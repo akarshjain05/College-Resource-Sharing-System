@@ -1,0 +1,70 @@
+import api from "./client";
+
+export const authApi = {
+  register: (payload) => api.post("/auth/register", payload),
+  login: (email, password) => {
+    const form = new URLSearchParams();
+    form.append("username", email);
+    form.append("password", password);
+    return api.post("/auth/login", form, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+  },
+  me: () => api.get("/auth/me"),
+  changePassword: (payload) => api.post("/auth/change-password", payload),
+  forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
+  resetPassword: (payload) => api.post("/auth/reset-password", payload),
+};
+
+export const userApi = {
+  getMyProfile: () => api.get("/users/me"),
+  updateMyProfile: (payload) => api.put("/users/me", payload),
+  getUser: (id) => api.get(`/users/${id}`),
+  listUsers: (params) => api.get("/users", { params }),
+  suspendUser: (id) => api.post(`/users/${id}/suspend`),
+  unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
+};
+
+export const categoryApi = {
+  list: () => api.get("/categories"),
+  create: (payload) => api.post("/categories", payload),
+  remove: (id) => api.delete(`/categories/${id}`),
+};
+
+export const resourceApi = {
+  list: (params) => api.get("/resources", { params }),
+  get: (id) => api.get(`/resources/${id}`),
+  create: (payload) => api.post("/resources", payload),
+  update: (id, payload) => api.put(`/resources/${id}`, payload),
+  remove: (id) => api.delete(`/resources/${id}`),
+  addImage: (id, imageUrl, isPrimary = false) =>
+    api.post(`/resources/${id}/images`, null, { params: { image_url: imageUrl, is_primary: isPrimary } }),
+};
+
+export const borrowApi = {
+  create: (payload) => api.post("/borrow-requests", payload),
+  myRequests: () => api.get("/borrow-requests/my-requests"),
+  incoming: () => api.get("/borrow-requests/incoming"),
+  approve: (id) => api.post(`/borrow-requests/${id}/approve`),
+  reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
+  cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
+  returnItem: (id, damageReport) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport }),
+};
+
+export const reviewApi = {
+  create: (payload) => api.post("/reviews", payload),
+  listForResource: (resourceId) => api.get(`/resources/${resourceId}/reviews`),
+};
+
+export const notificationApi = {
+  list: () => api.get("/notifications"),
+  markRead: (id) => api.post(`/notifications/${id}/read`),
+  markAllRead: () => api.post("/notifications/read-all"),
+};
+
+export const adminApi = {
+  overview: () => api.get("/admin/analytics/overview"),
+  mostBorrowedCategories: () => api.get("/admin/analytics/most-borrowed-categories"),
+  topContributors: () => api.get("/admin/analytics/top-contributors"),
+  departmentUsage: () => api.get("/admin/analytics/department-usage"),
+};

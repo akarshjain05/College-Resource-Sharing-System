@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-paper text-ink font-body antialiased;
+}
+
+h1, h2, h3, h4 {
+  @apply font-display text-ink-900;
+}
+
+::selection {
+  @apply bg-brass-100 text-ink-900;
+}
+
+*:focus-visible {
+  outline: 2px solid theme("colors.brass.500");
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-forest-700 text-white hover:bg-forest-900;
+  }
+  .btn-secondary {
+    @apply btn bg-white text-ink-900 border border-ink-100 hover:bg-ink-50;
+  }
+  .btn-brass {
+    @apply btn bg-brass-500 text-white hover:bg-brass-700;
+  }
+  .input {
+    @apply w-full rounded-md border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-300 focus:border-forest-500 focus:ring-1 focus:ring-forest-500 outline-none;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1;
+  }
+  .card {
+    @apply bg-card rounded-lg shadow-card border border-ink-100/60;
+  }
+
+  /* Signature element: library index card with a perforated ticket-stub edge,
+     used for resource listings across the app. */
+  .index-card {
+    @apply relative card overflow-hidden;
+  }
+  .index-card::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    background-image: radial-gradient(circle at 0 8px, transparent 5px, #fff 5px),
+      radial-gradient(circle at 0 28px, transparent 5px, #fff 5px),
+      radial-gradient(circle at 0 48px, transparent 5px, #fff 5px);
+    background-repeat: repeat-y;
+    background-size: 14px 20px;
+  }
+}
