@@ -84,14 +84,14 @@ services:
       - key: SMTP_FROM
         value: noreply@crss.edu
 
-  # ---------- Celery beat (schedules the daily reminder job) ----------
+ # ---------- Celery beat (schedules the daily reminder job) ----------
   - type: worker
     name: crss-celery-beat
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
-    startCommand: celery -A app.tasks.celery_app beat --loglevel=info
+    dockerCommand: celery -A app.tasks.celery_app beat --loglevel=info
     envVars:
       - key: DATABASE_URL
         fromDatabase:
