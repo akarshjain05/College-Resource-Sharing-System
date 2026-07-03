@@ -12,7 +12,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - crss_postgres_data:/var/lib/postgresql/data
+      - crss_postgres_data:/var/lib/postgresql/data 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crss_user} -d ${POSTGRES_DB:-crss_db}"]
       interval: 5s
