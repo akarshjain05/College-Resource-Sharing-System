@@ -1,4 +1,3 @@
-
 services:
   # ---------- Backend API ----------
   - type: web
@@ -8,7 +7,7 @@ services:
     dockerContext: ./backend
     plan: free
     healthCheckPath: /health
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    dockerCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -61,7 +60,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
-    startCommand: celery -A app.tasks.celery_app worker --loglevel=info
+    dockerCommand: celery -A app.tasks.celery_app worker --loglevel=info
     envVars:
       - key: DATABASE_URL
         fromDatabase:
