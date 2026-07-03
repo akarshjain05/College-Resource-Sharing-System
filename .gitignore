@@ -27,3 +27,4 @@ Thumbs.db
 
 # Uploads
 backend/uploads/
+backend/celerybeat-schedule
