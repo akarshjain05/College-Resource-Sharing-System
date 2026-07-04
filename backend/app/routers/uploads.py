@@ -74,3 +74,25 @@ def delete_resource_image(
     db.delete(image)
     db.commit()
     return None
+
+
+@router.patch("/resources/images/{image_id}/set-primary", response_model=ResourceImageResponse)
+def set_primary_resource_image(
+    image_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    image = db.query(ResourceImage).filter(ResourceImage.id == image_id).first()
+    if not image:
+        raise NotFoundException("Image not found")
+    if image.resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
+        raise ForbiddenException("You can only edit images for your own resources")
+
+    # Demote all other images for this resource
+    for img in image.resource.images:
+        img.is_primary = False
+    image.is_primary = True
+    db.commit()
+    db.refresh(image)
+    return image
+
