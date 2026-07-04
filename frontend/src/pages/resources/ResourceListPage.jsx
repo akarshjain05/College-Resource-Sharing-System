@@ -14,7 +14,6 @@ export default function ResourceListPage() {
   const [categoryId, setCategoryId] = useState("");
   const [condition, setCondition] = useState("");
   const [status, setStatus] = useState("");
-  const [department, setDepartment] = useState("");
   const [minRating, setMinRating] = useState("");
   const [sortBy, setSortBy] = useState("created_at");
   const [sortDir, setSortDir] = useState("desc");
@@ -33,7 +32,6 @@ export default function ResourceListPage() {
         category_id: categoryId || undefined,
         condition: condition || undefined,
         status: status || undefined,
-        department: department || undefined,
         min_rating: minRating ? Number(minRating) : undefined,
         sort_by: sortBy,
         sort_dir: sortDir,
@@ -45,7 +43,7 @@ export default function ResourceListPage() {
         setTotal(data.total);
       })
       .finally(() => setLoading(false));
-  }, [search, categoryId, condition, status, department, minRating, sortBy, sortDir, page]);
+  }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -109,16 +107,16 @@ export default function ResourceListPage() {
             type="button"
             onClick={() => setShowFilters(!showFilters)}
             className={`btn gap-2 sm:w-auto ${
-              showFilters || status || department || minRating
+              showFilters || status || minRating
                 ? "bg-forest-50 text-forest-750 border border-forest-300"
                 : "bg-white text-ink-500 border border-ink-100 hover:bg-ink-50"
             }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters
-            {(status || department || minRating) && (
+            {(status || minRating) && (
               <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-750 text-[10px] font-bold text-white">
-                {[status, department, minRating].filter(Boolean).length}
+                {[status, minRating].filter(Boolean).length}
               </span>
             )}
           </button>
@@ -126,7 +124,7 @@ export default function ResourceListPage() {
 
         {/* Collapsible Advanced Filters & Sorting Panel */}
         {showFilters && (
-          <div className="grid grid-cols-1 gap-4 pt-3 border-t border-ink-100/60 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 pt-3 border-t border-ink-100/60 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <label className="label">Status</label>
               <select
@@ -143,19 +141,6 @@ export default function ResourceListPage() {
                 <option value="unavailable">Unavailable</option>
                 <option value="pending_approval">Pending Approval</option>
               </select>
-            </div>
-
-            <div>
-              <label className="label">Owner Department</label>
-              <input
-                className="input"
-                placeholder="e.g. Computer Science"
-                value={department}
-                onChange={(e) => {
-                  setPage(1);
-                  setDepartment(e.target.value);
-                }}
-              />
             </div>
 
             <div>

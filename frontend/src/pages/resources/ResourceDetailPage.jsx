@@ -1,15 +1,24 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Star, MapPin, Package, Shield, Trash2, Edit3, Image as ImageIcon, Check, Loader2 } from "lucide-react";
-import { resourceApi, borrowApi, reviewApi, uploadApi, categoryApi } from "../../api/endpoints";
+import { Star, MapPin, Package, Shield, Trash2, Edit3, Image as ImageIcon, Loader2 } from "lucide-react";
+import { resourceApi, borrowApi, reviewApi, uploadApi, categoryApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
 export default function ResourceDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [resource, setResource] = useState(null);
+  const [resource, _setResource] = useState(null);
+  const setResource = (data) => {
+    if (data && data.images) {
+      // Sort images chronologically by upload date so that they don't shuffle
+      data.images = [...data.images].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at)
+      );
+    }
+    _setResource(data);
+  };
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
@@ -37,7 +46,10 @@ export default function ResourceDetailPage() {
 
   // Image upload state
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [isPrimaryUpload, setIsPrimaryUpload] = useState(false);
+  // Tracks which image is displayed in the hero gallery (ID-based, local-only)
+  const [activeImageId, setActiveImageId] = useState(null);
+  // Tracks which image is being set as primary
+  const [settingPrimaryId, setSettingPrimaryId] = useState(null);
 
   // Review states
   const [isEligibleToReview, setIsEligibleToReview] = useState(false);
@@ -123,6 +135,10 @@ export default function ResourceDetailPage() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (editForm.deposit_amount < 0) {
+      toast.error("Deposit amount must be greater than or equal to 0.");
+      return;
+    }
     setSubmittingEdit(true);
     try {
       const { data } = await resourceApi.update(id, editForm);
@@ -153,10 +169,9 @@ export default function ResourceDetailPage() {
     setUploadingImage(true);
     try {
       // If no images exist yet, force the new image to be primary
-      const shouldBePrimary = resource.images?.length === 0 || isPrimaryUpload;
+      const shouldBePrimary = resource.images?.length === 0;
       await uploadApi.uploadResourceImage(id, file, shouldBePrimary);
       toast.success("Image uploaded!");
-      setIsPrimaryUpload(false);
       // Reload resource
       const resResp = await resourceApi.get(id);
       setResource(resResp.data);
@@ -207,45 +222,75 @@ export default function ResourceDetailPage() {
   const isOwner = resource.owner.id === user?.id;
   const isAdmin = user?.role === "admin";
   const primaryImage = resource.images?.find((img) => img.is_primary) || resource.images?.[0];
+  // The hero shows the thumbnail the user last clicked, or defaults to the primary
+  const displayImage = resource.images?.find((img) => img.id === activeImageId) || primaryImage;
+
+  const handleSetPrimary = async (imageId) => {
+    setSettingPrimaryId(imageId);
+    try {
+      await uploadApi.setPrimaryImage(imageId);
+      toast.success("Primary photo updated!");
+      setActiveImageId(imageId);
+      const resResp = await resourceApi.get(id);
+      setResource(resResp.data);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Could not set primary image.");
+    } finally {
+      setSettingPrimaryId(null);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
         {/* Resource Image Display */}
         {resource.images?.length > 0 ? (
-          <div className="space-y-2">
-            <img
-              src={primaryImage.image_url}
-              alt={resource.title}
-              className="h-80 w-full rounded-lg object-cover"
-            />
+          <div className="space-y-3">
+            {/* Hero image — aspect-ratio constrained, no stretching */}
+            <div className="relative w-full overflow-hidden rounded-xl bg-ink-50" style={{ aspectRatio: "4/3" }}>
+              <img
+                key={displayImage.id}
+                src={getImageUrl(displayImage.image_url)}
+                alt={resource.title}
+                className="absolute inset-0 h-full w-full object-contain transition-opacity duration-300"
+              />
+              {displayImage.is_primary && (
+                <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-forest-700/90 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur-sm">
+                  <Star className="h-3 w-3 fill-white" /> Primary
+                </span>
+              )}
+            </div>
+            {/* Thumbnails */}
             {resource.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-2">
-                {resource.images.map((img) => (
-                  <img
-                    key={img.id}
-                    src={img.image_url}
-                    alt=""
-                    className={`h-16 w-20 rounded object-cover cursor-pointer border-2 ${
-                      img.id === primaryImage.id ? "border-forest-500" : "border-transparent"
-                    }`}
-                    onClick={() => {
-                      // Locally set the clicked image as primary
-                      setResource((prev) => ({
-                        ...prev,
-                        images: prev.images.map((i) => ({
-                          ...i,
-                          is_primary: i.id === img.id,
-                        })),
-                      }));
-                    }}
-                  />
-                ))}
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {resource.images.map((img) => {
+                  const isActive = img.id === (displayImage?.id);
+                  return (
+                    <button
+                      key={img.id}
+                      onClick={() => setActiveImageId(img.id)}
+                      className={`relative flex-shrink-0 h-16 w-20 rounded-lg overflow-hidden border-2 transition-all ${
+                        isActive ? "border-forest-500 ring-2 ring-forest-300" : "border-transparent hover:border-ink-300"
+                      }`}
+                    >
+                      <img
+                        src={getImageUrl(img.image_url)}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      {img.is_primary && (
+                        <span className="absolute bottom-0 left-0 right-0 bg-forest-700/80 text-white text-[8px] text-center font-semibold py-0.5">
+                          Primary
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
         ) : (
-          <div className="flex h-80 w-full items-center justify-center rounded-lg bg-ink-50 font-display text-5xl text-ink-300">
+          <div className="flex items-center justify-center rounded-xl bg-ink-50 font-display text-5xl text-ink-300" style={{ aspectRatio: "4/3" }}>
             {resource.title.charAt(0)}
           </div>
         )}
@@ -390,7 +435,7 @@ export default function ResourceDetailPage() {
               <p className="mt-2 whitespace-pre-line text-sm text-ink-700">{resource.description}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 pt-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 pt-4">
               <div className="card p-3 text-center">
                 <Star className="mx-auto mb-1 h-4 w-4 fill-brass-500 text-brass-500" />
                 <p className="text-sm font-semibold text-ink-900">{Number(resource.average_rating).toFixed(1)}</p>
@@ -410,6 +455,13 @@ export default function ResourceDetailPage() {
                 <MapPin className="mx-auto mb-1 h-4 w-4 text-forest-700" />
                 <p className="truncate text-sm font-semibold text-ink-900">{resource.pickup_location || "—"}</p>
                 <p className="text-xs text-ink-500">Pickup</p>
+              </div>
+              <div className="card p-3 text-center flex flex-col justify-between">
+                <span className="mx-auto mb-1 text-sm font-bold text-forest-700">₹</span>
+                <p className="text-sm font-semibold text-ink-900">
+                  {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit"}
+                </p>
+                <p className="text-xs text-ink-500">Deposit</p>
               </div>
             </div>
           </div>
@@ -494,12 +546,26 @@ export default function ResourceDetailPage() {
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Shared by</p>
           <p className="mt-1 font-display text-base font-semibold text-ink-900">{resource.owner.full_name}</p>
           <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+          
+          <div className="mt-4 border-t border-ink-100 pt-3 flex justify-between text-xs">
+            <span className="text-ink-500 font-medium">Security Deposit:</span>
+            <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700" : "text-ink-600"}`}>
+              {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
+            </span>
+          </div>
         </div>
 
         {/* Regular Borrow Form */}
         {!isOwner && resource.status === "available" && (
           <form onSubmit={handleBorrowRequest} className="card space-y-3 p-5">
             <h3 className="font-display text-base font-semibold text-ink-900">Request to borrow</h3>
+            <div className="rounded bg-ink-50 p-2.5 text-center text-xs">
+              {resource.deposit_amount > 0 ? (
+                <span>Security deposit required: <strong className="text-forest-700 font-semibold">₹{resource.deposit_amount}</strong></span>
+              ) : (
+                <span className="text-ink-600 font-medium">No security deposit required</span>
+              )}
+            </div>
             <div>
               <label className="label">From</label>
               <input
@@ -595,18 +661,6 @@ export default function ResourceDetailPage() {
                         "Choose Image File"
                       )}
                     </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="upload-is-primary"
-                        checked={isPrimaryUpload}
-                        onChange={(e) => setIsPrimaryUpload(e.target.checked)}
-                        className="rounded border-ink-100 text-forest-700 focus:ring-forest-500"
-                      />
-                      <label htmlFor="upload-is-primary" className="text-xs text-ink-500">
-                        Mark as primary photo
-                      </label>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -617,13 +671,30 @@ export default function ResourceDetailPage() {
                   <p className="label">Current Photos</p>
                   <div className="grid grid-cols-2 gap-2">
                     {resource.images.map((img) => (
-                      <div key={img.id} className="relative group border border-ink-100 rounded overflow-hidden">
+                      <div key={img.id} className="relative group border border-ink-100 rounded-lg overflow-hidden bg-ink-50">
                         <img
-                          src={img.image_url}
+                          src={getImageUrl(img.image_url)}
                           alt=""
                           className="h-20 w-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        {/* Action overlay on hover */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          {/* Set as Primary */}
+                          {!img.is_primary && (
+                            <button
+                              onClick={() => handleSetPrimary(img.id)}
+                              disabled={settingPrimaryId === img.id}
+                              className="p-1 rounded bg-forest-600 hover:bg-forest-700 text-white"
+                              title="Make Primary Photo"
+                            >
+                              {settingPrimaryId === img.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Star className="h-3.5 w-3.5" />
+                              )}
+                            </button>
+                          )}
+                          {/* Delete */}
                           <button
                             onClick={() => handleDeleteImage(img.id)}
                             className="p-1 rounded bg-rose-600 hover:bg-rose-700 text-white"
@@ -632,9 +703,10 @@ export default function ResourceDetailPage() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
+                        {/* Primary badge */}
                         {img.is_primary && (
-                          <span className="absolute bottom-1 right-1 bg-forest-700 text-white text-[9px] px-1 rounded font-semibold flex items-center gap-0.5">
-                            <Check className="h-2.5 w-2.5" /> Primary
+                          <span className="absolute bottom-1 left-1 bg-forest-700 text-white text-[9px] px-1.5 py-0.5 rounded-full font-semibold flex items-center gap-0.5">
+                            <Star className="h-2.5 w-2.5 fill-white" /> Primary
                           </span>
                         )}
                       </div>

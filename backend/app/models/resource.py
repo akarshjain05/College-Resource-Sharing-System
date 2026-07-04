@@ -43,7 +43,10 @@ class Resource(Base, UUIDMixin, TimestampMixin):
     owner: Mapped["User"] = relationship("User", back_populates="resources")
     category: Mapped["Category"] = relationship("Category", back_populates="resources")
     images: Mapped[List["ResourceImage"]] = relationship(
-        "ResourceImage", back_populates="resource", cascade="all, delete-orphan"
+        "ResourceImage",
+        back_populates="resource",
+        cascade="all, delete-orphan",
+        order_by="ResourceImage.created_at"
     )
     borrow_requests: Mapped[List["BorrowRequest"]] = relationship(
         "BorrowRequest", back_populates="resource", cascade="all, delete-orphan"

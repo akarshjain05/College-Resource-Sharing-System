@@ -1,4 +1,4 @@
-import api from "./client";
+import api, { getImageUrl } from "./client";
 
 export const authApi = {
   register: (payload) => api.post("/auth/register", payload),
@@ -86,5 +86,8 @@ export const uploadApi = {
     });
   },
   deleteResourceImage: (imageId) => api.delete(`/uploads/resources/images/${imageId}`),
+  setPrimaryImage: (imageId) => api.patch(`/uploads/resources/images/${imageId}/set-primary`),
 };
+
+export { getImageUrl };
 
