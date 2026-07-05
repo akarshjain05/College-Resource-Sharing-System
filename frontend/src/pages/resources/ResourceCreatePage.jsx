@@ -33,6 +33,10 @@ export default function ResourceCreatePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.deposit_amount < 0) {
+      toast.error("Deposit amount must be greater than or equal to 0.");
+      return;
+    }
     setSubmitting(true);
     try {
       const { data } = await resourceApi.create(form);

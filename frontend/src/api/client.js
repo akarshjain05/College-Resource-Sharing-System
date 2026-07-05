@@ -82,4 +82,18 @@ api.interceptors.response.use(
   }
 );
 
+export const getImageUrl = (url) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+  try {
+    const origin = new URL(apiBase).origin;
+    return `${origin}${url}`;
+  } catch (e) {
+    return `http://localhost:8000${url}`;
+  }
+};
+
 export default api;
