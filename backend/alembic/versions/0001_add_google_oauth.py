@@ -39,7 +39,15 @@ def upgrade() -> None:
             server_default="local",
         ),
     )
-    op.add_column("users", sa.Column("google_id", sa.String(length=255), nullable=True))
+    op.add_column(
+    "users",
+    sa.Column(
+        "auth_provider",
+        auth_provider_enum,
+        nullable=False,
+        server_default=sa.text("'local'::authprovider"),
+    ),
+)
     op.create_unique_constraint("uq_users_google_id", "users", ["google_id"])
     op.create_index("ix_users_google_id", "users", ["google_id"], unique=False)
 
