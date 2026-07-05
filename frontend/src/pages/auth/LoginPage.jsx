@@ -5,6 +5,7 @@ import { BookMarked } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import PasswordInput from "../../components/PasswordInput";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
+import CompleteGoogleProfileForm from "../../components/CompleteGoogleProfileForm";
 
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
@@ -13,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
+  const [googleSignup, setGoogleSignup] = useState(null); // { registrationToken, fullName, email }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,9 +38,19 @@ export default function LoginPage() {
   const handleGoogleCredential = async (credential) => {
     setGoogleSubmitting(true);
     try {
-      await loginWithGoogle(credential);
-      toast.success("Welcome back!");
-      navigate("/dashboard");
+      const result = await loginWithGoogle(credential);
+      if (result.status === "needs_profile") {
+        // First time this Google account has been seen -- no CRSS account exists
+        // yet, so collect the last few campus details before creating one.
+        setGoogleSignup({
+          registrationToken: result.registration_token,
+          fullName: result.full_name,
+          email: result.email,
+        });
+      } else {
+        toast.success("Welcome back!");
+        navigate("/dashboard");
+      }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Google sign-in failed. Please try again.");
     } finally {
@@ -58,60 +70,74 @@ export default function LoginPage() {
         </div>
 
         <div className="card space-y-5 p-6">
-          <div className="relative">
-            <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
-            {googleSubmitting && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-md bg-white/70">
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-forest-700 border-t-transparent" />
+          {googleSignup ? (
+            <CompleteGoogleProfileForm
+              registrationToken={googleSignup.registrationToken}
+              fullName={googleSignup.fullName}
+              email={googleSignup.email}
+              onDone={() => navigate("/dashboard")}
+              onCancel={() => setGoogleSignup(null)}
+            />
+          ) : (
+            <>
+              <div className="relative">
+                <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
+                {googleSubmitting && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-md bg-white/70">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-forest-700 border-t-transparent" />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-ink-100" />
-            <span className="text-xs font-medium uppercase tracking-wide text-ink-300">or</span>
-            <div className="h-px flex-1 bg-ink-100" />
-          </div>
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-ink-100" />
+                <span className="text-xs font-medium uppercase tracking-wide text-ink-300">or</span>
+                <div className="h-px flex-1 bg-ink-100" />
+              </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="label" htmlFor="email">Campus email</label>
-              <input
-                id="email"
-                type="email"
-                required
-                className="input"
-                placeholder="you@college.edu"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="label" htmlFor="password">Password</label>
-              <PasswordInput
-                id="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-              />
-              <Link to="/forgot-password" className="mt-1 inline-block text-xs text-forest-700 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-            <button type="submit" disabled={submitting} className="btn-primary w-full">
-              {submitting ? "Signing in..." : "Sign in"}
-            </button>
-          </form>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="label" htmlFor="email">Campus email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    className="input"
+                    placeholder="you@college.edu"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label" htmlFor="password">Password</label>
+                  <PasswordInput
+                    id="password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                  />
+                  <Link to="/forgot-password" className="mt-1 inline-block text-xs text-forest-700 hover:underline">
+                    Forgot password?
+                  </Link>
+                </div>
+                <button type="submit" disabled={submitting} className="btn-primary w-full">
+                  {submitting ? "Signing in..." : "Sign in"}
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
-        <p className="mt-6 text-center text-sm text-ink-500">
-          New to campus sharing?{" "}
-          <Link to="/register" className="font-semibold text-forest-700 hover:underline">
-            Create an account
-          </Link>
-        </p>
+        {!googleSignup && (
+          <p className="mt-6 text-center text-sm text-ink-500">
+            New to campus sharing?{" "}
+            <Link to="/register" className="font-semibold text-forest-700 hover:underline">
+              Create an account
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

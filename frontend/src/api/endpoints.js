@@ -11,6 +11,7 @@ export const authApi = {
     });
   },
   googleLogin: (credential) => api.post("/auth/google", { credential }),
+   completeGoogleProfile: (payload) => api.post("/auth/google/complete-profile", payload),
   me: () => api.get("/auth/me"),
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
