@@ -33,6 +33,34 @@ class GoogleAuthRequest(BaseModel):
     credential: str = Field(..., description="The ID token returned by Google Identity Services")
 
 
+class GoogleAuthResponse(BaseModel):
+    """
+    Returned by POST /auth/google. Two shapes, distinguished by `status`:
+    - status="login": an existing account was found (or just linked) -- access_token /
+      refresh_token are populated, same as a normal login.
+    - status="needs_profile": this is a brand-new signup. No account has been created
+      yet. `registration_token` must be sent to /auth/google/complete-profile along
+      with the additional fields (role, department, etc.) to actually create it.
+    """
+
+    status: str
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: str = "bearer"
+    registration_token: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+
+
+class GoogleProfileCompletion(BaseModel):
+    registration_token: str
+    role: UserRole = UserRole.STUDENT
+    department: Optional[str] = None
+    course: Optional[str] = None
+    year_of_study: Optional[int] = Field(None, ge=1, le=6)
+    student_id: Optional[str] = None
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

@@ -105,7 +105,7 @@ def _fake_google_idinfo(email, sub, name="Google User", picture=None):
     return info
 
 
-def test_google_login_creates_new_user(client, db_session):
+def test_google_login_new_user_returns_needs_profile(client, db_session):
     fake_idinfo = _fake_google_idinfo("newgoogle@crss.edu", "google-sub-1", picture="https://example.com/p.jpg")
 
     with patch("app.routers.auth.settings.GOOGLE_CLIENT_ID", "fake-client-id"), \
@@ -114,17 +114,77 @@ def test_google_login_creates_new_user(client, db_session):
 
     assert resp.status_code == 200
     body = resp.json()
+    assert body["status"] == "needs_profile"
+    assert body["email"] == "newgoogle@crss.edu"
+    assert body["registration_token"]
+    assert body.get("access_token") is None
+
+    # no account should exist yet -- it's only created after complete-profile
+    from app.models.user import User
+
+    user = db_session.query(User).filter(User.email == "newgoogle@crss.edu").first()
+    assert user is None
+
+
+def test_complete_google_profile_creates_account(client, db_session):
+    fake_idinfo = _fake_google_idinfo("newgoogle2@crss.edu", "google-sub-1b", picture="https://example.com/p.jpg")
+
+    with patch("app.routers.auth.settings.GOOGLE_CLIENT_ID", "fake-client-id"), \
+         patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=fake_idinfo):
+        first_resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
+
+    registration_token = first_resp.json()["registration_token"]
+
+    complete_resp = client.post(
+        "/api/v1/auth/google/complete-profile",
+        json={
+            "registration_token": registration_token,
+            "role": "student",
+            "department": "Computer Science",
+            "course": "B.Tech CSE",
+            "year_of_study": 2,
+            "student_id": "CSE2026042",
+        },
+    )
+    assert complete_resp.status_code == 201
+    body = complete_resp.json()
     assert "access_token" in body
     assert "refresh_token" in body
 
     from app.models.user import User
 
-    user = db_session.query(User).filter(User.email == "newgoogle@crss.edu").first()
+    user = db_session.query(User).filter(User.email == "newgoogle2@crss.edu").first()
     assert user is not None
     assert user.hashed_password is None
     assert user.is_verified is True
-    assert user.google_id == "google-sub-1"
+    assert user.google_id == "google-sub-1b"
     assert user.profile_picture_url == "https://example.com/p.jpg"
+    assert user.department == "Computer Science"
+    assert user.course == "B.Tech CSE"
+    assert user.year_of_study == 2
+    assert user.student_id == "CSE2026042"
+
+
+def test_complete_google_profile_rejects_bad_token(client):
+    resp = client.post(
+        "/api/v1/auth/google/complete-profile",
+        json={"registration_token": "not-a-real-token", "role": "student"},
+    )
+    assert resp.status_code == 400
+    assert resp.json()["error_code"] == "BAD_REGISTRATION_TOKEN"
+
+
+def test_complete_google_profile_rejects_duplicate_email(client, test_user):
+    fake_idinfo = _fake_google_idinfo(test_user.email, "google-sub-dup")
+
+    with patch("app.routers.auth.settings.GOOGLE_CLIENT_ID", "fake-client-id"), \
+         patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=fake_idinfo):
+        first_resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
+
+    # test_user already exists with this email, so /auth/google should have logged
+    # them in directly rather than returning needs_profile -- confirm that, then also
+    # confirm complete-profile independently rejects a duplicate as defense-in-depth.
+    assert first_resp.json()["status"] == "login"
 
 
 def test_google_login_links_existing_local_account(client, test_user, db_session):
@@ -135,6 +195,7 @@ def test_google_login_links_existing_local_account(client, test_user, db_session
         resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
 
     assert resp.status_code == 200
+    assert resp.json()["status"] == "login"
     db_session.refresh(test_user)
     assert test_user.google_id == "google-sub-2"
     # the account's original local password must be untouched by linking
@@ -146,7 +207,13 @@ def test_login_blocked_for_google_only_account(client, db_session):
 
     with patch("app.routers.auth.settings.GOOGLE_CLIENT_ID", "fake-client-id"), \
          patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=fake_idinfo):
-        client.post("/api/v1/auth/google", json={"credential": "fake-token"})
+        signup_resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
+
+    registration_token = signup_resp.json()["registration_token"]
+    client.post(
+        "/api/v1/auth/google/complete-profile",
+        json={"registration_token": registration_token, "role": "student"},
+    )
 
     resp = client.post(
         "/api/v1/auth/login", data={"username": "onlygoogle@crss.edu", "password": "anything-at-all"}
@@ -176,9 +243,15 @@ def test_change_password_blocked_for_google_only_account(client, db_session):
     fake_idinfo = _fake_google_idinfo("changepwtest@crss.edu", "google-sub-4")
     with patch("app.routers.auth.settings.GOOGLE_CLIENT_ID", "fake-client-id"), \
          patch("app.routers.auth.google_id_token.verify_oauth2_token", return_value=fake_idinfo):
-        login_resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
+        signup_resp = client.post("/api/v1/auth/google", json={"credential": "fake-token"})
 
-    token = login_resp.json()["access_token"]
+    registration_token = signup_resp.json()["registration_token"]
+    complete_resp = client.post(
+        "/api/v1/auth/google/complete-profile",
+        json={"registration_token": registration_token, "role": "student"},
+    )
+
+    token = complete_resp.json()["access_token"]
     resp = client.post(
         "/api/v1/auth/change-password",
         headers={"Authorization": f"Bearer {token}"},

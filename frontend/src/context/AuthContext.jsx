@@ -38,6 +38,18 @@ export function AuthProvider({ children }) {
 
   const loginWithGoogle = async (credential) => {
     const { data } = await authApi.googleLogin(credential);
+    if (data.status === "login") {
+      localStorage.setItem("crss_access_token", data.access_token);
+      localStorage.setItem("crss_refresh_token", data.refresh_token);
+      await loadUser();
+    }
+    // If data.status === "needs_profile", the caller (Login/RegisterPage) is
+    // responsible for showing the profile-completion form -- no tokens exist yet.
+    return data;
+  };
+
+  const completeGoogleProfile = async (payload) => {
+    const { data } = await authApi.completeGoogleProfile(payload);
     localStorage.setItem("crss_access_token", data.access_token);
     localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
@@ -54,7 +66,9 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, refreshUser: loadUser }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, loginWithGoogle, completeGoogleProfile, register, logout, refreshUser: loadUser }}
+    >
       {children}
     </AuthContext.Provider>
   );

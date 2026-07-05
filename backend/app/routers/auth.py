@@ -28,6 +28,8 @@ from app.schemas.user import (
     PasswordResetConfirm,
     ChangePassword,
     GoogleAuthRequest,
+    GoogleAuthResponse,
+    GoogleProfileCompletion,
 )
 from app.services.email_service import send_verification_email, send_password_reset_email
 from app.core.rate_limit import limiter
@@ -91,7 +93,7 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
-@router.post("/google", response_model=Token)
+@router.post("/google", response_model=GoogleAuthResponse)
 def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not settings.GOOGLE_CLIENT_ID:
         raise AppException(
@@ -120,26 +122,32 @@ def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
             error_code="INCOMPLETE_GOOGLE_PROFILE",
         )
 
+    full_name = idinfo.get("name") or email.split("@")[0]
     user = db.query(User).filter(User.email == email).first()
 
     if user is None:
-        # Brand new account — created straight from the verified Google profile,
-        # with no local password at all.
-        full_name = idinfo.get("name") or email.split("@")[0]
-        user = User(
+        # Brand new signup. Don't create the account yet -- Google only gives us
+        # name/email/picture, and the app wants department/course/year/student ID
+        # too. Package what Google verified into a short-lived registration token
+        # so the frontend can collect the rest without making the person go through
+        # the Google popup a second time.
+        registration_token = create_access_token(
+            email,
+            {
+                "purpose": "google_registration",
+                "google_sub": google_sub,
+                "full_name": full_name,
+                "picture": idinfo.get("picture") or "",
+            },
+        )
+        return GoogleAuthResponse(
+            status="needs_profile",
+            registration_token=registration_token,
             full_name=full_name,
             email=email,
-            hashed_password=None,
-            role=UserRole.STUDENT,
-            auth_provider=AuthProvider.GOOGLE,
-            google_id=google_sub,
-            profile_picture_url=idinfo.get("picture"),
-            is_verified=True,  # Google has already verified this email address.
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    elif not user.google_id:
+
+    if not user.google_id:
         # Existing local-password account signing in with Google for the first time —
         # link the two rather than creating a duplicate account for the same email.
         user.google_id = google_sub
@@ -150,6 +158,49 @@ def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
 
     if not user.is_active or user.is_suspended:
         raise AppException("Account is inactive or suspended", status_code=status.HTTP_403_FORBIDDEN, error_code="ACCOUNT_DISABLED")
+
+    access_token = create_access_token(str(user.id), {"role": user.role.value})
+    refresh_token = create_refresh_token(str(user.id))
+    return GoogleAuthResponse(status="login", access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post("/google/complete-profile", response_model=Token, status_code=status.HTTP_201_CREATED)
+def complete_google_profile(payload: GoogleProfileCompletion, db: Session = Depends(get_db)):
+    data = decode_token(payload.registration_token)
+    if not data or data.get("purpose") != "google_registration":
+        raise AppException(
+            "Your Google sign-up session has expired. Please try again.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="BAD_REGISTRATION_TOKEN",
+        )
+
+    email = data["sub"]
+    google_sub = data.get("google_sub")
+    full_name = data.get("full_name") or email.split("@")[0]
+    picture = data.get("picture") or None
+
+    if db.query(User).filter(User.email == email).first():
+        raise ConflictException("An account with this email already exists")
+    if payload.student_id and db.query(User).filter(User.student_id == payload.student_id).first():
+        raise ConflictException("This student ID is already registered")
+
+    user = User(
+        full_name=full_name,
+        email=email,
+        hashed_password=None,
+        role=payload.role,
+        department=payload.department,
+        course=payload.course,
+        year_of_study=payload.year_of_study,
+        student_id=payload.student_id,
+        auth_provider=AuthProvider.GOOGLE,
+        google_id=google_sub,
+        profile_picture_url=picture,
+        is_verified=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))

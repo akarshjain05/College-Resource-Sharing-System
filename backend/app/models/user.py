@@ -18,7 +18,9 @@ class User(Base, UUIDMixin, TimestampMixin):
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole), default=UserRole.STUDENT, nullable=False)
 
     auth_provider: Mapped[AuthProvider] = mapped_column(
-        SAEnum(AuthProvider), default=AuthProvider.LOCAL, nullable=False
+        SAEnum(AuthProvider, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=AuthProvider.LOCAL,
+        nullable=False,
     )
     google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True, index=True)
 
