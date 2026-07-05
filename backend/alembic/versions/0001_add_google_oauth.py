@@ -27,7 +27,7 @@ def upgrade() -> None:
         nullable=True,
     )
 
-    auth_provider_enum = sa.Enum("local", "google", name="authprovider")
+    auth_provider_enum = sa.Enum("LOCAL", "GOOGLE", name="authprovider")
     auth_provider_enum.create(op.get_bind(), checkfirst=True)
 
     op.add_column(
@@ -36,7 +36,7 @@ def upgrade() -> None:
             "auth_provider",
             auth_provider_enum,
             nullable=False,
-            server_default=sa.text("'local'::authprovider"),
+            server_default=sa.text("'LOCAL'::authprovider"),
         ),
     )
     op.add_column("users", sa.Column("google_id", sa.String(length=255), nullable=True))
