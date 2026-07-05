@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
-from app.models.enums import UserRole
+from app.models.enums import UserRole, AuthProvider
 
 
 class UserBase(BaseModel):
@@ -19,7 +19,18 @@ class UserBase(BaseModel):
 
 class UserRegister(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
+    confirm_password: str = Field(..., min_length=8, max_length=128)
     role: UserRole = UserRole.STUDENT
+
+    @model_validator(mode="after")
+    def passwords_match(self):
+        if self.password != self.confirm_password:
+            raise ValueError("password and confirm_password do not match")
+        return self
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(..., description="The ID token returned by Google Identity Services")
 
 
 class UserLogin(BaseModel):
@@ -43,6 +54,7 @@ class UserResponse(UserBase):
 
     id: uuid.UUID
     role: UserRole
+    auth_provider: AuthProvider
     bio: Optional[str] = None
     skills: Optional[str] = None
     profile_picture_url: Optional[str] = None

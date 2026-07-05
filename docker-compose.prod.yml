@@ -1,4 +1,12 @@
-version: "3.9"
+# Standalone production compose file for a single VM (e.g. Oracle Cloud Always Free).
+#
+# Deliberately NOT a partial override of docker-compose.yml: Compose merges list-typed
+# fields (volumes, ports) by CONCATENATION across -f files, not replacement, so trying
+# to "clear" the dev bind-mounts via an override would silently fail to remove them.
+# This file is self-contained instead, so what you read here is exactly what runs.
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d --build
 
 services:
   db:
@@ -9,8 +17,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-crss_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crss_password}
       POSTGRES_DB: ${POSTGRES_DB:-crss_db}
-    ports:
-      - "5432:5432"
     volumes:
       - crss_postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -18,13 +24,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    # No "ports:" mapping to the host -- only other containers on the Compose
+    # network need to reach Postgres. Keeping it off the public interface entirely
+    # is safer than relying on the VM's firewall alone.
 
   redis:
     image: redis:7-alpine
     container_name: crss_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -37,16 +44,17 @@ services:
       dockerfile: Dockerfile
     container_name: crss_backend
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
       REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: production
+      DEBUG: "false"
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
       - crss_uploads:/app/uploads
     depends_on:
       db:
@@ -66,8 +74,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
       REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: production
     volumes:
-      - ./backend:/app
       - crss_uploads:/app/uploads
     depends_on:
       db:
@@ -87,8 +95,7 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
       REDIS_URL: redis://redis:6379/0
-    volumes:
-      - ./backend:/app
+      ENVIRONMENT: production
     depends_on:
       db:
         condition: service_healthy
@@ -98,16 +105,13 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: ${PUBLIC_API_URL}
     container_name: crss_frontend
     restart: unless-stopped
-    environment:
-      VITE_API_BASE_URL: http://localhost:8000/api/v1
     ports:
-      - "5173:5173"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "80:80"
     depends_on:
       - backend
 

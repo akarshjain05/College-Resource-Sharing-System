@@ -18,4 +18,7 @@
 | [VIVA_QUESTIONS.md](VIVA_QUESTIONS.md) | Anticipated Q&A with answers |
 
 See also [`../deployment/DEPLOYMENT_GUIDE.md`](../deployment/DEPLOYMENT_GUIDE.md) for
-production deployment (Ubuntu VPS, Render, Railway).
+production deployment (Ubuntu VPS, Render, Railway), or
+[`../deployment/ORACLE_CLOUD_GUIDE.md`](../deployment/ORACLE_CLOUD_GUIDE.md) for a
+step-by-step guide to deploying the entire stack — including Celery, which Render's free
+tier doesn't cover — on Oracle Cloud's Always Free VM at zero ongoing cost.

@@ -3,13 +3,16 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { BookMarked } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import PasswordInput from "../../components/PasswordInput";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,9 +22,27 @@ export default function LoginPage() {
       toast.success("Welcome back!");
       navigate("/dashboard");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not sign in. Check your credentials.");
+      const errorCode = err.response?.data?.error_code;
+      if (errorCode === "GOOGLE_ACCOUNT_NO_PASSWORD") {
+        toast.error("This account uses Google Sign-In. Use the button below instead.");
+      } else {
+        toast.error(err.response?.data?.detail || "Could not sign in. Check your credentials.");
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleGoogleCredential = async (credential) => {
+    setGoogleSubmitting(true);
+    try {
+      await loginWithGoogle(credential);
+      toast.success("Welcome back!");
+      navigate("/dashboard");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Google sign-in failed. Please try again.");
+    } finally {
+      setGoogleSubmitting(false);
     }
   };
 
@@ -36,38 +57,54 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-ink-500">Sign in with your campus email to continue.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-          <div>
-            <label className="label" htmlFor="email">Campus email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              className="input"
-              placeholder="you@college.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+        <div className="card space-y-5 p-6">
+          <div className="relative">
+            <GoogleSignInButton onCredential={handleGoogleCredential} text="signin_with" />
+            {googleSubmitting && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-md bg-white/70">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-forest-700 border-t-transparent" />
+              </div>
+            )}
           </div>
-          <div>
-            <label className="label" htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              required
-              className="input"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Link to="/forgot-password" className="mt-1 inline-block text-xs text-forest-700 hover:underline">
-              Forgot password?
-            </Link>
+
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-ink-100" />
+            <span className="text-xs font-medium uppercase tracking-wide text-ink-300">or</span>
+            <div className="h-px flex-1 bg-ink-100" />
           </div>
-          <button type="submit" disabled={submitting} className="btn-primary w-full">
-            {submitting ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="label" htmlFor="email">Campus email</label>
+              <input
+                id="email"
+                type="email"
+                required
+                className="input"
+                placeholder="you@college.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="label" htmlFor="password">Password</label>
+              <PasswordInput
+                id="password"
+                required
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <Link to="/forgot-password" className="mt-1 inline-block text-xs text-forest-700 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+            <button type="submit" disabled={submitting} className="btn-primary w-full">
+              {submitting ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
+        </div>
 
         <p className="mt-6 text-center text-sm text-ink-500">
           New to campus sharing?{" "}

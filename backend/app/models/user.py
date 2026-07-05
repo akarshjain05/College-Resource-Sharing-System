@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.base import UUIDMixin, TimestampMixin
-from app.models.enums import UserRole
+from app.models.enums import UserRole, AuthProvider
 
 
 class User(Base, UUIDMixin, TimestampMixin):
@@ -13,8 +13,14 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     full_name: Mapped[str] = mapped_column(String(150), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Nullable because Google-authenticated accounts never set a local password.
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole), default=UserRole.STUDENT, nullable=False)
+
+    auth_provider: Mapped[AuthProvider] = mapped_column(
+        SAEnum(AuthProvider), default=AuthProvider.LOCAL, nullable=False
+    )
+    google_id: Mapped[Optional[str]] = mapped_column(String(255), unique=True, nullable=True, index=True)
 
     student_id: Mapped[Optional[str]] = mapped_column(String(50), unique=True, nullable=True)
     department: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
