@@ -10,6 +10,7 @@ export const authApi = {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
   },
+  googleLogin: (credential) => api.post("/auth/google", { credential }),
   me: () => api.get("/auth/me"),
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),

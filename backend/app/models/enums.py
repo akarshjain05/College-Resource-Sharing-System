@@ -11,6 +11,11 @@ class UserRole(str, enum.Enum):
     ADMIN = "admin"
 
 
+class AuthProvider(str, enum.Enum):
+    LOCAL = "local"
+    GOOGLE = "google"
+
+
 class ResourceCondition(str, enum.Enum):
     NEW = "new"
     GOOD = "good"

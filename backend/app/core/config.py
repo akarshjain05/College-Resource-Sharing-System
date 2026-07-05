@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # ---- Google Sign-In ----
+    # The OAuth 2.0 Client ID from Google Cloud Console (Credentials -> OAuth client ID
+    # -> Web application). Used as the required "audience" when verifying ID tokens, so
+    # tokens issued for a different app can't be replayed against this backend.
+    GOOGLE_CLIENT_ID: str = ""
+
     # ---- CORS ----
     BACKEND_CORS_ORIGINS: Union[List[str], str] = ["http://localhost:5173", "http://localhost:3000"]
 
