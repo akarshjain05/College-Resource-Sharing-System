@@ -1,4 +1,4 @@
-import api from "./client";
+import api, { getImageUrl } from "./client";
 
 export const authApi = {
   register: (payload) => api.post("/auth/register", payload),
@@ -69,3 +69,26 @@ export const adminApi = {
   topContributors: () => api.get("/admin/analytics/top-contributors"),
   departmentUsage: () => api.get("/admin/analytics/department-usage"),
 };
+
+export const uploadApi = {
+  uploadProfilePicture: (file) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post("/uploads/profile-picture", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  uploadResourceImage: (resourceId, file, isPrimary = false) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post(`/uploads/resources/${resourceId}/image`, formData, {
+      params: { is_primary: isPrimary },
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  deleteResourceImage: (imageId) => api.delete(`/uploads/resources/images/${imageId}`),
+  setPrimaryImage: (imageId) => api.patch(`/uploads/resources/images/${imageId}/set-primary`),
+};
+
+export { getImageUrl };
+

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Star, MapPin } from "lucide-react";
+import { getImageUrl } from "../api/endpoints";
 
 const CONDITION_LABEL = {
   new: "New",
@@ -32,7 +33,7 @@ export default function ResourceCard({ resource }) {
 
         {primaryImage ? (
           <img
-            src={primaryImage.image_url}
+            src={getImageUrl(primaryImage.image_url)}
             alt={resource.title}
             className="mb-3 h-36 w-full rounded-md object-cover"
           />
@@ -59,6 +60,13 @@ export default function ResourceCard({ resource }) {
             {resource.pickup_location}
           </div>
         )}
+
+        <div className="mt-3 flex items-center justify-between border-t border-ink-50 pt-3 text-xs">
+          <span className="text-ink-500 font-medium">Security Deposit:</span>
+          <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700" : "text-ink-600"}`}>
+            {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
+          </span>
+        </div>
       </div>
     </Link>
   );
