@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, AppException
+from app.core.exceptions import NotFoundException, AppException, ForbiddenException
 from app.models.resource import Resource
 from app.models.misc import Review, Notification
 from app.models.borrow import BorrowRequest
-from app.models.enums import BorrowStatus
+from app.models.enums import BorrowStatus, UserRole
 from app.models.user import User
 from app.schemas.review import ReviewCreate, ReviewResponse, NotificationResponse
 
@@ -26,18 +26,35 @@ def create_review(
     if not resource:
         raise NotFoundException("Resource not found")
 
-    has_borrowed = (
+    # Count successful completed borrows (returned or damaged)
+    successful_borrows = (
         db.query(BorrowRequest)
         .filter(
             BorrowRequest.resource_id == resource.id,
             BorrowRequest.borrower_id == current_user.id,
-            BorrowRequest.status == BorrowStatus.RETURNED,
+            BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED]),
         )
-        .first()
+        .count()
     )
-    if not has_borrowed:
+    if successful_borrows == 0:
         raise AppException(
-            "You can only review resources you have borrowed and returned",
+            "You can only review resources you have borrowed previously",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="NOT_ELIGIBLE",
+        )
+
+    # Count reviews already written by this user for this resource
+    reviews_written = (
+        db.query(Review)
+        .filter(
+            Review.resource_id == resource.id,
+            Review.reviewer_id == current_user.id,
+        )
+        .count()
+    )
+    if reviews_written >= successful_borrows:
+        raise AppException(
+            "You can only leave one review per successful borrow",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="NOT_ELIGIBLE",
         )
@@ -59,6 +76,32 @@ def list_resource_reviews(resource_id: uuid.UUID, db: Session = Depends(get_db))
     if not resource:
         raise NotFoundException("Resource not found")
     return resource.reviews
+
+
+@router.delete("/reviews/{review_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_review(
+    review_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Admin-only: permanently remove a review and recalculate the resource rating."""
+    if current_user.role != UserRole.ADMIN:
+        raise ForbiddenException("Only admins can delete reviews")
+
+    review = db.query(Review).filter(Review.id == review_id).first()
+    if not review:
+        raise NotFoundException("Review not found")
+
+    resource = review.resource
+    db.delete(review)
+    db.flush()  # apply deletion before recomputing
+
+    # Recompute average rating from remaining reviews
+    remaining = [r.rating for r in resource.reviews if r.id != review_id]
+    resource.average_rating = sum(remaining) / len(remaining) if remaining else 0.0
+
+    db.commit()
+    return None
 
 
 @router.get("/notifications", response_model=list[NotificationResponse])
