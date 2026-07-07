@@ -56,6 +56,7 @@ export const borrowApi = {
 export const reviewApi = {
   create: (payload) => api.post("/reviews", payload),
   listForResource: (resourceId) => api.get(`/resources/${resourceId}/reviews`),
+  delete: (reviewId) => api.delete(`/reviews/${reviewId}`),
 };
 
 export const notificationApi = {

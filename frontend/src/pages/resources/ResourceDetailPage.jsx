@@ -216,6 +216,17 @@ export default function ResourceDetailPage() {
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("Delete this review permanently? This cannot be undone.")) return;
+    try {
+      await reviewApi.delete(reviewId);
+      toast.success("Review deleted.");
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Could not delete review.");
+    }
+  };
+
   if (loading || !resource) {
     return <div className="h-96 animate-pulse rounded-lg bg-ink-100" />;
   }
@@ -528,9 +539,20 @@ export default function ResourceDetailPage() {
                         {r.reviewer.department || "Campus member"}
                       </p>
                     </div>
-                    <span className="flex items-center gap-1 text-xs text-brass-700 bg-brass-50 px-2 py-0.5 rounded-full">
-                      <Star className="h-3.5 w-3.5 fill-brass-500 text-brass-500" /> {r.rating}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1 text-xs text-brass-700 bg-brass-50 px-2 py-0.5 rounded-full">
+                        <Star className="h-3.5 w-3.5 fill-brass-500 text-brass-500" /> {r.rating}
+                      </span>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteReview(r.id)}
+                          title="Delete review (Admin)"
+                          className="p-1 rounded hover:bg-rose-50 text-rose-400 hover:text-rose-600 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {r.comment && <p className="mt-2 text-sm text-ink-700">{r.comment}</p>}
                 </div>
