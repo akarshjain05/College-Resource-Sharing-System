@@ -26,18 +26,35 @@ def create_review(
     if not resource:
         raise NotFoundException("Resource not found")
 
-    has_borrowed = (
+    # Count successful completed borrows (returned or damaged)
+    successful_borrows = (
         db.query(BorrowRequest)
         .filter(
             BorrowRequest.resource_id == resource.id,
             BorrowRequest.borrower_id == current_user.id,
-            BorrowRequest.status == BorrowStatus.RETURNED,
+            BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED]),
         )
-        .first()
+        .count()
     )
-    if not has_borrowed:
+    if successful_borrows == 0:
         raise AppException(
-            "You can only review resources you have borrowed and returned",
+            "You can only review resources you have borrowed previously",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="NOT_ELIGIBLE",
+        )
+
+    # Count reviews already written by this user for this resource
+    reviews_written = (
+        db.query(Review)
+        .filter(
+            Review.resource_id == resource.id,
+            Review.reviewer_id == current_user.id,
+        )
+        .count()
+    )
+    if reviews_written >= successful_borrows:
+        raise AppException(
+            "You can only leave one review per successful borrow",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="NOT_ELIGIBLE",
         )

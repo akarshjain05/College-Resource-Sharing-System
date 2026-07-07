@@ -82,16 +82,17 @@ export default function ResourceDetailPage() {
     if (user && resource && resource.owner.id !== user.id) {
       borrowApi.myRequests()
         .then(({ data }) => {
-          const hasReturned = data.some(
-            (req) => req.resource.id === resource.id && req.status === "returned"
+          const mySuccessfulBorrows = data.filter(
+            (req) => req.resource.id === resource.id && (req.status === "returned" || req.status === "damaged")
           );
-          setIsEligibleToReview(hasReturned);
+          const myReviewsCount = reviews.filter((r) => r.reviewer.id === user.id).length;
+          setIsEligibleToReview(mySuccessfulBorrows.length > myReviewsCount);
         })
         .catch(() => {});
     } else {
       setIsEligibleToReview(false);
     }
-  }, [user, resource]);
+  }, [user, resource, reviews]);
 
   const handleBorrowRequest = async (e) => {
     e.preventDefault();
