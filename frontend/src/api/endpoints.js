@@ -51,6 +51,7 @@ export const borrowApi = {
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
   returnItem: (id, damageReport) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport }),
+  confirmReturn: (id) => api.post(`/borrow-requests/${id}/confirm-return`),
 };
 
 export const reviewApi = {

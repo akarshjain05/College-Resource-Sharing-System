@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Plus, SlidersHorizontal } from "lucide-react";
 import { resourceApi, categoryApi } from "../../api/endpoints";
+import { useAuth } from "../../context/AuthContext";
 import ResourceCard from "../../components/ResourceCard";
 
 export default function ResourceListPage() {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [total, setTotal] = useState(0);
@@ -37,6 +39,7 @@ export default function ResourceListPage() {
         sort_dir: sortDir,
         page,
         page_size: pageSize,
+        ...(user?.id ? { exclude_owner_id: user.id } : {}),
       })
       .then(({ data }) => {
         setItems(data.items);

@@ -9,6 +9,7 @@ const STATUS_STYLE = {
   rejected: "bg-red-50 text-red-600",
   cancelled: "bg-ink-100 text-ink-500",
   returned: "bg-ink-100 text-ink-700",
+  return_requested: "bg-brass-50 text-brass-700",
   damaged: "bg-red-50 text-red-600",
   late: "bg-red-50 text-red-600",
 };
@@ -54,6 +55,14 @@ function RequestCard({ request, isIncoming, onAction }) {
             <RotateCcw className="h-3.5 w-3.5" /> Mark as returned
           </button>
         )}
+        {!isIncoming && request.status === "return_requested" && (
+          <span className="text-xs font-semibold text-brass-700">Return pending confirmation</span>
+        )}
+        {isIncoming && request.status === "return_requested" && (
+          <button onClick={() => onAction("confirm_return", request.id)} className="btn-forest !py-1.5 !px-3 text-xs bg-forest-700 text-white">
+            <Check className="h-3.5 w-3.5" /> Confirm Return
+          </button>
+        )}
       </div>
     </div>
   );
@@ -83,6 +92,7 @@ export default function BorrowRequestsPage() {
       if (action === "reject") await borrowApi.reject(id, "Not available at this time");
       if (action === "cancel") await borrowApi.cancel(id);
       if (action === "return") await borrowApi.returnItem(id);
+      if (action === "confirm_return") await borrowApi.confirmReturn(id);
       toast.success("Updated successfully");
       load();
     } catch (err) {

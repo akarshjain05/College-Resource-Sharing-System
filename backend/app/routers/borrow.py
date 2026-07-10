@@ -181,7 +181,31 @@ def return_resource(
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report
-    br.status = BorrowStatus.DAMAGED if payload.damage_report else BorrowStatus.RETURNED
+    br.status = BorrowStatus.RETURN_REQUESTED
+
+    db.commit()
+    db.refresh(br)
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "Return requested",
+        f"{current_user.full_name} has requested to return '{br.resource.title}'. Please confirm receipt.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    return br
+
+
+@router.post("/{request_id}/confirm-return", response_model=BorrowRequestResponse)
+def confirm_return_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = _get_owned_request(db, request_id, current_user)
+    if br.status != BorrowStatus.RETURN_REQUESTED:
+        raise AppException("Only pending returns can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.DAMAGED if br.damage_report else BorrowStatus.RETURNED
 
     resource = br.resource
     resource.quantity_available += 1
@@ -192,9 +216,9 @@ def return_resource(
     db.refresh(br)
 
     create_notification(
-        db, br.lender_id, NotificationType.RETURN_CONFIRMED,
-        "Resource returned",
-        f"'{resource.title}' has been returned by {current_user.full_name}.",
+        db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
+        "Return confirmed",
+        f"'{resource.title}' return has been confirmed.",
         link=f"/borrow-requests/{br.id}",
     )
     return br
