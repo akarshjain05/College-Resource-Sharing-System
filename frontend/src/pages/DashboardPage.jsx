@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     Promise.all([
-      resourceApi.list({ sort_by: "created_at", sort_dir: "desc", page_size: 6 }),
+      resourceApi.list({ sort_by: "created_at", sort_dir: "desc", page_size: 6, ...(user?.id ? { exclude_owner_id: user.id } : {}) }),
       borrowApi.myRequests(),
     ])
       .then(([resResp, reqResp]) => {
