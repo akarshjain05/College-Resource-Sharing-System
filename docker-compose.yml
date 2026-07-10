@@ -41,7 +41,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}}
       REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
@@ -64,7 +64,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}}
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ./backend:/app
@@ -85,7 +85,7 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}}
       REDIS_URL: redis://redis:6379/0
     volumes:
       - ./backend:/app
