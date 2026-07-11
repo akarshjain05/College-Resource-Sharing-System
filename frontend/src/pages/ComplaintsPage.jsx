@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AlertTriangle } from "lucide-react";
 import api from "../api/client";
@@ -16,9 +17,12 @@ const STATUS_STYLE = {
 };
 
 export default function ComplaintsPage() {
+  const [searchParams] = useSearchParams();
+  const borrowRequestId = searchParams.get("borrow_request_id");
+
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ subject: "", description: "" });
+  const [form, setForm] = useState({ subject: "", description: "", borrow_request_id: borrowRequestId || "" });
   const [submitting, setSubmitting] = useState(false);
 
   const load = () => {
@@ -32,9 +36,13 @@ export default function ComplaintsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await complaintApi.create(form);
+      const payload = { ...form };
+      if (!payload.borrow_request_id) {
+        delete payload.borrow_request_id;
+      }
+      await complaintApi.create(payload);
       toast.success("Complaint filed. An admin will review it shortly.");
-      setForm({ subject: "", description: "" });
+      setForm({ subject: "", description: "", borrow_request_id: borrowRequestId || "" });
       load();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Could not file complaint.");

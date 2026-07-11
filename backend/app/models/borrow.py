@@ -32,6 +32,9 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     damage_report: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    borrower_rating: Mapped[Optional[int]] = mapped_column(nullable=True)
+    lender_rating: Mapped[Optional[int]] = mapped_column(nullable=True)
+
     resource: Mapped["Resource"] = relationship("Resource", back_populates="borrow_requests")
     borrower: Mapped["User"] = relationship(
         "User", back_populates="borrow_requests", foreign_keys=[borrower_id]

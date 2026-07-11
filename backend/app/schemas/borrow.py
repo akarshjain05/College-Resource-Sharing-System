@@ -28,6 +28,11 @@ class BorrowRequestDecision(BaseModel):
 
 class BorrowRequestReturn(BaseModel):
     damage_report: Optional[str] = None
+    lender_rating: Optional[int] = Field(None, ge=1, le=5)
+
+
+class BorrowRequestConfirmReturn(BaseModel):
+    borrower_rating: Optional[int] = Field(None, ge=1, le=5)
 
 
 class BorrowRequestResponse(BaseModel):
@@ -42,6 +47,8 @@ class BorrowRequestResponse(BaseModel):
     deposit_paid: Optional[float] = None
     damage_report: Optional[str] = None
     rejection_reason: Optional[str] = None
+    borrower_rating: Optional[int] = None
+    lender_rating: Optional[int] = None
     resource: ResourceResponse
     borrower: UserResponse
     lender: UserResponse
