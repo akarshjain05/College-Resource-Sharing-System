@@ -49,9 +49,10 @@ export const borrowApi = {
   incoming: () => api.get("/borrow-requests/incoming"),
   approve: (id) => api.post(`/borrow-requests/${id}/approve`),
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
+  handover: (id) => api.post(`/borrow-requests/${id}/handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
-  returnItem: (id, damageReport) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport }),
-  confirmReturn: (id) => api.post(`/borrow-requests/${id}/confirm-return`),
+  returnItem: (id, damageReport, lenderRating) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating }),
+  confirmReturn: (id, borrowerRating) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating }),
 };
 
 export const reviewApi = {

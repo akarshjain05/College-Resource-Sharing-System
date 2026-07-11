@@ -1,5 +1,6 @@
 import uuid
 from datetime import date
+from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session
@@ -15,6 +16,7 @@ from app.schemas.borrow import (
     BorrowRequestCreate,
     BorrowRequestDecision,
     BorrowRequestReturn,
+    BorrowRequestConfirmReturn,
     BorrowRequestResponse,
 )
 from app.services.notification_service import create_notification
@@ -70,13 +72,19 @@ def create_borrow_request(
 
 
 @router.get("/my-requests", response_model=list[BorrowRequestResponse])
-def my_borrow_requests(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(BorrowRequest).filter(BorrowRequest.borrower_id == current_user.id).all()
+def my_borrow_requests(status: Optional[BorrowStatus] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    query = db.query(BorrowRequest).filter(BorrowRequest.borrower_id == current_user.id)
+    if status:
+        query = query.filter(BorrowRequest.status == status)
+    return query.all()
 
 
 @router.get("/incoming", response_model=list[BorrowRequestResponse])
-def incoming_borrow_requests(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(BorrowRequest).filter(BorrowRequest.lender_id == current_user.id).all()
+def incoming_borrow_requests(status: Optional[BorrowStatus] = None, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    query = db.query(BorrowRequest).filter(BorrowRequest.lender_id == current_user.id)
+    if status:
+        query = query.filter(BorrowRequest.status == status)
+    return query.all()
 
 
 def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User) -> BorrowRequest:
@@ -140,6 +148,29 @@ def reject_borrow_request(
     return br
 
 
+@router.post("/{request_id}/handover", response_model=BorrowRequestResponse)
+def handover_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = _get_owned_request(db, request_id, current_user)
+    if br.status != BorrowStatus.APPROVED:
+        raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.ACTIVE
+    db.commit()
+    db.refresh(br)
+
+    create_notification(
+        db, br.borrower_id, NotificationType.SYSTEM,
+        "Resource Handed Over",
+        f"'{br.resource.title}' has been handed over to you.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    return br
+
+
 @router.post("/{request_id}/cancel", response_model=BorrowRequestResponse)
 def cancel_borrow_request(
     request_id: uuid.UUID,
@@ -176,11 +207,12 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status != BorrowStatus.APPROVED:
+    if br.status != BorrowStatus.ACTIVE:
         raise AppException("Only active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report
+    br.lender_rating = payload.lender_rating
     br.status = BorrowStatus.RETURN_REQUESTED
 
     db.commit()
@@ -198,6 +230,7 @@ def return_resource(
 @router.post("/{request_id}/confirm-return", response_model=BorrowRequestResponse)
 def confirm_return_resource(
     request_id: uuid.UUID,
+    payload: BorrowRequestConfirmReturn,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -206,11 +239,37 @@ def confirm_return_resource(
         raise AppException("Only pending returns can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.status = BorrowStatus.DAMAGED if br.damage_report else BorrowStatus.RETURNED
+    br.borrower_rating = payload.borrower_rating
 
     resource = br.resource
     resource.quantity_available += 1
     resource.total_borrows += 1
     resource.status = ResourceStatus.AVAILABLE
+
+    # Trust Score Logic (Borrower)
+    borrower = db.query(User).filter(User.id == br.borrower_id).first()
+    if borrower:
+        if br.status == BorrowStatus.DAMAGED:
+            borrower.trust_score -= 20
+        else:
+            if br.actual_return_date and br.actual_return_date > br.requested_end_date:
+                borrower.trust_score -= 5
+            else:
+                borrower.trust_score += 2
+
+        if br.borrower_rating is not None:
+            # e.g., 5 star = +5, 1 star = -5 (linear: rating * 2.5 - 7.5, or simpler map)
+            rating_adj = {1: -5, 2: -2, 3: 0, 4: +2, 5: +5}
+            borrower.trust_score += rating_adj.get(br.borrower_rating, 0)
+
+    # Sharing Score Logic (Lender)
+    if br.status != BorrowStatus.DAMAGED:
+        current_user.sharing_score += 10
+    
+    if br.lender_rating is not None:
+        # Bonus for good sharing experience
+        rating_adj = {1: -2, 2: -1, 3: 0, 4: +2, 5: +5}
+        current_user.sharing_score += rating_adj.get(br.lender_rating, 0)
 
     db.commit()
     db.refresh(br)

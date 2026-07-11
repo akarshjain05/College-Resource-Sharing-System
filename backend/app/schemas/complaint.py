@@ -13,11 +13,13 @@ class ComplaintCreate(BaseModel):
     description: str = Field(..., min_length=10)
     against_user_id: Optional[uuid.UUID] = None
     resource_id: Optional[uuid.UUID] = None
+    borrow_request_id: Optional[uuid.UUID] = None
 
 
 class ComplaintAdminUpdate(BaseModel):
     status: ComplaintStatus
     admin_response: Optional[str] = None
+    trust_score_penalty: Optional[int] = Field(None, description="Amount to deduct from the against_user's trust score")
 
 
 class ComplaintResponse(BaseModel):
@@ -26,6 +28,7 @@ class ComplaintResponse(BaseModel):
     id: uuid.UUID
     subject: str
     description: str
+    borrow_request_id: Optional[uuid.UUID] = None
     status: ComplaintStatus
     admin_response: Optional[str] = None
     filed_by: UserResponse

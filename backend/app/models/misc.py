@@ -59,6 +59,9 @@ class Complaint(Base, UUIDMixin, TimestampMixin):
     resource_id: Mapped[Optional[UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resources.id"), nullable=True
     )
+    borrow_request_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=True
+    )
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[ComplaintStatus] = mapped_column(SAEnum(ComplaintStatus), default=ComplaintStatus.OPEN)
@@ -66,3 +69,4 @@ class Complaint(Base, UUIDMixin, TimestampMixin):
 
     filed_by: Mapped["User"] = relationship("User", foreign_keys=[filed_by_id])
     against_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[against_user_id])
+    borrow_request: Mapped[Optional["BorrowRequest"]] = relationship("BorrowRequest")

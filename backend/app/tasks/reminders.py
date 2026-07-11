@@ -24,7 +24,7 @@ def send_return_reminders():
         tomorrow = date.today() + timedelta(days=1)
         due_soon = (
             db.query(BorrowRequest)
-            .filter(BorrowRequest.status == BorrowStatus.APPROVED, BorrowRequest.requested_end_date == tomorrow)
+            .filter(BorrowRequest.status == BorrowStatus.ACTIVE, BorrowRequest.requested_end_date == tomorrow)
             .all()
         )
         for br in due_soon:
@@ -47,5 +47,43 @@ def send_return_reminders():
             sent += 1
         logger.info("Sent %d return reminders", sent)
         return {"reminders_sent": sent}
+    finally:
+        db.close()
+
+
+@celery_app.task(name="app.tasks.reminders.mark_overdue_borrows_late")
+def mark_overdue_borrows_late():
+    db = SessionLocal()
+    marked = 0
+    try:
+        today = date.today()
+        overdue = (
+            db.query(BorrowRequest)
+            .filter(BorrowRequest.status == BorrowStatus.ACTIVE, BorrowRequest.requested_end_date < today)
+            .all()
+        )
+        for br in overdue:
+            br.status = BorrowStatus.LATE
+            create_notification(
+                db,
+                br.borrower_id,
+                NotificationType.SYSTEM,
+                "Item Overdue",
+                f"Your borrow for '{br.resource.title}' is overdue! Please return it immediately to avoid further penalties.",
+                link=f"/borrow-requests/{br.id}",
+            )
+            create_notification(
+                db,
+                br.lender_id,
+                NotificationType.SYSTEM,
+                "Item Overdue",
+                f"The borrow for '{br.resource.title}' by {br.borrower.full_name} is overdue.",
+                link=f"/borrow-requests/{br.id}",
+            )
+            marked += 1
+        
+        db.commit()
+        logger.info("Marked %d borrows as late", marked)
+        return {"borrows_marked_late": marked}
     finally:
         db.close()

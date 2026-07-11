@@ -49,6 +49,12 @@ def update_complaint(
     complaint.status = payload.status
     if payload.admin_response is not None:
         complaint.admin_response = payload.admin_response
+    
+    if payload.trust_score_penalty and payload.trust_score_penalty > 0 and complaint.against_user_id:
+        offending_user = db.query(User).filter(User.id == complaint.against_user_id).first()
+        if offending_user:
+            offending_user.trust_score -= payload.trust_score_penalty
+
     db.commit()
     db.refresh(complaint)
     return complaint

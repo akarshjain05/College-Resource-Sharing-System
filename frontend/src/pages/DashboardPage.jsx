@@ -24,7 +24,7 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const activeBorrows = myRequests.filter((r) => r.status === "approved").length;
+  const activeBorrows = myRequests.filter((r) => r.status === "active").length;
   const pendingRequests = myRequests.filter((r) => r.status === "requested").length;
 
   return (
@@ -38,8 +38,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Active Borrows" value={activeBorrows} icon={ArrowLeftRight} accent="forest" />
-        <StatCard label="Pending Requests" value={pendingRequests} icon={PackageSearch} accent="brass" />
+        <StatCard label="Active Borrows" value={activeBorrows} icon={ArrowLeftRight} accent="forest" to="/borrow-requests?status=active" />
+        <StatCard label="Pending Requests" value={pendingRequests} icon={PackageSearch} accent="brass" to="/borrow-requests?status=requested" />
         <StatCard label="Trust Score" value={user?.trust_score ?? 100} icon={Star} accent="ink" />
         <StatCard label="Sharing Score" value={user?.sharing_score ?? 0} icon={TrendingUp} accent="forest" />
       </div>

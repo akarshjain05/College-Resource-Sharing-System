@@ -12,12 +12,17 @@ const STATUS_OPTIONS = ["open", "in_progress", "resolved", "closed"];
 function ComplaintRow({ complaint, onUpdate }) {
   const [status, setStatus] = useState(complaint.status);
   const [response, setResponse] = useState(complaint.admin_response || "");
+  const [penalty, setPenalty] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onUpdate(complaint.id, { status, admin_response: response });
+      await onUpdate(complaint.id, { 
+        status, 
+        admin_response: response,
+        trust_score_penalty: penalty ? parseInt(penalty, 10) : undefined 
+      });
     } finally {
       setSaving(false);
     }
@@ -46,6 +51,16 @@ function ComplaintRow({ complaint, onUpdate }) {
         value={response}
         onChange={(e) => setResponse(e.target.value)}
       />
+      <div className="flex items-center gap-2">
+        <label className="text-xs font-semibold text-ink-900">Trust Score Penalty:</label>
+        <input
+          type="number"
+          className="input !w-24 text-xs"
+          placeholder="0"
+          value={penalty}
+          onChange={(e) => setPenalty(e.target.value)}
+        />
+      </div>
       <button onClick={handleSave} disabled={saving} className="btn-secondary">
         {saving ? "Saving..." : "Save"}
       </button>

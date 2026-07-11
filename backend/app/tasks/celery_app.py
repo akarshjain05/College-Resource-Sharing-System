@@ -32,4 +32,8 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.reminders.send_return_reminders",
         "schedule": crontab(hour=8, minute=0),  # every day at 08:00 UTC
     },
+    "mark-overdue-borrows-daily": {
+        "task": "app.tasks.reminders.mark_overdue_borrows_late",
+        "schedule": crontab(hour=0, minute=5),  # every day at 00:05 UTC
+    },
 }
