@@ -112,8 +112,11 @@ services:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     container_name: crss_frontend
     restart: unless-stopped
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
 
