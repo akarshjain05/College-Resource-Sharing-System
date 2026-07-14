@@ -26,6 +26,7 @@ from app.routers import (
     admin_analytics,
     uploads,
     complaints,
+    wanted,
     websocket,
     health,
 )
@@ -48,7 +49,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -71,6 +72,7 @@ app.include_router(reviews.router, prefix=API_PREFIX)
 app.include_router(admin_analytics.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(complaints.router, prefix=API_PREFIX)
+app.include_router(wanted.router, prefix=API_PREFIX)
 app.include_router(websocket.router)
 
 

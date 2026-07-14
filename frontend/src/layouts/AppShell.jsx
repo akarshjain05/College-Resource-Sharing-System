@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { to: "/resources", label: "Browse Resources", icon: PackageSearch },
   { to: "/borrow-requests", label: "Borrow Requests", icon: ArrowLeftRight },
+  { to: "/wanted", label: "Wanted Items", icon: PackageSearch },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
   { to: "/profile", label: "My Profile", icon: User },
 ];

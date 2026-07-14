@@ -67,6 +67,17 @@ export const notificationApi = {
   markAllRead: () => api.post("/notifications/read-all"),
 };
 
+export const wantedApi = {
+  list: () => api.get("/wanted"),
+  create: (data) => api.post("/wanted", data),
+  fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
+  delete: (id) => api.delete(`/wanted/${id}`),
+};
+
+export const usersApi = {
+  getPublicProfile: (id) => api.get(`/users/${id}/public`),
+};
+
 export const adminApi = {
   overview: () => api.get("/admin/analytics/overview"),
   mostBorrowedCategories: () => api.get("/admin/analytics/most-borrowed-categories"),

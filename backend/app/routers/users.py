@@ -38,6 +38,33 @@ def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     return user
 
 
+@router.get("/{user_id}/public")
+def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+    from app.schemas.user import PublicUserResponse
+    from app.models.resource import Resource
+    from app.schemas.resource import ResourceResponse
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundException("User not found")
+        
+    public_user = PublicUserResponse.model_validate(user)
+    
+    # Also fetch active resources this user is sharing
+    shared_resources = (
+        db.query(Resource)
+        .filter(Resource.owner_id == user_id, Resource.is_active == True)
+        .order_by(Resource.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    
+    return {
+        "user": public_user,
+        "shared_resources": shared_resources,
+    }
+
+
 @router.get("", response_model=list[UserResponse])
 def list_users(
     skip: int = Query(0, ge=0),

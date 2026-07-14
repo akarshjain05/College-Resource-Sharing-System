@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Check, X, RotateCcw, Ban } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
@@ -48,7 +48,11 @@ function RequestCard({ request, isIncoming, onAction }) {
         <div>
           <p className="font-display text-sm font-semibold text-ink-900">{request.resource.title}</p>
           <p className="text-xs text-ink-500">
-            {isIncoming ? `Requested by ${request.borrower.full_name}` : `Owned by ${request.lender.full_name}`}
+            {isIncoming ? (
+              <>Requested by <Link to={`/users/${request.borrower.id}`} className="hover:underline text-ink-900 font-medium">{request.borrower.full_name}</Link></>
+            ) : (
+              <>Owned by <Link to={`/users/${request.lender.id}`} className="hover:underline text-ink-900 font-medium">{request.lender.full_name}</Link></>
+            )}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
