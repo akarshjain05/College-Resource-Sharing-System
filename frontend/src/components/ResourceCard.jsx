@@ -44,7 +44,12 @@ export default function ResourceCard({ resource }) {
         )}
 
         <h3 className="font-display text-base font-semibold text-ink-900 line-clamp-1">{resource.title}</h3>
-        <p className="mt-1 text-sm text-ink-500 line-clamp-2">{resource.description}</p>
+        {resource.owner && (
+          <p className="mt-0.5 text-xs text-ink-500">
+            by <Link to={`/users/${resource.owner.id}`} className="font-medium hover:underline text-ink-900" onClick={(e) => e.stopPropagation()}>{resource.owner.full_name}</Link>
+          </p>
+        )}
+        <p className="mt-2 text-sm text-ink-500 line-clamp-2">{resource.description}</p>
 
         <div className="mt-3 flex items-center justify-between text-xs text-ink-500">
           <span className="flex items-center gap-1">

@@ -105,3 +105,21 @@ class PasswordResetConfirm(BaseModel):
 class ChangePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class PublicUserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    full_name: str
+    department: Optional[str] = None
+    course: Optional[str] = None
+    year_of_study: Optional[int] = None
+    bio: Optional[str] = None
+    skills: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    trust_score: int
+    sharing_score: int
+    created_at: datetime
+    # We will let the router attach a list of public resources or history if needed,
+    # or just keep it simple and return a separate field or let the frontend query resources by owner.
