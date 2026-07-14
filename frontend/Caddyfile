@@ -2,4 +2,8 @@
     root * /usr/share/caddy
     try_files {path} {path}/ /index.html
     file_server
+
+    # Proxy API and uploads to the backend container
+    reverse_proxy /api/* backend:8000
+    reverse_proxy /uploads/* backend:8000
 }
