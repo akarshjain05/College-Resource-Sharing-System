@@ -67,9 +67,15 @@ export default function ProfilePage() {
 
       <form onSubmit={handleSave} className="card space-y-4 p-6">
         <h2 className="font-display text-base font-semibold text-ink-900">Basic information</h2>
-        <div>
-          <label className="label">Full name</label>
-          <input className="input" value={form.full_name} onChange={update("full_name")} />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Full name</label>
+            <input className="input" value={form.full_name} onChange={update("full_name")} />
+          </div>
+          <div>
+            <label className="label">Email address</label>
+            <input className="input bg-gray-50 text-gray-500 cursor-not-allowed" value={user?.email || ""} disabled readOnly title="Email cannot be changed" />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
