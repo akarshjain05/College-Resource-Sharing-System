@@ -122,7 +122,7 @@ function RequestCard({ request, isIncoming, onAction }) {
             <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
           )}
           {isIncoming && request.status === "approved" && (
-            <button onClick={() => handleActionClick("handover")} className="btn-forest !py-1.5 !px-3 text-xs bg-forest-600 text-white">
+            <button onClick={() => handleActionClick("handover")} className="btn-primary !py-1.5 !px-3 text-xs">
               <Check className="h-3.5 w-3.5" /> Mark as Handed Over
             </button>
           )}
@@ -140,7 +140,7 @@ function RequestCard({ request, isIncoming, onAction }) {
             <span className="text-xs font-semibold text-brass-700">Return pending confirmation</span>
           )}
           {isIncoming && request.status === "return_requested" && (
-            <button onClick={() => handleActionClick("confirm_return")} className="btn-forest !py-1.5 !px-3 text-xs bg-forest-700 text-white">
+            <button onClick={() => handleActionClick("confirm_return")} className="btn-primary !py-1.5 !px-3 text-xs">
               <Check className="h-3.5 w-3.5" /> Confirm Return
             </button>
           )}
