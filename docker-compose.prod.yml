@@ -104,6 +104,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: crss_frontend_prod
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
