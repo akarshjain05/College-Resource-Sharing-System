@@ -14,7 +14,7 @@ export function useNotificationSocket(onNotification) {
   const reconnectTimeoutRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("crss_access_token");
+    const token = sessionStorage.getItem("crss_access_token");
     if (!token) return undefined;
 
     let cancelled = false;
