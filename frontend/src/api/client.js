@@ -13,7 +13,7 @@ function getCookie(name) {
 }
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("crss_access_token");
+  const token = sessionStorage.getItem("crss_access_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -49,11 +49,11 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      const refreshToken = localStorage.getItem("crss_refresh_token");
+      const refreshToken = sessionStorage.getItem("crss_refresh_token");
 
       if (!refreshToken) {
-        localStorage.removeItem("crss_access_token");
-        localStorage.removeItem("crss_refresh_token");
+        sessionStorage.removeItem("crss_access_token");
+        sessionStorage.removeItem("crss_refresh_token");
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -62,15 +62,15 @@ api.interceptors.response.use(
         const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
-        localStorage.setItem("crss_access_token", data.access_token);
-        localStorage.setItem("crss_refresh_token", data.refresh_token);
+        sessionStorage.setItem("crss_access_token", data.access_token);
+        sessionStorage.setItem("crss_refresh_token", data.refresh_token);
         processQueue(null, data.access_token);
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem("crss_access_token");
-        localStorage.removeItem("crss_refresh_token");
+        sessionStorage.removeItem("crss_access_token");
+        sessionStorage.removeItem("crss_refresh_token");
         window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
