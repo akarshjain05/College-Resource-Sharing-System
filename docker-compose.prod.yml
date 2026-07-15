@@ -118,9 +118,14 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - backend
 
 volumes:
   crss_postgres_data:
   crss_uploads:
+  caddy_data:
+  caddy_config:
