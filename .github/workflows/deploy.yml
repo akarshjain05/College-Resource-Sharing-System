@@ -17,15 +17,15 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 1. Go into the project directory (Change 'crss' to your actual folder name if different)
-            cd crss
+            # 1. Go into the project directory
+            cd College-Resource-Sharing-System
             
-            # 2. Pull the latest code from GitHub
-            git pull origin main
+            # 2. Pull the latest code from GitHub main branch
+            git fetch origin
+            git reset --hard origin/main
             
-            # 3. Export the API URL using the server's public IP
-            # (We use a curl command to automatically fetch the EC2 instance's public IP)
-            export PUBLIC_API_URL=http://$(curl -s http://checkip.amazonaws.com):8000/api/v1
+            # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
+            export $(grep -v '^#' .env | xargs)
             
             # 4. Rebuild and restart the Docker containers with the new code
             docker compose -f docker-compose.prod.yml up -d --build
