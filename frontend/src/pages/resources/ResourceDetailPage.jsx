@@ -761,62 +761,146 @@ export default function ResourceDetailPage() {
                 <h3 className="text-lg font-bold font-display text-slate-900">Request to Borrow</h3>
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Deposit-backed transaction</p>
               </div>
-              
-              <div className="rounded bg-ink-50 p-2.5 text-center text-xs">
-                <div className="mb-1">
-                  <span className="text-ink-600 font-medium">Max borrow period: <strong className="text-ink-900">{resource.max_borrow_days} days</strong></span>
+
+              {/* Date selections */}
+              <div className="space-y-2.5">
+                <label className="label">Select Dates</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-0.5">FROM</label>
+                    <input
+                      type="date"
+                      required
+                      value={startDate}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        if (e.target.value && endDate) {
+                          const s = new Date(e.target.value);
+                          const eDate = new Date(endDate);
+                          const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
+                          if (diffDays > resource.max_borrow_days) setEndDate("");
+                        }
+                      }}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 block mb-0.5">TO</label>
+                    <input
+                      type="date"
+                      required
+                      value={endDate}
+                      min={startDate || new Date().toISOString().split("T")[0]}
+                      max={
+                        startDate
+                          ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
+                          : undefined
+                      }
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                    />
+                  </div>
                 </div>
-                {resource.deposit_amount > 0 ? (
-                  <span>Security deposit required: <strong className="text-forest-700 font-semibold">₹{resource.deposit_amount}</strong></span>
+                <div className="flex justify-between items-center text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <span>Total Days</span>
+                  <span className="text-primary-600 bg-primary-50 px-2.5 py-0.5 rounded-lg text-[11px]">{daysCount} days</span>
+                </div>
+              </div>
+
+              {/* Price Details breakdown */}
+              <div className="space-y-2.5 bg-slate-50/50 rounded-2xl p-4 border border-slate-200/60">
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Price Details</h3>
+                
+                <div className="space-y-2 text-xs font-medium text-slate-600">
+                  <div className="flex justify-between">
+                    <span>₹{dailyPrice} x {daysCount} days</span>
+                    <span className="font-bold text-slate-800">₹{rentAmount}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span className="inline-flex items-center gap-1">
+                      Security Deposit <span className="text-[9px] font-bold text-primary-600 bg-primary-50 px-1 py-0.5 rounded">Refundable</span>
+                    </span>
+                    <span className="font-bold text-slate-800">₹{securityDeposit}</span>
+                  </div>
+                  
+                  <div className="h-px bg-slate-200/80 my-2" />
+                  
+                  <div className="flex justify-between text-sm font-extrabold text-slate-900">
+                    <span>Total Amount</span>
+                    <span className="text-primary-600">₹{totalAmount}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-2">
+                <label className="label">Payment Method</label>
+                
+                <div className="space-y-2">
+                  {/* UPI */}
+                  <label className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${
+                    paymentMethod === "upi"
+                      ? "border-primary-600 bg-primary-50/20"
+                      : "border-slate-200 hover:bg-slate-50"
+                  }`}>
+                    <div className="flex items-center gap-2.5">
+                      <CreditCard className="h-4 w-4 text-primary-600" />
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">UPI Method</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">.... 8567@paytm</p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_opt"
+                      value="upi"
+                      checked={paymentMethod === "upi"}
+                      onChange={() => setPaymentMethod("upi")}
+                      className="h-4.5 w-4.5 text-primary-600 focus:ring-primary-500"
+                    />
+                  </label>
+
+                  {/* Wallet */}
+                  <label className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${
+                    paymentMethod === "wallet"
+                      ? "border-primary-600 bg-primary-50/20"
+                      : "border-slate-200 hover:bg-slate-50"
+                  }`}>
+                    <div className="flex items-center gap-2.5">
+                      <Wallet className="h-4 w-4 text-slate-600" />
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">My Wallet Balance</p>
+                        <p className="text-[10px] text-slate-400 font-semibold">₹320 available</p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="payment_opt"
+                      value="wallet"
+                      checked={paymentMethod === "wallet"}
+                      onChange={() => setPaymentMethod("wallet")}
+                      className="h-4.5 w-4.5 text-primary-600 focus:ring-primary-500"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit CTA */}
+              <button
+                type="submit"
+                disabled={submittingBorrow}
+                className="w-full btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-3.5 text-xs font-bold shadow-md shadow-primary-600/10 transition-all flex items-center justify-center gap-2 hover:shadow-lg active:scale-98 disabled:opacity-50"
+              >
+                {submittingBorrow ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
-                  <span className="text-ink-600 font-medium">No security deposit required</span>
+                  <>
+                    <span>Send Request</span>
+                    <span className="font-extrabold bg-white/20 px-2 py-0.5 rounded text-[10px]">Pay ₹{totalAmount}</span>
+                  </>
                 )}
-              </div>
-
-              <div>
-                <label className="label">From</label>
-                <input
-                  required
-                  type="date"
-                  className="input"
-                  value={startDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    if (e.target.value && endDate) {
-                      const s = new Date(e.target.value);
-                      const eDate = new Date(endDate);
-                      const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
-                      if (diffDays > resource.max_borrow_days) setEndDate("");
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <label className="label">Until</label>
-                <input
-                  required
-                  type="date"
-                  className="input"
-                  value={endDate}
-                  min={startDate || new Date().toISOString().split("T")[0]}
-                  max={
-                    startDate
-                      ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
-                      : undefined
-                  }
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="label">Purpose (optional)</label>
-                <textarea rows={3} className="input" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
-              </div>
-
-              <button type="submit" disabled={submittingBorrow} className="btn-brass w-full">
-                {submittingBorrow ? "Sending..." : "Send borrow request"}
               </button>
             </form>
           )}
