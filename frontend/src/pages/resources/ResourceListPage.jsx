@@ -52,15 +52,11 @@ export default function ResourceListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Browse resources</h1>
-          <p className="text-sm text-ink-500">{total} items shared across campus</p>
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 tracking-tight">All Listings</h1>
+          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{total} items shared in community</p>
         </div>
-        <Link to="/resources/new" className="btn-primary w-fit">
-          <Plus className="h-4 w-4" />
-          List a resource
-        </Link>
       </div>
 
       <div className="card p-4 space-y-4">
@@ -111,14 +107,14 @@ export default function ResourceListPage() {
             onClick={() => setShowFilters(!showFilters)}
             className={`btn gap-2 sm:w-auto ${
               showFilters || status || minRating
-                ? "bg-forest-50 text-forest-750 border border-forest-300"
+                ? "bg-primary-50 text-primary-700 border border-primary-300"
                 : "bg-white text-ink-500 border border-ink-100 hover:bg-ink-50"
             }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters
             {(status || minRating) && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-forest-750 text-[10px] font-bold text-white">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-bold text-white">
                 {[status, minRating].filter(Boolean).length}
               </span>
             )}
@@ -213,7 +209,7 @@ export default function ResourceListPage() {
               key={p}
               onClick={() => setPage(p)}
               className={`h-8 w-8 rounded-md text-sm font-semibold ${
-                p === page ? "bg-forest-700 text-white" : "bg-white text-ink-500 hover:bg-ink-50"
+                p === page ? "bg-primary-600 text-white" : "bg-white text-ink-500 hover:bg-ink-50"
               }`}
             >
               {p}

@@ -10,7 +10,7 @@ const CONDITION_LABEL = {
 };
 
 const STATUS_STYLE = {
-  available: "bg-forest-50 text-forest-700",
+  available: "bg-primary-50 text-primary-700",
   borrowed: "bg-brass-50 text-brass-700",
   unavailable: "bg-ink-100 text-ink-500",
   pending_approval: "bg-brass-50 text-brass-700",
@@ -66,9 +66,9 @@ export default function ResourceCard({ resource }) {
           </div>
         )}
 
-        <div className="mt-3 flex items-center justify-between border-t border-ink-50 pt-3 text-xs">
-          <span className="text-ink-500 font-medium">Security Deposit:</span>
-          <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700" : "text-ink-600"}`}>
+        <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+          <span className="text-slate-500 font-medium">Security Deposit:</span>
+          <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-primary-600" : "text-slate-600"}`}>
             {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
           </span>
         </div>
