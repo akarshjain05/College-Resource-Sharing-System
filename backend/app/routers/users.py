@@ -55,7 +55,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     # Also fetch active resources this user is sharing
     shared_resources = (
         db.query(Resource)
-        .filter(Resource.owner_id == user_id, Resource.is_active == True)
+        .filter(Resource.owner_id == user_id)
         .order_by(Resource.created_at.desc())
         .limit(10)
         .all()
