@@ -567,7 +567,11 @@ export default function ResourceDetailPage() {
         {/* Owner Info Box */}
         <div className="card p-5">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Shared by</p>
-          <p className="mt-1 font-display text-base font-semibold text-ink-900">{resource.owner.full_name}</p>
+          <p className="mt-1 font-display text-base font-semibold text-ink-900">
+            <Link to={`/users/${resource.owner.id}`} className="hover:underline">
+              {resource.owner.full_name}
+            </Link>
+          </p>
           <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
           
           <div className="mt-4 border-t border-ink-100 pt-3 flex justify-between text-xs">
