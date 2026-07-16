@@ -10,6 +10,7 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState(null);
   const [sharedResources, setSharedResources] = useState([]);
   const [stats, setStats] = useState(null);
+  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -20,6 +21,7 @@ export default function PublicProfilePage() {
         setProfile(res.data.user);
         setSharedResources(res.data.shared_resources);
         setStats(res.data.stats);
+        setRecentReviews(res.data.recent_reviews || []);
       })
       .catch((err) => setError(err.response?.data?.detail || "Failed to load profile"))
       .finally(() => setLoading(false));
@@ -114,6 +116,40 @@ export default function PublicProfilePage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {sharedResources.map((r) => (
               <ResourceCard key={r.id} resource={r} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Community Reviews */}
+      <div className="mt-10">
+        <h2 className="font-display text-xl font-semibold text-ink-900 mb-4">Community Reviews</h2>
+        {recentReviews.length === 0 ? (
+          <div className="card p-10 text-center text-sm text-ink-500">
+            No text reviews found.
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recentReviews.map((r) => (
+              <div key={r.id + r.role} className="card p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-ink-900">{r.reviewer_name}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">
+                      To {profile.full_name.split(" ")[0]} as a {r.role}
+                    </span>
+                  </div>
+                  <div className="flex text-amber-500">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className={`w-3.5 h-3.5 ${i < r.rating ? "fill-current" : "text-ink-200"}`} />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-sm text-ink-700 italic">"{r.review}"</p>
+                <p className="text-xs text-ink-400 mt-2">
+                  Regarding {r.resource_title} &bull; {r.date ? new Date(r.date).toLocaleDateString() : "Recently"}
+                </p>
+              </div>
             ))}
           </div>
         )}

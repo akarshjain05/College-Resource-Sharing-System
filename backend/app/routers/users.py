@@ -89,10 +89,51 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
         "avg_lender_rating": round(avg_lender_rating, 1),
     }
     
+    recent_reviews = []
+    
+    # Reviews where this user was the borrower (so the LENDER left the review)
+    borrower_reviews = db.query(BorrowRequest).filter(
+        BorrowRequest.borrower_id == user_id,
+        BorrowRequest.borrower_review.isnot(None)
+    ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
+    
+    for br in borrower_reviews:
+        recent_reviews.append({
+            "id": str(br.id),
+            "role": "borrower",
+            "reviewer_name": br.lender.full_name,
+            "rating": br.borrower_rating,
+            "review": br.borrower_review,
+            "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_title": br.resource.title
+        })
+
+    # Reviews where this user was the lender (so the BORROWER left the review)
+    lender_reviews = db.query(BorrowRequest).filter(
+        BorrowRequest.lender_id == user_id,
+        BorrowRequest.lender_review.isnot(None)
+    ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
+    
+    for br in lender_reviews:
+        recent_reviews.append({
+            "id": str(br.id),
+            "role": "lender",
+            "reviewer_name": br.borrower.full_name,
+            "rating": br.lender_rating,
+            "review": br.lender_review,
+            "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_title": br.resource.title
+        })
+        
+    # Sort by date descending
+    recent_reviews.sort(key=lambda x: x["date"] or "", reverse=True)
+    recent_reviews = recent_reviews[:10]
+    
     return {
         "user": public_user,
         "shared_resources": shared_resources,
         "stats": stats,
+        "recent_reviews": recent_reviews,
     }
 
 
