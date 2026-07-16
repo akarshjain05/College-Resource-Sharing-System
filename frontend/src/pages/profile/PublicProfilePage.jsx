@@ -9,6 +9,7 @@ export default function PublicProfilePage() {
   const { userId } = useParams();
   const [profile, setProfile] = useState(null);
   const [sharedResources, setSharedResources] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -18,6 +19,7 @@ export default function PublicProfilePage() {
       .then((res) => {
         setProfile(res.data.user);
         setSharedResources(res.data.shared_resources);
+        setStats(res.data.stats);
       })
       .catch((err) => setError(err.response?.data?.detail || "Failed to load profile"))
       .finally(() => setLoading(false));
@@ -67,11 +69,36 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Global Scores */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <StatCard label="Trust Score" value={profile.trust_score} icon={Star} accent="brass" />
         <StatCard label="Sharing Score" value={profile.sharing_score} icon={TrendingUp} accent="forest" />
       </div>
+
+      {/* Borrow/Lend Stats */}
+      {stats && (
+        <div className="card p-6">
+          <h2 className="font-display text-lg font-semibold text-ink-900 mb-4">Community History</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-2xl font-bold text-ink-900">{stats.avg_borrower_rating} <Star className="inline h-4 w-4 text-brass-500 fill-brass-500 mb-1" /></p>
+              <p className="text-xs text-ink-500 uppercase tracking-wide font-semibold mt-1">Borrower Rating</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ink-900">{stats.returned_on_time} / {stats.total_borrows}</p>
+              <p className="text-xs text-ink-500 uppercase tracking-wide font-semibold mt-1">Returned On Time</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ink-900">{stats.avg_lender_rating} <Star className="inline h-4 w-4 text-forest-500 fill-forest-500 mb-1" /></p>
+              <p className="text-xs text-ink-500 uppercase tracking-wide font-semibold mt-1">Lender Rating</p>
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-ink-900">{stats.total_lends}</p>
+              <p className="text-xs text-ink-500 uppercase tracking-wide font-semibold mt-1">Total Items Lent</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Shared Resources */}
       <div>
