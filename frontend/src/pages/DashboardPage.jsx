@@ -40,8 +40,20 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active Borrows" value={activeBorrows} icon={ArrowLeftRight} accent="forest" to="/borrow-requests?status=active" />
         <StatCard label="Pending Requests" value={pendingRequests} icon={PackageSearch} accent="brass" to="/borrow-requests?status=requested" />
-        <StatCard label="Trust Score" value={user?.trust_score ?? 100} icon={Star} accent="ink" />
-        <StatCard label="Sharing Score" value={user?.sharing_score ?? 0} icon={TrendingUp} accent="forest" />
+        <StatCard 
+          label="Trust Score" 
+          value={user?.trust_score ?? 100} 
+          icon={Star} 
+          accent="ink" 
+          infoTooltip="Based on user reviews. Starts at 100, increases with good reviews and decreases with bad ones." 
+        />
+        <StatCard 
+          label="Sharing Score" 
+          value={user?.sharing_score ?? 0} 
+          icon={TrendingUp} 
+          accent="forest" 
+          infoTooltip="Earned by lending items. Increases every time an item you lent is returned on time." 
+        />
       </div>
 
       <div>

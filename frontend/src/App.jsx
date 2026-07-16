@@ -12,6 +12,7 @@ import DashboardPage from "./pages/DashboardPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ComplaintsPage from "./pages/ComplaintsPage";
 import ResourceListPage from "./pages/resources/ResourceListPage";
+import MyListingsPage from "./pages/resources/MyListingsPage";
 import ResourceDetailPage from "./pages/resources/ResourceDetailPage";
 import ResourceCreatePage from "./pages/resources/ResourceCreatePage";
 import BorrowRequestsPage from "./pages/borrow/BorrowRequestsPage";
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/resources" element={<ResourceListPage />} />
+            <Route path="/my-listings" element={<MyListingsPage />} />
             <Route path="/resources/new" element={<ResourceCreatePage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
             <Route path="/borrow-requests" element={<BorrowRequestsPage />} />

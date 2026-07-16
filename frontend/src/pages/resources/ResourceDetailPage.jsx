@@ -566,13 +566,21 @@ export default function ResourceDetailPage() {
       <div className="space-y-4">
         {/* Owner Info Box */}
         <div className="card p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">Shared by</p>
-          <p className="mt-1 font-display text-base font-semibold text-ink-900">
-            <Link to={`/users/${resource.owner.id}`} className="hover:underline">
-              {resource.owner.full_name}
-            </Link>
-          </p>
-          <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-3">Shared by</p>
+          <Link 
+            to={`/users/${resource.owner.id}`} 
+            className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-ink-50 transition-colors group"
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-100 font-bold text-forest-700">
+              {resource.owner.full_name.charAt(0)}
+            </div>
+            <div>
+              <p className="font-display text-base font-semibold text-ink-900 group-hover:text-forest-700 transition-colors">
+                {resource.owner.full_name}
+              </p>
+              <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+            </div>
+          </Link>
           
           <div className="mt-4 border-t border-ink-100 pt-3 flex justify-between text-xs">
             <span className="text-ink-500 font-medium">Security Deposit:</span>
