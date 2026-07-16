@@ -219,6 +219,7 @@ def return_resource(
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report
     br.lender_rating = payload.lender_rating
+    br.lender_review = payload.lender_review
     br.status = BorrowStatus.RETURN_REQUESTED
 
     db.commit()
@@ -246,6 +247,7 @@ def confirm_return_resource(
 
     br.status = BorrowStatus.DAMAGED if br.damage_report else BorrowStatus.RETURNED
     br.borrower_rating = payload.borrower_rating
+    br.borrower_review = payload.borrower_review
 
     resource = br.resource
     resource.quantity_available += 1

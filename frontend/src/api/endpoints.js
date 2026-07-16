@@ -51,8 +51,8 @@ export const borrowApi = {
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
-  returnItem: (id, damageReport, lenderRating) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating }),
-  confirmReturn: (id, borrowerRating) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating }),
+  returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
+  confirmReturn: (id, borrowerRating, borrowerReview) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating, borrower_review: borrowerReview }),
 };
 
 export const reviewApi = {

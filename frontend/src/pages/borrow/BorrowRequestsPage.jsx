@@ -19,6 +19,7 @@ const STATUS_STYLE = {
 function RequestCard({ request, isIncoming, onAction }) {
   const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState(5);
+  const [review, setReview] = useState("");
   const [actionType, setActionType] = useState("");
 
   const today = new Date();
@@ -37,8 +38,8 @@ function RequestCard({ request, isIncoming, onAction }) {
   };
 
   const submitRatingAction = () => {
-    // Pass the rating up via onAction
-    onAction(actionType, request.id, rating);
+    // Pass the rating and review up via onAction
+    onAction(actionType, request.id, rating, review);
     setShowRating(false);
   };
 
@@ -83,7 +84,7 @@ function RequestCard({ request, isIncoming, onAction }) {
           <p className="text-xs font-semibold text-ink-900 mb-2">
             {actionType === "return" ? "Rate the lender & item:" : "Rate the borrower:"}
           </p>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-col gap-2 mb-3">
             <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="input !w-24 text-xs !py-1">
               <option value={5}>5 Stars</option>
               <option value={4}>4 Stars</option>
@@ -91,6 +92,13 @@ function RequestCard({ request, isIncoming, onAction }) {
               <option value={2}>2 Stars</option>
               <option value={1}>1 Star</option>
             </select>
+            <textarea
+              className="input text-xs"
+              placeholder="Leave a written review (optional)"
+              rows={2}
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+            />
           </div>
           <div className="flex gap-2">
             <button onClick={submitRatingAction} className="btn-primary !py-1 !px-3 text-xs">
@@ -171,14 +179,14 @@ export default function BorrowRequestsPage() {
 
   useEffect(load, []);
 
-  const handleAction = async (action, id, rating = null) => {
+  const handleAction = async (action, id, rating, review) => {
     try {
       if (action === "approve") await borrowApi.approve(id);
-      if (action === "reject") await borrowApi.reject(id, "Not available at this time");
+      if (action === "reject") await borrowApi.reject(id, "Not available right now");
       if (action === "handover") await borrowApi.handover(id);
       if (action === "cancel") await borrowApi.cancel(id);
-      if (action === "return") await borrowApi.returnItem(id, null, rating);
-      if (action === "confirm_return") await borrowApi.confirmReturn(id, rating);
+      if (action === "return") await borrowApi.returnItem(id, null, rating, review);
+      if (action === "confirm_return") await borrowApi.confirmReturn(id, rating, review);
       toast.success("Updated successfully");
       load();
     } catch (err) {
