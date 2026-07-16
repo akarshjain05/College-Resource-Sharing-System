@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Star, MapPin, Package, Shield, Trash2, Edit3, Image as ImageIcon, Loader2 } from "lucide-react";
 import { resourceApi, borrowApi, reviewApi, uploadApi, categoryApi, getImageUrl } from "../../api/endpoints";
