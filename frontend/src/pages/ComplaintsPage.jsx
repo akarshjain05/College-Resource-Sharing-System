@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { AlertTriangle } from "lucide-react";
 import api from "../api/client";
+import { userApi, resourceApi } from "../api/endpoints";
 
 const complaintApi = {
   create: (payload) => api.post("/complaints", payload),
@@ -21,13 +22,24 @@ export default function ComplaintsPage() {
   const borrowRequestId = searchParams.get("borrow_request_id");
 
   const [complaints, setComplaints] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ subject: "", description: "", borrow_request_id: borrowRequestId || "" });
+  const [form, setForm] = useState({ subject: "", description: "", borrow_request_id: borrowRequestId || "", against_user_id: "", resource_id: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const load = () => {
     setLoading(true);
-    complaintApi.myComplaints().then(({ data }) => setComplaints(data)).finally(() => setLoading(false));
+    Promise.all([
+      complaintApi.myComplaints(),
+      userApi.listPublicDirectory(),
+      resourceApi.list({ limit: 1000 })
+    ]).then(([compRes, userRes, resRes]) => {
+      setComplaints(compRes.data);
+      setUsers(userRes.data);
+      // resourceApi.list returns { items, total }
+      setResources(resRes.data.items || resRes.data);
+    }).finally(() => setLoading(false));
   };
 
   useEffect(load, []);
@@ -37,12 +49,13 @@ export default function ComplaintsPage() {
     setSubmitting(true);
     try {
       const payload = { ...form };
-      if (!payload.borrow_request_id) {
-        delete payload.borrow_request_id;
-      }
+      if (!payload.borrow_request_id) delete payload.borrow_request_id;
+      if (!payload.against_user_id) delete payload.against_user_id;
+      if (!payload.resource_id) delete payload.resource_id;
+
       await complaintApi.create(payload);
       toast.success("Complaint filed. An admin will review it shortly.");
-      setForm({ subject: "", description: "", borrow_request_id: borrowRequestId || "" });
+      setForm({ subject: "", description: "", borrow_request_id: borrowRequestId || "", against_user_id: "", resource_id: "" });
       load();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Could not file complaint.");
@@ -64,6 +77,27 @@ export default function ComplaintsPage() {
         <div>
           <label className="label">Subject</label>
           <input required className="input" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="label">Against User (Optional)</label>
+            <select className="input" value={form.against_user_id} onChange={(e) => setForm({ ...form, against_user_id: e.target.value })}>
+              <option value="">-- None --</option>
+              {users.map((u) => (
+                <option key={u.id} value={u.id}>{u.full_name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Resource (Optional)</label>
+            <select className="input" value={form.resource_id} onChange={(e) => setForm({ ...form, resource_id: e.target.value })}>
+              <option value="">-- None --</option>
+              {resources.map((r) => (
+                <option key={r.id} value={r.id}>{r.title}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div>
           <label className="label">Description</label>

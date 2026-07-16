@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Star,
@@ -725,14 +725,101 @@ export default function ResourceDetailPage() {
           </div>
         </div>
 
-        {/* Right Side: Request/Booking Widget Card (4 Columns - Screen 4) */}
+        {/* Right Side: Request/Booking Widget & Sidebar Controls */}
         <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg space-y-5">
-            <div>
-              <h2 className="text-lg font-bold font-display text-slate-900">Request to Borrow</h2>
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Deposit-backed transaction</p>
+          
+          {/* Owner Info Box (from main) */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 mb-3">Shared by</p>
+            <Link 
+              to={`/users/${resource.owner.id}`} 
+              className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-ink-50 transition-colors group"
+            >
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-100 font-bold text-forest-700">
+                {resource.owner.full_name.charAt(0)}
+              </div>
+              <div>
+                <p className="font-display text-base font-semibold text-ink-900 group-hover:text-forest-700 transition-colors">
+                  {resource.owner.full_name}
+                </p>
+                <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+              </div>
+            </Link>
+            
+            <div className="mt-4 border-t border-slate-100 pt-3 flex justify-between text-xs">
+              <span className="text-ink-500 font-medium">Security Deposit:</span>
+              <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700" : "text-ink-600"}`}>
+                {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
+              </span>
             </div>
+          </div>
 
+          {/* Regular Borrow Form (using your friend's wrapper styling, but main's logic) */}
+          {!isOwner && resource.status === "available" && (
+            <form onSubmit={handleBorrowRequest} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg space-y-5">
+              <div>
+                <h3 className="text-lg font-bold font-display text-slate-900">Request to Borrow</h3>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Deposit-backed transaction</p>
+              </div>
+              
+              <div className="rounded bg-ink-50 p-2.5 text-center text-xs">
+                <div className="mb-1">
+                  <span className="text-ink-600 font-medium">Max borrow period: <strong className="text-ink-900">{resource.max_borrow_days} days</strong></span>
+                </div>
+                {resource.deposit_amount > 0 ? (
+                  <span>Security deposit required: <strong className="text-forest-700 font-semibold">₹{resource.deposit_amount}</strong></span>
+                ) : (
+                  <span className="text-ink-600 font-medium">No security deposit required</span>
+                )}
+              </div>
+
+              <div>
+                <label className="label">From</label>
+                <input
+                  required
+                  type="date"
+                  className="input"
+                  value={startDate}
+                  min={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    if (e.target.value && endDate) {
+                      const s = new Date(e.target.value);
+                      const eDate = new Date(endDate);
+                      const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
+                      if (diffDays > resource.max_borrow_days) setEndDate("");
+                    }
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="label">Until</label>
+                <input
+                  required
+                  type="date"
+                  className="input"
+                  value={endDate}
+                  min={startDate || new Date().toISOString().split("T")[0]}
+                  max={
+                    startDate
+                      ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
+                      : undefined
+                  }
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="label">Purpose (optional)</label>
+                <textarea rows={3} className="input" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+              </div>
+
+              <button type="submit" disabled={submittingBorrow} className="btn-brass w-full">
+                {submittingBorrow ? "Sending..." : "Send borrow request"}
+              </button>
+            </form>
+          )}
             <form onSubmit={handleBorrowRequest} className="space-y-4">
               {/* Date selections */}
               <div className="space-y-2.5">

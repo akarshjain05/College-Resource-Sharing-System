@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const WS_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1")
@@ -12,6 +13,7 @@ const WS_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000
 export function useNotificationSocket(onNotification) {
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = sessionStorage.getItem("crss_access_token");
@@ -27,7 +29,17 @@ export function useNotificationSocket(onNotification) {
       socket.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
-          toast(payload.title, { icon: "🔔" });
+          toast((t) => (
+            <div 
+              onClick={() => {
+                if (payload.link) navigate(payload.link);
+                toast.dismiss(t.id);
+              }}
+              style={{ cursor: payload.link ? "pointer" : "default" }}
+            >
+              {payload.title}
+            </div>
+          ), { icon: "🔔" });
           onNotification?.(payload);
         } catch (err) {
           // ignore malformed payloads
@@ -55,3 +67,4 @@ export function useNotificationSocket(onNotification) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
+

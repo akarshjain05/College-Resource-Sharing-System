@@ -73,3 +73,30 @@ def delete_wanted_request(
 
     db.delete(wanted)
     db.commit()
+
+
+@router.post("/{wanted_id}/offer", status_code=status.HTTP_200_OK)
+def offer_wanted_request(
+    wanted_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.services.notification_service import create_notification
+    from app.models.enums import NotificationType
+
+    wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
+    if not wanted:
+        raise NotFoundException("Wanted request not found")
+    if wanted.user_id == current_user.id:
+        raise ForbiddenException("You cannot offer an item for your own request")
+
+    create_notification(
+        db,
+        user_id=wanted.user_id,
+        notif_type=NotificationType.SYSTEM,
+        title="Someone has the item you requested!",
+        message=f"{current_user.full_name} has offered to lend you the item '{wanted.title}'! You can contact them at {current_user.email} or check their profile.",
+        link=f"/users/{current_user.id}"
+    )
+
+    return {"detail": "Offer sent successfully"}

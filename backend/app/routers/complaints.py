@@ -36,6 +36,9 @@ def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(re
     return db.query(Complaint).order_by(Complaint.created_at.desc()).all()
 
 
+from app.models.enums import NotificationType
+from app.services.notification_service import create_notification
+
 @router.put("/{complaint_id}", response_model=ComplaintResponse)
 def update_complaint(
     complaint_id: uuid.UUID,
@@ -46,9 +49,23 @@ def update_complaint(
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
         raise NotFoundException("Complaint not found")
+        
+    old_status = complaint.status
     complaint.status = payload.status
+    
     if payload.admin_response is not None:
+        is_new_response = complaint.admin_response != payload.admin_response
         complaint.admin_response = payload.admin_response
+        
+        if is_new_response or old_status != payload.status:
+            create_notification(
+                db,
+                complaint.filed_by_id,
+                NotificationType.SYSTEM,
+                "Complaint Update",
+                f"An admin has updated your complaint '{complaint.subject}': {payload.admin_response}",
+                link="/complaints"
+            )
     
     if payload.trust_score_penalty and payload.trust_score_penalty > 0 and complaint.against_user_id:
         offending_user = db.query(User).filter(User.id == complaint.against_user_id).first()

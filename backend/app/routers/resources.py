@@ -25,6 +25,7 @@ def list_resources(
     status_filter: Optional[ResourceStatus] = Query(None, alias="status"),
     department: Optional[str] = None,
     min_rating: Optional[float] = Query(None, ge=0, le=5),
+    owner_id: Optional[uuid.UUID] = None,
     exclude_owner_id: Optional[uuid.UUID] = None,
     sort_by: str = Query("created_at", pattern="^(created_at|average_rating|total_borrows|title)$"),
     sort_dir: str = Query("desc", pattern="^(asc|desc)$"),
@@ -46,6 +47,8 @@ def list_resources(
         query = query.filter(Resource.status == status_filter)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
+    if owner_id:
+        query = query.filter(Resource.owner_id == owner_id)
     if exclude_owner_id:
         query = query.filter(Resource.owner_id != exclude_owner_id)
     if department:

@@ -12,6 +12,9 @@ import {
   HelpCircle,
   ChevronDown,
   MessageSquare,
+  BookMarked,
+  AlertTriangle,
+  Package,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { notificationApi } from "../api/endpoints";
@@ -20,9 +23,11 @@ import { useNotificationSocket } from "../hooks/useNotificationSocket";
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Explore Items", icon: Home },
   { to: "/resources", label: "All Listings", icon: HelpCircle },
+  { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
   { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/wanted", label: "Campus Needs", icon: MessageSquare },
+  { to: "/complaints", label: "Complaints", icon: AlertTriangle },
   { to: "/profile", label: "My Profile", icon: User },
 ];
 

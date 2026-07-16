@@ -60,6 +60,7 @@ const DEFAULT_MOCK_NOTIFICATIONS = [
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const loadNotifications = () => {
     setLoading(true);
@@ -130,34 +131,24 @@ export default function NotificationsPage() {
     loadNotifications();
   };
 
-  const handleMarkOne = async (id) => {
-    // 1. Mark localStorage single as read
-    const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-    const idx = local.findIndex(n => n.id === id);
-    if (idx !== -1) {
-      local[idx].is_read = true;
-      localStorage.setItem("share_neighbour_notifs", JSON.stringify(local));
+  const handleMarkOne = async (n) => {
+    // Clean API logic from main
+    if (!n.is_read) {
+      await notificationApi.markRead(n.id);
     }
-
-    // 2. Trigger API
-    if (!id.toString().startsWith("notif-mock-")) {
-      try {
-        await notificationApi.markRead(id);
-      } catch (e) {
-        console.log("Offline notice, marked single read locally.");
-      }
+    if (n.link) {
+      navigate(n.link);
+    } else {
+      loadNotifications(); // Use whichever load function is defined in this file (load or loadNotifications)
     }
-    
-    loadNotifications();
   };
 
   const handleDeleteAll = () => {
-    localStorage.setItem("share_neighbour_notifs", JSON.stringify([]));
-    toast.success("Notification log cleared");
-    loadNotifications();
+    // If you don't have a backend "delete all" route yet, you can leave this empty or remove the button in the UI
+    toast.error("Clear all is not supported yet.");
   };
 
-  // Helper to render notification category icons matching designs
+  // Helper to render notification category icons matching designs (from feature branch)
   const getNotificationIcon = (type) => {
     const tp = type?.toLowerCase() || "";
     if (tp === "check") {
@@ -195,7 +186,7 @@ export default function NotificationsPage() {
     );
   };
 
-  // Helper to format date label
+  // Helper to format date label (from feature branch)
   const getRelativeTimeLabel = (isoString) => {
     const diff = Date.now() - new Date(isoString);
     const mins = Math.floor(diff / 60000);
@@ -207,7 +198,6 @@ export default function NotificationsPage() {
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Page Header */}
@@ -256,7 +246,7 @@ export default function NotificationsPage() {
           {notifications.map((n) => (
             <button
               key={n.id}
-              onClick={() => handleMarkOne(n.id)}
+              onClick={() => handleMarkOne(n)}
               className={`w-full rounded-2xl border p-4.5 text-left transition-all flex gap-3.5 items-start ${
                 n.is_read
                   ? "border-slate-200/60 bg-white hover:bg-slate-50/50"

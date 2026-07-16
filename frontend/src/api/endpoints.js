@@ -23,6 +23,7 @@ export const userApi = {
   updateMyProfile: (payload) => api.put("/users/me", payload),
   getUser: (id) => api.get(`/users/${id}`),
   listUsers: (params) => api.get("/users", { params }),
+  listPublicDirectory: () => api.get("/users/directory/public"),
   suspendUser: (id) => api.post(`/users/${id}/suspend`),
   unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
 };
@@ -45,14 +46,14 @@ export const resourceApi = {
 
 export const borrowApi = {
   create: (payload) => api.post("/borrow-requests", payload),
-  myRequests: () => api.get("/borrow-requests/my-requests"),
-  incoming: () => api.get("/borrow-requests/incoming"),
+  myRequests: (status) => api.get("/borrow-requests/my-requests", { params: { status } }),
+  incoming: (status) => api.get("/borrow-requests/incoming", { params: { status } }),
   approve: (id) => api.post(`/borrow-requests/${id}/approve`),
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
-  returnItem: (id, damageReport, lenderRating) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating }),
-  confirmReturn: (id, borrowerRating) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating }),
+  returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
+  confirmReturn: (id, borrowerRating, borrowerReview) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating, borrower_review: borrowerReview }),
 };
 
 export const reviewApi = {
@@ -71,6 +72,7 @@ export const wantedApi = {
   list: () => api.get("/wanted"),
   create: (data) => api.post("/wanted", data),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
+  offer: (id) => api.post(`/wanted/${id}/offer`),
   delete: (id) => api.delete(`/wanted/${id}`),
 };
 
