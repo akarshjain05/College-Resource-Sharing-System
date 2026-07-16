@@ -766,7 +766,7 @@ export default function DashboardPage() {
                     {/* Footer Row (Owner avatar + Ratings) */}
                     <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-3 text-[11px]">
                       <div className="flex items-center gap-2">
-                        <div className="h-6.5 w-6.5 rounded-lg bg-gradient-to-tr from-slate-200 to-slate-300 text-slate-700 font-bold flex items-center justify-center text-[10px]">
+                        <div className="h-6.5 w-6.5 rounded-lg bg-gradient-to-tr from-slate-200 to-slate-350 text-slate-700 font-bold flex items-center justify-center text-[10px]">
                           {item.owner.charAt(0)}
                         </div>
                         <span className="font-semibold text-slate-600 dark:text-slate-400">{item.owner}</span>
