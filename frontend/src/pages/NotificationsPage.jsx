@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck } from "lucide-react";
 import { notificationApi } from "../api/endpoints";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const load = () => {
     setLoading(true);
@@ -18,9 +20,15 @@ export default function NotificationsPage() {
     load();
   };
 
-  const handleMarkOne = async (id) => {
-    await notificationApi.markRead(id);
-    load();
+  const handleMarkOne = async (n) => {
+    if (!n.is_read) {
+      await notificationApi.markRead(n.id);
+    }
+    if (n.link) {
+      navigate(n.link);
+    } else {
+      load();
+    }
   };
 
   return (
@@ -48,7 +56,7 @@ export default function NotificationsPage() {
           {notifications.map((n) => (
             <button
               key={n.id}
-              onClick={() => handleMarkOne(n.id)}
+              onClick={() => handleMarkOne(n)}
               className={`w-full rounded-lg border p-4 text-left transition-colors ${
                 n.is_read ? "border-ink-100 bg-white" : "border-forest-300 bg-forest-50"
               }`}
