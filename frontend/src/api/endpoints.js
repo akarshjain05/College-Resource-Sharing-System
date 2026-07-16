@@ -46,8 +46,8 @@ export const resourceApi = {
 
 export const borrowApi = {
   create: (payload) => api.post("/borrow-requests", payload),
-  myRequests: () => api.get("/borrow-requests/my-requests"),
-  incoming: () => api.get("/borrow-requests/incoming"),
+  myRequests: (status) => api.get("/borrow-requests/my-requests", { params: { status } }),
+  incoming: (status) => api.get("/borrow-requests/incoming", { params: { status } }),
   approve: (id) => api.post(`/borrow-requests/${id}/approve`),
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),

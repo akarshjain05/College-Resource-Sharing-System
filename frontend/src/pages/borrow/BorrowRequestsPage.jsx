@@ -64,7 +64,7 @@ function RequestCard({ request, isIncoming, onAction }) {
             <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${
               daysRemaining < 0 || request.status === "late" ? "bg-red-100 text-red-700" :
               daysRemaining === 0 ? "bg-orange-100 text-orange-700" :
-              daysRemaining <= 2 ? "bg-yellow-100 text-yellow-700" : "hidden"
+              daysRemaining <= 2 ? "bg-yellow-100 text-yellow-700" : "bg-forest-100 text-forest-700"
             }`}>
               {daysRemaining < 0 || request.status === "late" ? `Overdue by ${Math.abs(daysRemaining)} day(s)` :
                daysRemaining === 0 ? "Due today" :
