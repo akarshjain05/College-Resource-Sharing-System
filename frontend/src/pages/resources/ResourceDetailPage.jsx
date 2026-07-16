@@ -564,6 +564,9 @@ export default function ResourceDetailPage() {
           <form onSubmit={handleBorrowRequest} className="card space-y-3 p-5">
             <h3 className="font-display text-base font-semibold text-ink-900">Request to borrow</h3>
             <div className="rounded bg-ink-50 p-2.5 text-center text-xs">
+              <div className="mb-1">
+                <span className="text-ink-600 font-medium">Max borrow period: <strong className="text-ink-900">{resource.max_borrow_days} days</strong></span>
+              </div>
               {resource.deposit_amount > 0 ? (
                 <span>Security deposit required: <strong className="text-forest-700 font-semibold">₹{resource.deposit_amount}</strong></span>
               ) : (
@@ -578,7 +581,16 @@ export default function ResourceDetailPage() {
                 className="input"
                 value={startDate}
                 min={new Date().toISOString().split("T")[0]}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  // Reset end date if it violates new max
+                  if (e.target.value && endDate) {
+                    const s = new Date(e.target.value);
+                    const eDate = new Date(endDate);
+                    const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
+                    if (diffDays > resource.max_borrow_days) setEndDate("");
+                  }
+                }}
               />
             </div>
             <div>
@@ -589,6 +601,11 @@ export default function ResourceDetailPage() {
                 className="input"
                 value={endDate}
                 min={startDate || new Date().toISOString().split("T")[0]}
+                max={
+                  startDate
+                    ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
+                    : undefined
+                }
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>

@@ -39,6 +39,12 @@ def create_borrow_request(
         raise AppException("You cannot borrow your own resource", status_code=status.HTTP_400_BAD_REQUEST, error_code="SELF_BORROW")
     if resource.quantity_available < 1:
         raise AppException("This resource is currently unavailable", status_code=status.HTTP_400_BAD_REQUEST, error_code="OUT_OF_STOCK")
+        
+    requested_days = (payload.requested_end_date - payload.requested_start_date).days
+    if requested_days > resource.max_borrow_days:
+        raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
+    if requested_days < 0:
+        raise AppException("End date must be after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
 
     borrow_request = BorrowRequest(
         resource_id=resource.id,
