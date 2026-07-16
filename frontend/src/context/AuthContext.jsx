@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const loadUser = useCallback(async () => {
-    const token = sessionStorage.getItem("crss_access_token");
+    const token = localStorage.getItem("crss_access_token");
     if (!token) {
       setLoading(false);
       return;
@@ -17,8 +17,8 @@ export function AuthProvider({ children }) {
       const { data } = await authApi.me();
       setUser(data);
     } catch (err) {
-      sessionStorage.removeItem("crss_access_token");
-      sessionStorage.removeItem("crss_refresh_token");
+      localStorage.removeItem("crss_access_token");
+      localStorage.removeItem("crss_refresh_token");
       setUser(null);
     } finally {
       setLoading(false);
@@ -31,16 +31,16 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await authApi.login(email, password);
-    sessionStorage.setItem("crss_access_token", data.access_token);
-    sessionStorage.setItem("crss_refresh_token", data.refresh_token);
+    localStorage.setItem("crss_access_token", data.access_token);
+    localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
   };
 
   const loginWithGoogle = async (credential) => {
     const { data } = await authApi.googleLogin(credential);
     if (data.status === "login") {
-      sessionStorage.setItem("crss_access_token", data.access_token);
-      sessionStorage.setItem("crss_refresh_token", data.refresh_token);
+      localStorage.setItem("crss_access_token", data.access_token);
+      localStorage.setItem("crss_refresh_token", data.refresh_token);
       await loadUser();
     }
     // If data.status === "needs_profile", the caller (Login/RegisterPage) is
@@ -50,8 +50,8 @@ export function AuthProvider({ children }) {
 
   const completeGoogleProfile = async (payload) => {
     const { data } = await authApi.completeGoogleProfile(payload);
-    sessionStorage.setItem("crss_access_token", data.access_token);
-    sessionStorage.setItem("crss_refresh_token", data.refresh_token);
+    localStorage.setItem("crss_access_token", data.access_token);
+    localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
   };
 
@@ -60,8 +60,8 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    sessionStorage.removeItem("crss_access_token");
-    sessionStorage.removeItem("crss_refresh_token");
+    localStorage.removeItem("crss_access_token");
+    localStorage.removeItem("crss_refresh_token");
     setUser(null);
   };
 
