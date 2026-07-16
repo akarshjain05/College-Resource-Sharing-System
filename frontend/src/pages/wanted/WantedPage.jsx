@@ -107,7 +107,7 @@ export default function WantedPage() {
                     </div>
                   </div>
                   
-                  {isOwner && (
+                  {isOwner ? (
                     <div className="flex gap-2">
                       <button onClick={() => handleFulfill(r.id)} className="rounded p-1.5 text-forest-600 hover:bg-forest-50" title="Mark as Fulfilled">
                         <Check className="h-4 w-4" />
@@ -116,6 +116,13 @@ export default function WantedPage() {
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
+                  ) : (
+                    <a
+                      href={`mailto:${r.user.email}?subject=Regarding your request for: ${encodeURIComponent(r.title)}`}
+                      className="btn-primary !py-1 !px-3 text-xs"
+                    >
+                      I have this
+                    </a>
                   )}
                 </div>
               </div>
