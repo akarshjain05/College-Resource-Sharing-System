@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,40 +12,40 @@ body {
   @apply bg-paper text-ink font-body antialiased;
 }
 
-h1, h2, h3, h4 {
-  @apply font-display text-ink-900;
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display text-ink-900 tracking-tight;
 }
 
 ::selection {
-  @apply bg-brass-100 text-ink-900;
+  @apply bg-primary-100 text-primary-900;
 }
 
 *:focus-visible {
-  outline: 2px solid theme("colors.brass.500");
+  outline: 2px solid theme("colors.primary.500");
   outline-offset: 2px;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary {
-    @apply btn bg-forest-700 text-white hover:bg-forest-900;
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 shadow-sm shadow-primary-600/10;
   }
   .btn-secondary {
-    @apply btn bg-white text-ink-900 border border-ink-100 hover:bg-ink-50;
+    @apply btn bg-white text-ink-700 border border-ink-200 hover:bg-ink-50 hover:text-ink-900;
   }
   .btn-brass {
     @apply btn bg-brass-500 text-white hover:bg-brass-700;
   }
   .input {
-    @apply w-full rounded-md border border-ink-100 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-300 focus:border-forest-500 focus:ring-1 focus:ring-forest-500 outline-none;
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none;
   }
   .label {
-    @apply block text-xs font-semibold uppercase tracking-wide text-ink-500 mb-1;
+    @apply block text-xs font-semibold uppercase tracking-wider text-ink-500 mb-1.5;
   }
   .card {
-    @apply bg-card rounded-lg shadow-card border border-ink-100/60;
+    @apply bg-card rounded-2xl shadow-card border border-ink-200/50 hover:border-ink-200/80 transition-all duration-200;
   }
 
   /* Signature element: library index card with a perforated ticket-stub edge,
