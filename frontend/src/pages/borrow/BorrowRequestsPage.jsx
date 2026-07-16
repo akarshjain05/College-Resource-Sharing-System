@@ -282,37 +282,7 @@ export default function BorrowRequestsPage() {
       toast.error(err.response?.data?.detail || "Action failed");
     }
   };
-    // 2. Trigger actual backend action if database booking ID
-    if (!bookingId.toString().startsWith("mock-")) {
-      try {
-        if (newStatus === "approved") borrowApi.approve(bookingId);
-        if (newStatus === "rejected") borrowApi.reject(bookingId, "Unavailable");
-        if (newStatus === "active") borrowApi.handover(bookingId);
-        if (newStatus === "cancelled") borrowApi.cancel(bookingId);
-        if (newStatus === "returned") borrowApi.confirmReturn(bookingId, 5);
-      } catch (err) {
-        console.log("Offline backend trigger error:", err);
-      }
-    }
 
-    // 3. Add visual notification logs
-    const activeBooking = bookings[tab].find(b => b.id === bookingId);
-    if (activeBooking) {
-      const savedNotifs = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-      savedNotifs.unshift({
-        id: "notif-" + Date.now(),
-        title: `Booking status updated`,
-        message: `Your booking for ${activeBooking.resource.title} is now ${newStatus.toUpperCase()}.`,
-        created_at: new Date().toISOString(),
-        is_read: false,
-        type: newStatus === "approved" ? "check" : "calendar",
-      });
-      localStorage.setItem("share_neighbour_notifs", JSON.stringify(savedNotifs));
-    }
-
-    toast.success(`Booking status updated to ${newStatus}`);
-    loadBookingsList();
-  };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();

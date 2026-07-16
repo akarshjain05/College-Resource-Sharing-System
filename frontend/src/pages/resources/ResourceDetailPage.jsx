@@ -761,66 +761,7 @@ export default function ResourceDetailPage() {
                 <h3 className="text-lg font-bold font-display text-slate-900">Request to Borrow</h3>
                 <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Deposit-backed transaction</p>
               </div>
-              
-              <div className="rounded bg-ink-50 p-2.5 text-center text-xs">
-                <div className="mb-1">
-                  <span className="text-ink-600 font-medium">Max borrow period: <strong className="text-ink-900">{resource.max_borrow_days} days</strong></span>
-                </div>
-                {resource.deposit_amount > 0 ? (
-                  <span>Security deposit required: <strong className="text-forest-700 font-semibold">₹{resource.deposit_amount}</strong></span>
-                ) : (
-                  <span className="text-ink-600 font-medium">No security deposit required</span>
-                )}
-              </div>
 
-              <div>
-                <label className="label">From</label>
-                <input
-                  required
-                  type="date"
-                  className="input"
-                  value={startDate}
-                  min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    if (e.target.value && endDate) {
-                      const s = new Date(e.target.value);
-                      const eDate = new Date(endDate);
-                      const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
-                      if (diffDays > resource.max_borrow_days) setEndDate("");
-                    }
-                  }}
-                />
-              </div>
-
-              <div>
-                <label className="label">Until</label>
-                <input
-                  required
-                  type="date"
-                  className="input"
-                  value={endDate}
-                  min={startDate || new Date().toISOString().split("T")[0]}
-                  max={
-                    startDate
-                      ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
-                      : undefined
-                  }
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="label">Purpose (optional)</label>
-                <textarea rows={3} className="input" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
-              </div>
-
-              <button type="submit" disabled={submittingBorrow} className="btn-brass w-full">
-                {submittingBorrow ? "Sending..." : "Send borrow request"}
-              </button>
-            </form>
-          )}
-            <form onSubmit={handleBorrowRequest} className="space-y-4">
               {/* Date selections */}
               <div className="space-y-2.5">
                 <label className="label">Select Dates</label>
@@ -831,7 +772,16 @@ export default function ResourceDetailPage() {
                       type="date"
                       required
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => {
+                        setStartDate(e.target.value);
+                        if (e.target.value && endDate) {
+                          const s = new Date(e.target.value);
+                          const eDate = new Date(endDate);
+                          const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
+                          if (diffDays > resource.max_borrow_days) setEndDate("");
+                        }
+                      }}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
@@ -841,6 +791,12 @@ export default function ResourceDetailPage() {
                       type="date"
                       required
                       value={endDate}
+                      min={startDate || new Date().toISOString().split("T")[0]}
+                      max={
+                        startDate
+                          ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
+                          : undefined
+                      }
                       onChange={(e) => setEndDate(e.target.value)}
                       className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                     />
@@ -947,7 +903,8 @@ export default function ResourceDetailPage() {
                 )}
               </button>
             </form>
-          </div>
+          )}
+
 
           {/* Safety instructions */}
           <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-4.5 flex gap-2.5 text-slate-500">
