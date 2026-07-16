@@ -26,6 +26,149 @@ export default function ResourceListPage() {
     categoryApi.list().then(({ data }) => setCategories(data));
   }, []);
 
+  const loadMockData = () => {
+    const savedMocksStr = localStorage.getItem("share_neighbour_mocks");
+    let allMocks = [];
+    if (savedMocksStr) {
+      const mocksObj = JSON.parse(savedMocksStr);
+      Object.values(mocksObj).forEach((arr) => allMocks.push(...arr));
+    } else {
+      allMocks = [
+        {
+          id: "mock-ladder-1",
+          title: "Aluminium Ladder (7 Step)",
+          category: "Tools",
+          daily_price: 90,
+          deposit_amount: 500,
+          average_rating: 4.7,
+          reviews_count: 15,
+          distance: "0.3 km",
+          owner: "Rahul Sharma",
+          image_placeholder: "🪜",
+          description: "Sturdy 7 step aluminium ladder. Perfect for home painting, bulb changing, etc. Well maintained.",
+          condition: "good",
+          status: "available",
+        },
+        {
+          id: "mock-drill-1",
+          title: "Bosch Drill Machine",
+          category: "Tools",
+          daily_price: 150,
+          deposit_amount: 500,
+          average_rating: 4.8,
+          reviews_count: 23,
+          distance: "0.5 km",
+          owner: "Amit Patel",
+          image_placeholder: "🔌",
+          description: "Powerful drill machine. Used only a few times. Comes with standard bits.",
+          condition: "new",
+          status: "available",
+        },
+        {
+          id: "mock-cooler-1",
+          title: "Cooler - Symphony",
+          category: "Party",
+          daily_price: 120,
+          deposit_amount: 600,
+          average_rating: 4.5,
+          reviews_count: 8,
+          distance: "0.8 km",
+          owner: "Neha Iyer",
+          image_placeholder: "❄️",
+          description: "Large desert cooler for parties and events. Blows super cold air. Quiet operation.",
+          condition: "good",
+          status: "available",
+        },
+        {
+          id: "mock-mixer-1",
+          title: "Mixer Grinder (Prestige)",
+          category: "Kitchen",
+          daily_price: 80,
+          deposit_amount: 300,
+          average_rating: 4.4,
+          reviews_count: 5,
+          distance: "0.4 km",
+          owner: "Vikram Rao",
+          image_placeholder: "🌪️",
+          description: "Prestige 750W mixer grinder. Perfect for making batters, chutneys, and shakes.",
+          condition: "good",
+          status: "available",
+        },
+        {
+          id: "mock-racket-1",
+          title: "Yonex Badminton Racket",
+          category: "Sports",
+          daily_price: 40,
+          deposit_amount: 200,
+          average_rating: 4.9,
+          reviews_count: 12,
+          distance: "0.2 km",
+          owner: "Suresh Kumar",
+          image_placeholder: "🏸",
+          description: "Lightweight Yonex Carbonex racket. Newly strung, comes with dynamic cover.",
+          condition: "new",
+          status: "available",
+        },
+        {
+          id: "mock-tent-1",
+          title: "4-Person Camping Tent",
+          category: "Camping",
+          daily_price: 250,
+          deposit_amount: 800,
+          average_rating: 4.6,
+          reviews_count: 18,
+          distance: "1.1 km",
+          owner: "Rohit Singh",
+          image_placeholder: "⛺",
+          description: "Waterproof Quechua double dome tent. Pitch in 5 minutes. Includes sleeping mats.",
+          condition: "good",
+          status: "available",
+        },
+      ];
+    }
+
+    const adapted = allMocks.map(m => ({
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      condition: m.condition.toLowerCase(),
+      status: m.status ? m.status.toLowerCase() : "available",
+      deposit_amount: m.deposit_amount || m.daily_price * 4,
+      daily_price: m.daily_price || 100,
+      average_rating: m.average_rating || 5.0,
+      total_borrows: m.reviews_count || 0,
+      pickup_location: m.distance ? `${m.distance} away` : "Nearby",
+      category: typeof m.category === "string" ? { id: "cat-1", name: m.category } : m.category,
+      owner: typeof m.owner === "string" ? { id: "owner-1", full_name: m.owner } : m.owner,
+      images: m.image_placeholder ? [{ id: "img-1", image_url: m.image_placeholder }] : [],
+    }));
+
+    const filtered = adapted.filter(item => {
+      const matchCat = categoryId ? item.category?.id === categoryId || item.category?.name.toLowerCase() === categories.find(c => c.id === categoryId)?.name.toLowerCase() : true;
+      const matchCond = condition ? item.condition === condition : true;
+      const matchStatus = status ? item.status === status : true;
+      const matchRating = minRating ? item.average_rating >= Number(minRating) : true;
+      const matchSearch = search ? item.title.toLowerCase().includes(search.toLowerCase()) || item.description.toLowerCase().includes(search.toLowerCase()) : true;
+      return matchCat && matchCond && matchStatus && matchRating && matchSearch;
+    });
+
+    filtered.sort((a, b) => {
+      if (sortBy === "average_rating") {
+        return sortDir === "desc" ? b.average_rating - a.average_rating : a.average_rating - b.average_rating;
+      }
+      if (sortBy === "total_borrows") {
+        return sortDir === "desc" ? b.total_borrows - a.total_borrows : a.total_borrows - b.total_borrows;
+      }
+      if (sortBy === "title") {
+        return sortDir === "desc" ? b.title.localeCompare(a.title) : a.title.localeCompare(b.title);
+      }
+      return 0;
+    });
+
+    setItems(filtered.slice((page - 1) * pageSize, page * pageSize));
+    setTotal(filtered.length);
+  };
+
   useEffect(() => {
     setLoading(true);
     resourceApi
@@ -42,11 +185,19 @@ export default function ResourceListPage() {
         ...(user?.id ? { exclude_owner_id: user.id } : {}),
       })
       .then(({ data }) => {
-        setItems(data.items);
-        setTotal(data.total);
+        if (data && data.items && data.items.length > 0) {
+          setItems(data.items);
+          setTotal(data.total);
+        } else {
+          loadMockData();
+        }
+      })
+      .catch((err) => {
+        console.log("Database list call failed, loading local mocks.", err);
+        loadMockData();
       })
       .finally(() => setLoading(false));
-  }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page]);
+  }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page, categories]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
