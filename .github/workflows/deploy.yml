@@ -24,6 +24,18 @@ jobs:
             git fetch origin
             git reset --hard origin/main
             
+            # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
+            if [ $(sudo swapon --show | wc -l) -eq 0 ]; then
+              echo "No swap file found. Creating a 2GB swap file to prevent out-of-memory errors..."
+              sudo fallocate -l 2G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+            else
+              echo "Swap file already exists."
+            fi
+            
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
             
