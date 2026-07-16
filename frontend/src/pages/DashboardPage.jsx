@@ -47,34 +47,8 @@ export default function DashboardPage() {
         <StatCard label="Sharing Score" value={user?.sharing_score ?? 0} icon={TrendingUp} accent="forest" />
       </div>
 
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-ink-900">Recently added on campus</h2>
-          <Link to="/resources" className="text-sm font-semibold text-forest-700 hover:underline">
-            Browse all
-          </Link>
-        </div>
-        {loading ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-64 animate-pulse rounded-lg bg-ink-100" />
-            ))}
-          </div>
-        ) : recent.length === 0 ? (
-          <div className="card p-8 text-center text-sm text-ink-500">
-            No resources have been shared yet. Be the first to list one.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {recent.map((r) => (
-              <ResourceCard key={r.id} resource={r} />
-            ))}
-          </div>
-        )}
-      </div>
-
       {campusNeeds.length > 0 && (
-        <div className="pt-4">
+        <div className="pt-2">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold text-ink-900">Recent Campus Needs</h2>
             <Link to="/wanted" className="text-sm font-semibold text-forest-700 hover:underline">
@@ -102,6 +76,32 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-display text-lg font-semibold text-ink-900">Recently added on campus</h2>
+          <Link to="/resources" className="text-sm font-semibold text-forest-700 hover:underline">
+            Browse all
+          </Link>
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-64 animate-pulse rounded-lg bg-ink-100" />
+            ))}
+          </div>
+        ) : recent.length === 0 ? (
+          <div className="card p-8 text-center text-sm text-ink-500">
+            No resources have been shared yet. Be the first to list one.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recent.map((r) => (
+              <ResourceCard key={r.id} resource={r} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
