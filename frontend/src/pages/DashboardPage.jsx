@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { PackageSearch, ArrowLeftRight, Star, TrendingUp } from "lucide-react";
-import { resourceApi, borrowApi, wantedApi } from "../api/endpoints";
+import { resourceApi, borrowApi } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
 import ResourceCard from "../components/ResourceCard";
 import StatCard from "../components/StatCard";
@@ -10,19 +10,16 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [recent, setRecent] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
-  const [campusNeeds, setCampusNeeds] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       resourceApi.list({ sort_by: "created_at", sort_dir: "desc", page_size: 6, ...(user?.id ? { exclude_owner_id: user.id } : {}) }),
       borrowApi.myRequests(),
-      wantedApi.list(),
     ])
-      .then(([resResp, reqResp, wantedResp]) => {
+      .then(([resResp, reqResp]) => {
         setRecent(resResp.data.items);
         setMyRequests(reqResp.data);
-        setCampusNeeds(wantedResp.data.slice(0, 3));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -72,36 +69,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-
-      {campusNeeds.length > 0 && (
-        <div className="pt-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-ink-900">Recent Campus Needs</h2>
-            <Link to="/wanted" className="text-sm font-semibold text-forest-700 hover:underline">
-              See all requests
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {campusNeeds.map((r) => (
-              <div key={r.id} className="card p-4 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
-                  <p className="mt-1 text-xs text-ink-600 line-clamp-2">{r.description || "No description."}</p>
-                </div>
-                <div className="mt-3 flex items-center justify-between border-t border-ink-100 pt-3">
-                  <span className="text-[10px] text-ink-500">Requested by {r.user.full_name}</span>
-                  <a
-                    href={`mailto:${r.user.email}?subject=Regarding your request for: ${encodeURIComponent(r.title)}`}
-                    className="text-xs font-semibold text-forest-600 hover:underline"
-                  >
-                    Offer Item
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

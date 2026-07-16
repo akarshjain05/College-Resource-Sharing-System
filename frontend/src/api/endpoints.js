@@ -71,6 +71,7 @@ export const wantedApi = {
   list: () => api.get("/wanted"),
   create: (data) => api.post("/wanted", data),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
+  offer: (id) => api.post(`/wanted/${id}/offer`),
   delete: (id) => api.delete(`/wanted/${id}`),
 };
 

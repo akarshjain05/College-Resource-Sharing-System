@@ -58,6 +58,15 @@ export default function WantedPage() {
     }
   };
 
+  const handleOffer = async (id) => {
+    try {
+      await wantedApi.offer(id);
+      toast.success("Offer sent! The requester has been notified.");
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Action failed");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-ink-100 pb-4">
@@ -117,12 +126,12 @@ export default function WantedPage() {
                       </button>
                     </div>
                   ) : (
-                    <a
-                      href={`mailto:${r.user.email}?subject=Regarding your request for: ${encodeURIComponent(r.title)}`}
+                    <button
+                      onClick={() => handleOffer(r.id)}
                       className="btn-primary !py-1 !px-3 text-xs"
                     >
                       I have this
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>
