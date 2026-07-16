@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   BookMarked,
   AlertTriangle,
+  Package,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { notificationApi } from "../api/endpoints";
@@ -18,6 +19,7 @@ import { useNotificationSocket } from "../hooks/useNotificationSocket";
 const NAV_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { to: "/resources", label: "Browse Resources", icon: PackageSearch },
+  { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "Borrow Requests", icon: ArrowLeftRight },
   { to: "/wanted", label: "Wanted Items", icon: PackageSearch },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
