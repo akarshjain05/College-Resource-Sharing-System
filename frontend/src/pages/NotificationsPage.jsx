@@ -135,13 +135,25 @@ export default function NotificationsPage() {
 
   const handleMarkOne = async (n) => {
     // Clean API logic from main
-    if (!n.is_read) {
-      await notificationApi.markRead(n.id);
+    try {
+      if (!n.is_read) {
+        if (n.id && !n.id.toString().startsWith("notif-mock-")) {
+          await notificationApi.markRead(n.id);
+        } else {
+          // Local mock update
+          const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
+          const updated = local.map(notif => notif.id === n.id ? { ...notif, is_read: true } : notif);
+          localStorage.setItem("share_neighbour_notifs", JSON.stringify(updated));
+        }
+      }
+    } catch (e) {
+      console.log("Failed to mark read", e);
     }
+
     if (n.link) {
       navigate(n.link);
     } else {
-      loadNotifications(); // Use whichever load function is defined in this file (load or loadNotifications)
+      loadNotifications(); // Refresh to show is_read=true state
     }
   };
 
