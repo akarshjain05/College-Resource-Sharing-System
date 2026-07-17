@@ -75,28 +75,120 @@ def delete_wanted_request(
     db.commit()
 
 
-@router.post("/{wanted_id}/offer", status_code=status.HTTP_200_OK)
+from app.models.wanted import WantedRequest, WantedOffer
+from app.schemas.wanted import WantedCreate, WantedResponse, WantedOfferCreate, WantedOfferResponse
+from app.models.resource import Resource
+from app.models.borrow import BorrowRequest
+from app.models.enums import NotificationType, BorrowStatus
+
+
+@router.post("/{wanted_id}/offer", response_model=WantedOfferResponse, status_code=status.HTTP_201_CREATED)
 def offer_wanted_request(
     wanted_id: uuid.UUID,
+    payload: WantedOfferCreate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     from app.services.notification_service import create_notification
-    from app.models.enums import NotificationType
 
     wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
     if not wanted:
         raise NotFoundException("Wanted request not found")
     if wanted.user_id == current_user.id:
         raise ForbiddenException("You cannot offer an item for your own request")
+    if wanted.is_fulfilled:
+        raise ForbiddenException("This request has already been fulfilled")
+
+    resource = db.query(Resource).filter(Resource.id == payload.resource_id).first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+    if resource.owner_id != current_user.id:
+        raise ForbiddenException("You can only offer your own resources")
+
+    # Check if already offered
+    existing_offer = db.query(WantedOffer).filter(
+        WantedOffer.wanted_request_id == wanted.id,
+        WantedOffer.offerer_id == current_user.id,
+        WantedOffer.resource_id == resource.id
+    ).first()
+    if existing_offer:
+        raise ForbiddenException("You have already offered this resource for this request")
+
+    offer = WantedOffer(
+        wanted_request_id=wanted.id,
+        offerer_id=current_user.id,
+        resource_id=resource.id,
+        status="PENDING"
+    )
+    db.add(offer)
+    db.commit()
+    db.refresh(offer)
 
     create_notification(
         db,
         user_id=wanted.user_id,
         notif_type=NotificationType.SYSTEM,
         title="Someone has the item you requested!",
-        message=f"{current_user.full_name} has offered to lend you the item '{wanted.title}'! You can contact them at {current_user.email} or check their profile.",
-        link=f"/users/{current_user.id}"
+        message=f"{current_user.full_name} has offered their item '{resource.title}' for your request '{wanted.title}'!",
+        link=f"/wanted"  # Link them back to wanted page to see offers
     )
 
-    return {"detail": "Offer sent successfully"}
+    return offer
+
+
+@router.get("/{wanted_id}/offers", response_model=list[WantedOfferResponse])
+def list_wanted_offers(
+    wanted_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
+    if not wanted:
+        raise NotFoundException("Wanted request not found")
+    
+    offers = db.query(WantedOffer).filter(WantedOffer.wanted_request_id == wanted_id).order_by(WantedOffer.created_at.desc()).all()
+    return offers
+
+
+@router.post("/offers/{offer_id}/accept", response_model=WantedResponse)
+def accept_wanted_offer(
+    offer_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.services.notification_service import create_notification
+
+    offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
+    if not offer:
+        raise NotFoundException("Offer not found")
+
+    wanted = offer.wanted_request
+    if wanted.user_id != current_user.id:
+        raise ForbiddenException("Only the requester can accept an offer")
+    
+    if wanted.is_fulfilled:
+        raise ForbiddenException("This request has already been fulfilled")
+
+    offer.status = "ACCEPTED"
+    wanted.is_fulfilled = True
+    
+    # Reject other offers
+    other_offers = db.query(WantedOffer).filter(
+        WantedOffer.wanted_request_id == wanted.id,
+        WantedOffer.id != offer.id
+    ).all()
+    for other in other_offers:
+        other.status = "REJECTED"
+
+    db.commit()
+    db.refresh(wanted)
+
+    create_notification(
+        db,
+        user_id=offer.offerer_id,
+        notif_type=NotificationType.SYSTEM,
+        title="Your offer was accepted!",
+        message=f"{current_user.full_name} has accepted your offer for '{offer.resource.title}'. They will create a borrow request soon.",
+        link=f"/resources/{offer.resource_id}"
+    )
+
+    return wanted
