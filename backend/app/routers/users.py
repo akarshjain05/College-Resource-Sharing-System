@@ -38,7 +38,7 @@ def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     return user
 
 
-@router.get("/{user_id}/public", response_model=dict)
+@router.get("/{user_id}/public")
 def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     from app.schemas.user import PublicUserResponse
     from app.models.resource import Resource
@@ -129,12 +129,17 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     recent_reviews.sort(key=lambda x: x["date"] or "", reverse=True)
     recent_reviews = recent_reviews[:10]
     
-    return {
-        "user": public_user,
-        "shared_resources": shared_resources,
+    # Map SQLAlchemy objects to Pydantic models and dump to JSON primitives
+    shared_resources_schemas = [ResourceResponse.model_validate(r).model_dump(mode="json") for r in shared_resources]
+    
+    from fastapi.responses import JSONResponse
+    
+    return JSONResponse(content={
+        "user": public_user.model_dump(mode="json"),
+        "shared_resources": shared_resources_schemas,
         "stats": stats,
         "recent_reviews": recent_reviews,
-    }
+    })
 
 
 @router.get("", response_model=list[UserResponse])
