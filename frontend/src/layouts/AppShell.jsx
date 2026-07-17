@@ -41,7 +41,6 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
   
-  // Location selection state
   const [selectedLocation, setSelectedLocation] = useState(
     localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
   );
@@ -122,14 +121,6 @@ export default function AppShell() {
     navigate("/login");
   };
 
-  const changeLocation = (loc) => {
-    setSelectedLocation(loc);
-    localStorage.setItem("share_neighbour_location", loc);
-    setShowLocationDropdown(false);
-    // Dispatch a custom event to notify components that location changed
-    window.dispatchEvent(new Event("locationChanged"));
-  };
-
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-body text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* SIDEBAR */}
@@ -148,7 +139,6 @@ export default function AppShell() {
           </div>
         </div>
 
-        {/* Navigation items */}
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
             const isActive = location.pathname === to || (to !== "/dashboard" && location.pathname.startsWith(to));
@@ -212,7 +202,6 @@ export default function AppShell() {
         </div>
       </aside>
 
-      {/* MAIN CONTAINER */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* HEADER BAR */}
         <header className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 sticky top-0 z-10 shadow-sm shadow-slate-100/40 dark:shadow-none transition-colors duration-200">
@@ -223,7 +212,6 @@ export default function AppShell() {
             </span>
           </div>
 
-          {/* Quick Controls */}
           <div className="flex items-center gap-4">
             {/* Quick Listing CTA */}
             <button
@@ -234,7 +222,6 @@ export default function AppShell() {
               <span>Post a Need</span>
             </button>
 
-            {/* Notification Badge */}
             <Link
               to="/notifications"
               className="relative rounded-xl border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 p-2.5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all active:scale-95"
@@ -262,7 +249,6 @@ export default function AppShell() {
           </div>
         </header>
 
-        {/* PAGE CONTENT */}
         <main className="flex-1 p-6 md:p-8 max-w-[1400px] w-full mx-auto">
           <Outlet />
         </main>
