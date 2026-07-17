@@ -21,14 +21,14 @@ import { notificationApi } from "../api/endpoints";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Explore Items", icon: Home },
-  { to: "/resources", label: "All Listings", icon: HelpCircle },
+  // { to: "/dashboard", label: "Explore Items", icon: Home },
+  { to: "/resources", label: "Explore Items", icon: HelpCircle },
+  { to: "/wanted", label: "Campus Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
-  { to: "/resources/new", label: "List an Item", icon: PlusCircle },
-  { to: "/wanted", label: "Campus Needs", icon: MessageSquare },
+  // { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
-  { to: "/profile", label: "My Profile", icon: User },
+  // { to: "/profile", label: "My Profile", icon: User },
 ];
 
 export default function AppShell() {
