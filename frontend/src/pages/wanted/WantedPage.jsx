@@ -41,6 +41,15 @@ export default function WantedPage() {
 
   useEffect(() => {
     loadData();
+
+    const handleWantedCreated = () => {
+      loadData();
+    };
+
+    window.addEventListener("wantedCreated", handleWantedCreated);
+    return () => {
+      window.removeEventListener("wantedCreated", handleWantedCreated);
+    };
   }, [user]);
 
   const handleSubmit = async (e) => {
@@ -127,10 +136,7 @@ export default function WantedPage() {
         <div>
           <h1 className="font-display text-2xl font-semibold text-ink-900">Wanted Items</h1>
           <p className="text-sm text-ink-500">See what your campus needs, or post a request for something you're looking for.</p>
-        </div>
-        <button onClick={() => setShowModal(true)} className="btn-primary flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Post a Need
-        </button>
+        </div>  
       </div>
 
       {loading ? (
