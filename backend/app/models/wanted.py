@@ -20,3 +20,18 @@ class WantedRequest(Base, UUIDMixin, TimestampMixin):
 
     user = relationship("User")
     category = relationship("Category")
+    offers = relationship("WantedOffer", back_populates="wanted_request", cascade="all, delete-orphan")
+
+
+class WantedOffer(Base, UUIDMixin, TimestampMixin):
+    __tablename__ = "wanted_offers"
+
+    wanted_request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wanted_requests.id"), nullable=False)
+    offerer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    resource_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="PENDING", nullable=False) # PENDING, ACCEPTED, REJECTED
+
+    wanted_request = relationship("WantedRequest", back_populates="offers")
+    offerer = relationship("User")
+    resource = relationship("Resource")
+

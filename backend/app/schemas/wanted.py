@@ -5,7 +5,26 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.schemas.user import UserResponse
-from app.schemas.resource import CategoryResponse
+from app.schemas.resource import CategoryResponse, ResourceResponse
+
+
+class WantedOfferCreate(BaseModel):
+    resource_id: uuid.UUID
+
+
+class WantedOfferResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    wanted_request_id: uuid.UUID
+    offerer_id: uuid.UUID
+    resource_id: uuid.UUID
+    status: str
+    created_at: datetime
+    
+    offerer: UserResponse
+    resource: ResourceResponse
+
 
 
 class WantedCreate(BaseModel):

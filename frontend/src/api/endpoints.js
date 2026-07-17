@@ -72,7 +72,9 @@ export const wantedApi = {
   list: () => api.get("/wanted"),
   create: (data) => api.post("/wanted", data),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
-  offer: (id) => api.post(`/wanted/${id}/offer`),
+  offer: (id, resourceId) => api.post(`/wanted/${id}/offer`, { resource_id: resourceId }),
+  listOffers: (id) => api.get(`/wanted/${id}/offers`),
+  acceptOffer: (offerId) => api.post(`/wanted/offers/${offerId}/accept`),
   delete: (id) => api.delete(`/wanted/${id}`),
 };
 
