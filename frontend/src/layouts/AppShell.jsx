@@ -131,15 +131,15 @@ export default function AppShell() {
 
         {/* Bottom Profile Summary */}
         <div className="border-t border-slate-100 p-4 bg-slate-50/50">
-          <div className="mb-3.5 flex items-center gap-3 px-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm">
+          <Link to="/profile" className="mb-3.5 flex items-center gap-3 px-2 py-1.5 -mx-2 rounded-lg hover:bg-slate-200/50 transition-colors cursor-pointer group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
               {user?.full_name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-slate-800">{user?.full_name || "Neighbor User"}</p>
+              <p className="truncate text-sm font-bold text-slate-800 group-hover:text-primary-600 transition-colors">{user?.full_name || "Neighbor User"}</p>
               <p className="truncate text-[10px] text-slate-500 font-semibold uppercase tracking-wider">{user?.role || "Member"}</p>
             </div>
-          </div>
+          </Link>
           <button
             onClick={handleLogout}
             className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 px-3 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
