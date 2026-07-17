@@ -175,20 +175,11 @@ export default function BorrowRequestsPage() {
   const loadBookingsList = () => {
     setLoading(true);
     
-    // Fetch actual API requests if backend works
     Promise.all([
       borrowApi.myRequests().catch(() => ({ data: [] })),
       borrowApi.incoming().catch(() => ({ data: [] }))
     ])
       .then(([myReqsResp, incomingReqsResp]) => {
-        // Load custom requests from localStorage
-        const stored = JSON.parse(localStorage.getItem("share_neighbour_bookings"));
-        if (!stored) {
-          localStorage.setItem("share_neighbour_bookings", JSON.stringify(DEFAULT_MOCK_BOOKINGS));
-        }
-        
-        const local = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-        
         // Map database requests to match structure
         const dbMyReqs = (myReqsResp.data || []).map(r => ({
           id: r.id,
@@ -199,9 +190,9 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: r.deposit_amount + 100, // mock total
+          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: r.lender.full_name },
+          lender: { full_name: r.lender?.full_name || "Unknown" },
           borrower: { full_name: "You" },
         }));
 
@@ -214,24 +205,20 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: r.deposit_amount + 100,
+          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
           lender: { full_name: "You" },
-          borrower: { full_name: r.borrower.full_name },
+          borrower: { full_name: r.borrower?.full_name || "Unknown" },
         }));
 
-        // Combine
-        const allBorrows = [...dbMyReqs, ...local.filter(x => x.borrower?.full_name === "You")];
-        const allLends = [...dbIncomingReqs, ...local.filter(x => x.lender?.full_name === "You" || x.borrower?.full_name !== "You")];
-        
-        // Remove duplicates
-        const uniqueBorrows = allBorrows.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-        const uniqueLends = allLends.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-
         setBookings({
-          borrowing: uniqueBorrows,
-          lending: uniqueLends
+          borrowing: dbMyReqs,
+          lending: dbIncomingReqs
         });
+      })
+      .catch((err) => {
+        console.error("Failed to load bookings:", err);
+        toast.error("Failed to load bookings");
       })
       .finally(() => setLoading(false));
   };
