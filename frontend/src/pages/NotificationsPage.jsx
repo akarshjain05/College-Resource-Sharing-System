@@ -85,6 +85,7 @@ export default function NotificationsPage() {
           message: n.message,
           created_at: n.created_at,
           is_read: n.is_read,
+          link: n.link,
           type: n.title.toLowerCase().includes("request") ? "request" : "calendar"
         }));
 
