@@ -129,7 +129,7 @@ export default function MyNeedsPage() {
             const offersList = expandedOffers[r.id];
             
             return (
-              <div key={r.id} className={`card p-5 flex flex-col justify-between ${r.is_fulfilled ? 'opacity-70' : ''}`}>
+              <div key={r.id} className={`card p-5 flex flex-col justify-between h-fit ${r.is_fulfilled ? 'opacity-70' : ''}`}>
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
