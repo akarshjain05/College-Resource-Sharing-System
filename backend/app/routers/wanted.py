@@ -36,9 +36,26 @@ def create_wanted_request(
 
 
 @router.get("", response_model=list[WantedResponse])
-def list_wanted_requests(db: Session = Depends(get_db)):
-    # Sort by newest first and only unfulfilled
-    return db.query(WantedRequest).filter(WantedRequest.is_fulfilled == False).order_by(WantedRequest.created_at.desc()).all()
+def list_wanted_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Sort by newest first and only unfulfilled, excluding current user's own requests
+    return db.query(WantedRequest).filter(
+        WantedRequest.is_fulfilled == False,
+        WantedRequest.user_id != current_user.id
+    ).order_by(WantedRequest.created_at.desc()).all()
+
+
+@router.get("/me", response_model=list[WantedResponse])
+def my_wanted_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Sort by newest first, include both unfulfilled and fulfilled for own requests
+    return db.query(WantedRequest).filter(
+        WantedRequest.user_id == current_user.id
+    ).order_by(WantedRequest.created_at.desc()).all()
 
 
 @router.post("/{wanted_id}/fulfill", response_model=WantedResponse)
