@@ -70,6 +70,7 @@ export const notificationApi = {
 
 export const wantedApi = {
   list: () => api.get("/wanted"),
+  myNeeds: () => api.get("/wanted/me"),
   create: (data) => api.post("/wanted", data),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
   offer: (id, resourceId) => api.post(`/wanted/${id}/offer`, { resource_id: resourceId }),

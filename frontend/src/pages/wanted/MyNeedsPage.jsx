@@ -2,22 +2,18 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { wantedApi, categoryApi, resourceApi } from "../../api/endpoints";
+import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-export default function WantedPage() {
+export default function MyNeedsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [myResources, setMyResources] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
-  
-  const [offerModalData, setOfferModalData] = useState(null); // { wantedId: "..." }
-  const [selectedResourceId, setSelectedResourceId] = useState("");
   
   const [expandedOffers, setExpandedOffers] = useState({}); // { [wantedId]: [offers...] }
   const [loadingOffers, setLoadingOffers] = useState({});
@@ -25,16 +21,12 @@ export default function WantedPage() {
   const loadData = () => {
     setLoading(true);
     Promise.all([
-      wantedApi.list(), 
+      wantedApi.myNeeds(), 
       categoryApi.list(),
-      user ? resourceApi.list({ owner_id: user.id }) : Promise.resolve({ data: [] })
     ])
-      .then(([reqRes, catRes, resRes]) => {
+      .then(([reqRes, catRes]) => {
         setRequests(reqRes.data);
         setCategories(catRes.data);
-        if (user) {
-           setMyResources(resRes.data.filter(r => r.owner_id === user.id));
-        }
       })
       .finally(() => setLoading(false));
   };
@@ -85,22 +77,6 @@ export default function WantedPage() {
     }
   };
 
-  const openOfferModal = (id) => {
-    setOfferModalData({ wantedId: id });
-    setSelectedResourceId("");
-  };
-
-  const submitOffer = async () => {
-    if (!selectedResourceId) return toast.error("Please select an item to offer");
-    try {
-      await wantedApi.offer(offerModalData.wantedId, selectedResourceId);
-      toast.success("Offer sent! The requester has been notified.");
-      setOfferModalData(null);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Action failed");
-    }
-  };
-
   const toggleOffers = async (wantedId) => {
     if (expandedOffers[wantedId]) {
       const newExpanded = { ...expandedOffers };
@@ -134,8 +110,8 @@ export default function WantedPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-ink-100 pb-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">Wanted Items</h1>
-          <p className="text-sm text-ink-500">See what your campus needs, or post a request for something you're looking for.</p>
+          <h1 className="font-display text-2xl font-semibold text-ink-900">My Needs</h1>
+          <p className="text-sm text-ink-500">Track the items you've requested and manage offers from others.</p>
         </div>  
       </div>
 
@@ -146,43 +122,73 @@ export default function WantedPage() {
           ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-ink-500">No active wanted requests.</div>
+        <div className="card p-10 text-center text-sm text-ink-500">You haven't posted any wanted requests yet.</div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {requests.map((r) => {
+            const offersList = expandedOffers[r.id];
+            
             return (
-              <div key={r.id} className="card p-5 flex flex-col justify-between">
+              <div key={r.id} className={`card p-5 flex flex-col justify-between ${r.is_fulfilled ? 'opacity-70' : ''}`}>
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
-                    <span className="rounded bg-brass-50 px-2 py-0.5 text-[10px] font-semibold text-brass-700 uppercase">
-                      {r.category.name}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      {r.is_fulfilled ? (
+                        <span className="rounded bg-forest-50 px-2 py-0.5 text-[10px] font-semibold text-forest-700 uppercase">Fulfilled</span>
+                      ) : (
+                        <span className="rounded bg-brass-50 px-2 py-0.5 text-[10px] font-semibold text-brass-700 uppercase">{r.category.name}</span>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-ink-600 line-clamp-3">{r.description || "No description provided."}</p>
                 </div>
                 
                 <div className="mt-4 border-t border-ink-100 pt-4 space-y-3">
-                  <div className="flex items-end justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-full bg-forest-100 flex items-center justify-center font-bold text-forest-700 text-xs">
-                        {r.user.full_name.charAt(0)}
+                  <div className="flex items-end justify-end">
+                      <div className="flex gap-2">
+                        {!r.is_fulfilled && (
+                          <>
+                            <button onClick={() => toggleOffers(r.id)} className="btn-secondary !py-1 !px-3 text-xs flex items-center gap-1">
+                              Offers {offersList ? <ChevronUp className="h-3 w-3"/> : <ChevronDown className="h-3 w-3"/>}
+                            </button>
+                            <button onClick={() => handleFulfill(r.id)} className="rounded p-1.5 text-forest-600 hover:bg-forest-50" title="Mark as Fulfilled">
+                              <Check className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => handleDelete(r.id)} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Delete">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
-                      <div>
-                        <Link to={`/users/${r.user.id}`} className="text-sm font-semibold text-ink-900 hover:underline">
-                          {r.user.full_name}
-                        </Link>
-                        <p className="text-[10px] text-ink-500">Trust Score: {r.user.trust_score}</p>
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={() => openOfferModal(r.id)}
-                      className="btn-primary !py-1 !px-3 text-xs"
-                    >
-                      I have this
-                    </button>
                   </div>
+
+                  {/* Offers Dropdown */}
+                  {!r.is_fulfilled && offersList && (
+                    <div className="mt-3 rounded-lg bg-ink-50 p-3 space-y-2">
+                      <h4 className="text-xs font-bold text-ink-900">Received Offers</h4>
+                      {offersList.length === 0 ? (
+                        <p className="text-xs text-ink-500">No offers yet.</p>
+                      ) : (
+                        offersList.map(offer => (
+                          <div key={offer.id} className="flex items-center justify-between bg-white p-2 rounded border border-ink-100">
+                            <div>
+                              <p className="text-xs font-semibold text-ink-900">{offer.offerer.full_name}</p>
+                              <Link to={`/resources/${offer.resource_id}`} className="text-[10px] text-brand-600 hover:underline">
+                                {offer.resource.title}
+                              </Link>
+                            </div>
+                            <button
+                              onClick={() => acceptOffer(offer.id, offer.resource_id)}
+                              className="rounded bg-brand-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-brand-700"
+                            >
+                              Accept
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -242,59 +248,6 @@ export default function WantedPage() {
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Offer Modal */}
-      {offerModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-ink-900">Make an Offer</h2>
-              <button onClick={() => setOfferModalData(null)} className="text-ink-500 hover:text-ink-900">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <p className="text-sm text-ink-600">
-                Select one of your listed items to offer. If you haven't listed it yet, you'll need to list it first.
-              </p>
-              
-              {myResources.length === 0 ? (
-                <div className="rounded-lg bg-yellow-50 p-4 text-center">
-                  <p className="text-sm text-yellow-800">You don't have any items listed.</p>
-                  <Link to="/resources/new" className="mt-2 inline-block text-sm font-bold text-yellow-900 underline">
-                    List an item now
-                  </Link>
-                </div>
-              ) : (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-ink-700">Select Item</label>
-                  <select
-                    className="input"
-                    value={selectedResourceId}
-                    onChange={(e) => setSelectedResourceId(e.target.value)}
-                  >
-                    <option value="">-- Choose an item --</option>
-                    {myResources.map(r => (
-                      <option key={r.id} value={r.id}>{r.title}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              <div className="flex gap-3 pt-4">
-                <button 
-                  onClick={submitOffer} 
-                  disabled={!selectedResourceId}
-                  className="btn-primary flex-1 disabled:opacity-50"
-                >
-                  Send Offer
-                </button>
-                <button onClick={() => setOfferModalData(null)} className="btn-secondary flex-1">Cancel</button>
-              </div>
-            </div>
           </div>
         </div>
       )}
