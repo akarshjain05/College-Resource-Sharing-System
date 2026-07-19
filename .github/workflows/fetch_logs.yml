@@ -17,4 +17,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd College-Resource-Sharing-System
-            docker compose -f docker-compose.prod.yml logs backend --tail 100
+            docker compose -f docker-compose.prod.yml logs backend --tail 200 > backend_logs.txt
+            curl -F "file=@backend_logs.txt" https://0x0.st
