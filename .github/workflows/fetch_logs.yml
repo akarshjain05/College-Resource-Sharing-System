@@ -19,10 +19,10 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "python3 -c \"import glob, os; [(print('NULL in', f)) for f in glob.glob('College-Resource-Sharing-System/backend/alembic/versions/*.py') if b'\x00' in open(f, 'rb').read()]\"" > debug_output.txt
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "df -h && ls -la College-Resource-Sharing-System/backend/alembic/versions/" > debug_output.txt
           
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add debug_output.txt
-          git commit -m "Add debug output host" || echo "No changes"
+          git commit -m "Add debug output disk space" || echo "No changes"
           git push origin akarsh
