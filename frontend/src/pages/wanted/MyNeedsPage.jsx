@@ -124,12 +124,12 @@ export default function MyNeedsPage() {
       ) : requests.length === 0 ? (
         <div className="card p-10 text-center text-sm text-ink-500">You haven't posted any wanted requests yet.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests.map((r) => {
             const offersList = expandedOffers[r.id];
             
             return (
-              <div key={r.id} className={`card p-5 flex flex-col justify-between ${r.is_fulfilled ? 'opacity-70' : ''}`}>
+              <div key={r.id} className={`card p-5 flex flex-col justify-between h-fit ${r.is_fulfilled ? 'opacity-70' : ''}`}>
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
@@ -144,7 +144,7 @@ export default function MyNeedsPage() {
                   <p className="mt-2 text-sm text-ink-600 line-clamp-3">{r.description || "No description provided."}</p>
                 </div>
                 
-                <div className="mt-4 border-t border-ink-100 pt-4 space-y-3">
+                <div className="mt-4 border-t border-ink-100 pt-4 space-y-3 relative">
                   <div className="flex items-end justify-end">
                       <div className="flex gap-2">
                         {!r.is_fulfilled && (
@@ -165,13 +165,13 @@ export default function MyNeedsPage() {
 
                   {/* Offers Dropdown */}
                   {!r.is_fulfilled && offersList && (
-                    <div className="mt-3 rounded-lg bg-ink-50 p-3 space-y-2">
+                    <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-lg bg-white shadow-xl border border-ink-100 p-3 space-y-2">
                       <h4 className="text-xs font-bold text-ink-900">Received Offers</h4>
                       {offersList.length === 0 ? (
                         <p className="text-xs text-ink-500">No offers yet.</p>
                       ) : (
                         offersList.map(offer => (
-                          <div key={offer.id} className="flex items-center justify-between bg-white p-2 rounded border border-ink-100">
+                          <div key={offer.id} className="flex items-center justify-between bg-ink-50 p-2 rounded border border-ink-100">
                             <div>
                               <p className="text-xs font-semibold text-ink-900">{offer.offerer.full_name}</p>
                               <Link to={`/resources/${offer.resource_id}`} className="text-[10px] text-brand-600 hover:underline">

@@ -148,10 +148,10 @@ export default function WantedPage() {
       ) : requests.length === 0 ? (
         <div className="card p-10 text-center text-sm text-ink-500">No active wanted requests.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests.map((r) => {
             return (
-              <div key={r.id} className="card p-5 flex flex-col justify-between">
+              <div key={r.id} className="card p-5 flex flex-col justify-between h-fit">
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
