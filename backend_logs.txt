@@ -1,51 +1,66 @@
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                          PORTS                                                                                             NAMES
+63611ae277f0   crss_frontend_prod                              "caddy run --config …"   3 minutes ago   Up 3 minutes                    0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+6c5c972c25b3   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   3 minutes ago   Up 3 minutes                    8000/tcp                                                                                          crss_celery_worker
+990a8e2df324   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   3 minutes ago   Restarting (1) 20 seconds ago                                                                                                     crss_backend
+a3da4fd08b93   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   3 minutes ago   Up 3 minutes                    8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago      Up 2 days (healthy)             5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago      Up 2 days (healthy)             6379/tcp                                                                                          crss_redis
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/c7f260b43a82_add_is_suspended.py", line 24, in upgrade
+crss_backend  |     op.add_column('users', sa.Column('is_suspended', sa.Boolean(), server_default='false', nullable=False))
+crss_backend  |   File "<string>", line 8, in add_column
+crss_backend  |   File "<string>", line 3, in add_column
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 2142, in add_column
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 171, in add_column
+crss_backend  |     operations.impl.add_column(table_name, column, schema=schema, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 334, in add_column
+crss_backend  |     self._exec(base.AddColumn(table_name, column, schema=schema))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 207, in _exec
+crss_backend  |     return conn.execute(construct, multiparams)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
 crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 210, in _revision_map
-crss_backend  |     for revision in self._generator():
-crss_backend  |                     ^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 155, in _load_revisions
-crss_backend  |     script = Script._from_filename(self, dir_name, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 1042, in _from_filename
-crss_backend  |     module = util.load_python_file(dir_, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1133, in get_code
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1063, in source_to_code
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  | SyntaxError: source code string cannot contain null bytes
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateColumn) column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | [SQL: ALTER TABLE users ADD COLUMN is_suspended BOOLEAN DEFAULT 'false' NOT NULL]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade 2060cdf0bdda -> a7c3e9ed1944, add_wanted_request_id_to_borrow_request
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade a7c3e9ed1944 -> c7f260b43a82, add_is_suspended
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateColumn: column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
 crss_backend  | Traceback (most recent call last):
 crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
 crss_backend  |     sys.exit(main())
@@ -75,54 +90,63 @@ crss_backend  |     context.run_migrations()
 crss_backend  |   File "<string>", line 8, in run_migrations
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
 crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/c7f260b43a82_add_is_suspended.py", line 24, in upgrade
+crss_backend  |     op.add_column('users', sa.Column('is_suspended', sa.Boolean(), server_default='false', nullable=False))
+crss_backend  |   File "<string>", line 8, in add_column
+crss_backend  |   File "<string>", line 3, in add_column
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 2142, in add_column
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 171, in add_column
+crss_backend  |     operations.impl.add_column(table_name, column, schema=schema, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 334, in add_column
+crss_backend  |     self._exec(base.AddColumn(table_name, column, schema=schema))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 207, in _exec
+crss_backend  |     return conn.execute(construct, multiparams)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
 crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 210, in _revision_map
-crss_backend  |     for revision in self._generator():
-crss_backend  |                     ^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 155, in _load_revisions
-crss_backend  |     script = Script._from_filename(self, dir_name, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 1042, in _from_filename
-crss_backend  |     module = util.load_python_file(dir_, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1133, in get_code
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1063, in source_to_code
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  | SyntaxError: source code string cannot contain null bytes
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateColumn) column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | [SQL: ALTER TABLE users ADD COLUMN is_suspended BOOLEAN DEFAULT 'false' NOT NULL]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade 2060cdf0bdda -> a7c3e9ed1944, add_wanted_request_id_to_borrow_request
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade a7c3e9ed1944 -> c7f260b43a82, add_is_suspended
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateColumn: column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
 crss_backend  | Traceback (most recent call last):
 crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
 crss_backend  |     sys.exit(main())
@@ -152,49 +176,132 @@ crss_backend  |     context.run_migrations()
 crss_backend  |   File "<string>", line 8, in run_migrations
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
 crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/c7f260b43a82_add_is_suspended.py", line 24, in upgrade
+crss_backend  |     op.add_column('users', sa.Column('is_suspended', sa.Boolean(), server_default='false', nullable=False))
+crss_backend  |   File "<string>", line 8, in add_column
+crss_backend  |   File "<string>", line 3, in add_column
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 2142, in add_column
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 171, in add_column
+crss_backend  |     operations.impl.add_column(table_name, column, schema=schema, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 334, in add_column
+crss_backend  |     self._exec(base.AddColumn(table_name, column, schema=schema))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 207, in _exec
+crss_backend  |     return conn.execute(construct, multiparams)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
 crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 210, in _revision_map
-crss_backend  |     for revision in self._generator():
-crss_backend  |                     ^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 155, in _load_revisions
-crss_backend  |     script = Script._from_filename(self, dir_name, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 1042, in _from_filename
-crss_backend  |     module = util.load_python_file(dir_, filename)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateColumn) column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | [SQL: ALTER TABLE users ADD COLUMN is_suspended BOOLEAN DEFAULT 'false' NOT NULL]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade 2060cdf0bdda -> a7c3e9ed1944, add_wanted_request_id_to_borrow_request
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade a7c3e9ed1944 -> c7f260b43a82, add_is_suspended
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateColumn: column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
+crss_backend  |     sys.exit(main())
+crss_backend  |              ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
+crss_backend  |     CommandLine(prog=prog).main(argv=argv)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
+crss_backend  |     self.run_cmd(cfg, options)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
+crss_backend  |     fn(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
+crss_backend  |     script.run_env()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
+crss_backend  |     util.load_python_file(self.dir, "env.py")
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
 crss_backend  |     module = load_module_py(module_id, path)
 crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
 crss_backend  |     spec.loader.exec_module(module)  # type: ignore
 crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1133, in get_code
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 1063, in source_to_code
+crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
 crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  | SyntaxError: source code string cannot contain null bytes
+crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
+crss_backend  |     run_migrations_online()
+crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
+crss_backend  |     context.run_migrations()
+crss_backend  |   File "<string>", line 8, in run_migrations
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
+crss_backend  |     self.get_context().run_migrations(**kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/c7f260b43a82_add_is_suspended.py", line 24, in upgrade
+crss_backend  |     op.add_column('users', sa.Column('is_suspended', sa.Boolean(), server_default='false', nullable=False))
+crss_backend  |   File "<string>", line 8, in add_column
+crss_backend  |   File "<string>", line 3, in add_column
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 2142, in add_column
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 171, in add_column
+crss_backend  |     operations.impl.add_column(table_name, column, schema=schema, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 334, in add_column
+crss_backend  |     self._exec(base.AddColumn(table_name, column, schema=schema))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 207, in _exec
+crss_backend  |     return conn.execute(construct, multiparams)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateColumn) column "is_suspended" of relation "users" already exists
+crss_backend  | 
+crss_backend  | [SQL: ALTER TABLE users ADD COLUMN is_suspended BOOLEAN DEFAULT 'false' NOT NULL]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
