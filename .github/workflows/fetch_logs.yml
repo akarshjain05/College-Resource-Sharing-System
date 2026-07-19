@@ -12,17 +12,17 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
-      - name: Debug files
+      - name: Fetch logs
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "df -h && ls -la College-Resource-Sharing-System/backend/alembic/versions/" > debug_output.txt
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "cd College-Resource-Sharing-System && docker ps -a && docker compose -f docker-compose.prod.yml logs backend --tail 300" > backend_logs.txt || true
           
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add debug_output.txt
-          git commit -m "Add debug output disk space" || echo "No changes"
+          git add backend_logs.txt
+          git commit -m "Fetch latest backend logs" || echo "No changes"
           git push origin akarsh
