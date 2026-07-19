@@ -12,17 +12,17 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
-      - name: Fetch and commit logs
+      - name: Debug files
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
           
-          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "cd College-Resource-Sharing-System && docker compose -f docker-compose.prod.yml logs backend --tail 200" > backend_logs.txt
+          ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }} "docker exec crss_backend python3 -c \"import glob, os; [(print('NULL in', f)) for f in glob.glob('/app/alembic/versions/*.py') if b'\x00' in open(f, 'rb').read()]\"" > debug_output.txt
           
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add backend_logs.txt
-          git commit -m "Commit backend logs directly" || echo "No changes"
+          git add debug_output.txt
+          git commit -m "Add debug output" || echo "No changes"
           git push origin akarsh
