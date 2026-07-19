@@ -45,6 +45,9 @@ def list_resources(
         query = query.filter(Resource.condition == condition)
     if status_filter:
         query = query.filter(Resource.status == status_filter)
+    elif not owner_id:
+        # Default to available for public explore page
+        query = query.filter(Resource.status == ResourceStatus.AVAILABLE)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
     if owner_id:
@@ -83,7 +86,7 @@ def create_resource(
     db: Session = Depends(get_db),
 ):
     resource = Resource(
-        **payload.model_dump(),
+        **payload.model_dump(exclude_unset=True),
         owner_id=current_user.id,
         quantity_available=payload.quantity,
     )

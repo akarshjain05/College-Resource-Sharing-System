@@ -59,8 +59,11 @@ api.interceptors.response.use(
       }
 
       try {
+        const csrfToken = getCookie("csrf_token");
         const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
+        }, {
+          headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {}
         });
         localStorage.setItem("crss_access_token", data.access_token);
         localStorage.setItem("crss_refresh_token", data.refresh_token);
@@ -89,6 +92,9 @@ export const getImageUrl = (url) => {
   }
   const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
   try {
+    if (apiBase.startsWith("/")) {
+      return `${window.location.origin}${url}`;
+    }
     const origin = new URL(apiBase).origin;
     return `${origin}${url}`;
   } catch (e) {

@@ -18,6 +18,9 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     )
     borrower_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     lender_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    wanted_request_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("wanted_requests.id"), nullable=True
+    )
 
     status: Mapped[BorrowStatus] = mapped_column(
         SAEnum(BorrowStatus), default=BorrowStatus.REQUESTED, index=True

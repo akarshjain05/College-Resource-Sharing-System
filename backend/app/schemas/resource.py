@@ -30,7 +30,7 @@ class ResourceBase(BaseModel):
 
 
 class ResourceCreate(ResourceBase):
-    pass
+    status: Optional[ResourceStatus] = None
 
 
 class ResourceUpdate(BaseModel):
@@ -42,7 +42,6 @@ class ResourceUpdate(BaseModel):
     tags: Optional[str] = None
     deposit_amount: Optional[float] = None
     max_borrow_days: Optional[int] = None
-    status: Optional[ResourceStatus] = None
     category_id: Optional[uuid.UUID] = None
 
 

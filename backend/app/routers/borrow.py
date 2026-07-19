@@ -32,7 +32,7 @@ def create_borrow_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    resource = db.query(Resource).filter(Resource.id == payload.resource_id).first()
+    resource = db.query(Resource).filter(Resource.id == payload.resource_id).with_for_update().first()
     if not resource:
         raise NotFoundException("Resource not found")
     if resource.owner_id == current_user.id:
@@ -93,8 +93,11 @@ def incoming_borrow_requests(status: Optional[BorrowStatus] = None, current_user
     return query.all()
 
 
-def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User) -> BorrowRequest:
-    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User, for_update: bool = False) -> BorrowRequest:
+    query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
+    if for_update:
+        query = query.with_for_update()
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
     if br.lender_id != lender.id and lender.role != UserRole.ADMIN:
@@ -108,12 +111,18 @@ def approve_borrow_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    br = _get_owned_request(db, request_id, current_user)
+    br = _get_owned_request(db, request_id, current_user, for_update=True)
     if br.status != BorrowStatus.REQUESTED:
         raise AppException("Only pending requests can be approved", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
+    # Lock resource explicitly to prevent concurrent approvals on the last unit
+    resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+    if resource.quantity_available < 1:
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+
     br.status = BorrowStatus.APPROVED
-    resource = br.resource
     resource.quantity_available -= 1
     if resource.quantity_available <= 0:
         resource.status = ResourceStatus.BORROWED
