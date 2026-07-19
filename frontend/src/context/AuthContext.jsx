@@ -17,9 +17,11 @@ export function AuthProvider({ children }) {
       const { data } = await authApi.me();
       setUser(data);
     } catch (err) {
-      localStorage.removeItem("crss_access_token");
-      localStorage.removeItem("crss_refresh_token");
-      setUser(null);
+      if (err.response && err.response.status === 401) {
+        localStorage.removeItem("crss_access_token");
+        localStorage.removeItem("crss_refresh_token");
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }
