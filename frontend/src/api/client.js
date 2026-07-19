@@ -72,9 +72,12 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        localStorage.removeItem("crss_access_token");
-        localStorage.removeItem("crss_refresh_token");
-        window.location.href = "/login";
+        const status = refreshError.response?.status;
+        if (status === 401 || status === 400) {
+          localStorage.removeItem("crss_access_token");
+          localStorage.removeItem("crss_refresh_token");
+          window.location.href = "/login";
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
