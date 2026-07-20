@@ -1,24 +1,25 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                PORTS                                                                                             NAMES
-aae54adf3214   crss_frontend_prod                              "caddy run --config …"   9 minutes ago   Up 9 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-d90fa2b10bd5   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   9 minutes ago   Up 9 minutes          8000/tcp                                                                                          crss_celery_worker
-35ff63930501   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   9 minutes ago   Up 9 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-978d16951ac0   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   9 minutes ago   Up 9 minutes          8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago      Up 2 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago      Up 2 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED        STATUS                PORTS                                                                                             NAMES
+d0cf4340aea4   crss_frontend_prod                              "caddy run --config …"   11 hours ago   Up 11 hours           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+0a8cc7ce9bfc   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   11 hours ago   Up 11 hours           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+481e23a63362   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   11 hours ago   Up 11 hours           8000/tcp                                                                                          crss_celery_worker
+93949ff27788   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   11 hours ago   Up 11 hours           8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago     Up 2 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago     Up 2 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | INFO  [alembic.runtime.migration] Running upgrade 2060cdf0bdda -> a7c3e9ed1944, add_wanted_request_id_to_borrow_request
-crss_backend  | INFO  [alembic.runtime.migration] Running upgrade a7c3e9ed1944 -> c7f260b43a82, add_is_suspended
-crss_backend  | INFO:     Started server process [8]
+crss_backend  | INFO:     Started server process [9]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:34354 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:34354 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:34354 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33394 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33394 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33404 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33406 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33394 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33394 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42252 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42252 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42258 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42272 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42272 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48480 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48488 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48486 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48486 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48480 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48488 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52290 - "HEAD /api/config HTTP/1.1" 404 Not Found

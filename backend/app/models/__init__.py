@@ -9,3 +9,4 @@ from app.models.resource import Resource, ResourceImage  # noqa: F401
 from app.models.borrow import BorrowRequest  # noqa: F401
 from app.models.misc import Review, Notification, AuditLog, Complaint  # noqa: F401
 from app.models.wanted import WantedRequest  # noqa: F401
+from app.models.damage_claim import DamageClaim  # noqa: F401
