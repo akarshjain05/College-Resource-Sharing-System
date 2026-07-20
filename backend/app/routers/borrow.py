@@ -254,7 +254,8 @@ def confirm_return_resource(
     if br.status != BorrowStatus.RETURN_REQUESTED:
         raise AppException("Only pending returns can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    br.status = BorrowStatus.DAMAGED if br.damage_report else BorrowStatus.RETURNED
+    is_damaged = bool(br.damage_report)
+    br.status = BorrowStatus.DAMAGED if is_damaged else BorrowStatus.RETURNED
     br.borrower_rating = payload.borrower_rating
     br.borrower_review = payload.borrower_review
 
@@ -263,33 +264,54 @@ def confirm_return_resource(
     resource.total_borrows += 1
     resource.status = ResourceStatus.AVAILABLE
 
-    # Trust Score Logic (Borrower)
+    # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
     if borrower:
-        if br.status == BorrowStatus.DAMAGED:
-            borrower.trust_score -= 20
-        else:
+        if not is_damaged:
+            # Only apply normal trust adjustments for non-damaged returns
             if br.actual_return_date and br.actual_return_date > br.requested_end_date:
                 borrower.trust_score -= 5
             else:
                 borrower.trust_score += 2
 
         if br.borrower_rating is not None:
-            # e.g., 5 star = +5, 1 star = -5 (linear: rating * 2.5 - 7.5, or simpler map)
             rating_adj = {1: -5, 2: -2, 3: 0, 4: +2, 5: +5}
             borrower.trust_score += rating_adj.get(br.borrower_rating, 0)
 
     # Sharing Score Logic (Lender)
-    if br.status != BorrowStatus.DAMAGED:
+    if not is_damaged:
         current_user.sharing_score += 10
     
     if br.lender_rating is not None:
-        # Bonus for good sharing experience
         rating_adj = {1: -2, 2: -1, 3: 0, 4: +2, 5: +5}
         current_user.sharing_score += rating_adj.get(br.lender_rating, 0)
 
     db.commit()
     db.refresh(br)
+
+    # If damaged, auto-create a DamageClaim for admin adjudication
+    if is_damaged:
+        from app.models.damage_claim import DamageClaim
+        from app.models.enums import DamageClaimStatus
+
+        claim = DamageClaim(
+            borrow_request_id=br.id,
+            filed_by_id=current_user.id,
+            against_user_id=br.borrower_id,
+            description=br.damage_report,
+            status=DamageClaimStatus.OPEN,
+        )
+        db.add(claim)
+        db.commit()
+        db.refresh(claim)
+
+        # Notify borrower about the damage claim
+        create_notification(
+            db, br.borrower_id, NotificationType.SYSTEM,
+            "Damage claim filed",
+            f"A damage claim has been filed for '{resource.title}'. You can dispute it within your dashboard.",
+            link=f"/damage-claims/{claim.id}",
+        )
 
     create_notification(
         db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
@@ -298,3 +320,4 @@ def confirm_return_resource(
         link=f"/borrow-requests/{br.id}",
     )
     return br
+
