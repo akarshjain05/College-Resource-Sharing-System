@@ -40,6 +40,7 @@ export const resourceApi = {
   create: (payload) => api.post("/resources", payload),
   update: (id, payload) => api.put(`/resources/${id}`, payload),
   remove: (id) => api.delete(`/resources/${id}`),
+  getAvailability: (id) => api.get(`/resources/${id}/availability`),
   addImage: (id, imageUrl, isPrimary = false) =>
     api.post(`/resources/${id}/images`, null, { params: { image_url: imageUrl, is_primary: isPrimary } }),
 };

@@ -59,7 +59,10 @@ def mark_overdue_borrows_late():
         today = date.today()
         overdue = (
             db.query(BorrowRequest)
-            .filter(BorrowRequest.status == BorrowStatus.ACTIVE, BorrowRequest.requested_end_date < today)
+            .filter(
+                BorrowRequest.status.in_([BorrowStatus.ACTIVE, BorrowStatus.APPROVED]),
+                BorrowRequest.requested_end_date < today
+            )
             .all()
         )
         for br in overdue:
