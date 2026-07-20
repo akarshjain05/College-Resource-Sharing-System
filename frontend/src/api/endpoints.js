@@ -61,7 +61,14 @@ export const borrowApi = {
 export const reviewApi = {
   create: (payload) => api.post("/reviews", payload),
   listForResource: (resourceId) => api.get(`/resources/${resourceId}/reviews`),
+  listForRequest: (requestId) => api.get(`/borrow-requests/${requestId}/reviews`),
   delete: (reviewId) => api.delete(`/reviews/${reviewId}`),
+};
+
+export const chatApi = {
+  list: (requestId) => api.get(`/borrow-requests/${requestId}/messages`),
+  send: (requestId, payload) => api.post(`/borrow-requests/${requestId}/messages`, payload),
+  markRead: (requestId) => api.patch(`/borrow-requests/${requestId}/messages/read`),
 };
 
 export const notificationApi = {

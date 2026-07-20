@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star, BellRing } from "lucide-react";
+import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
+import ChatThread from "../../components/ChatThread";
+import { chatEventBus } from "../../utils/chatEventBus";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -19,9 +21,22 @@ const STATUS_STYLE = {
 
 function RequestCard({ request, isIncoming, onAction }) {
   const [showRating, setShowRating] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [actionType, setActionType] = useState("");
+  const [hasUnread, setHasUnread] = useState(false); // Can be set by websocket
+
+  // Listen for websocket messages to show dot if chat is closed
+  useEffect(() => {
+    const handleNewMessage = (newMsg) => {
+      if (!showChat) {
+        setHasUnread(true);
+      }
+    };
+    const unsubscribe = chatEventBus.subscribe(request.id, handleNewMessage);
+    return () => unsubscribe();
+  }, [request.id, showChat]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -165,6 +180,31 @@ function RequestCard({ request, isIncoming, onAction }) {
             </button>
           )}
         </div>
+      )}
+      
+      <div className="mt-3 flex justify-end">
+        <button 
+          onClick={() => {
+            setShowChat(!showChat);
+            if (!showChat) setHasUnread(false);
+          }} 
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors relative ${
+            showChat ? "bg-slate-100 text-slate-800" : "bg-primary-50 text-primary-600 hover:bg-primary-100"
+          }`}
+        >
+          <MessageCircle className="h-4 w-4" />
+          {showChat ? "Close Chat" : "Message"}
+          {hasUnread && !showChat && (
+            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-rose-500 translate-x-1/3 -translate-y-1/3 border border-white"></span>
+          )}
+        </button>
+      </div>
+
+      {showChat && (
+        <ChatThread 
+          request={request} 
+          onReportIssue={(req) => window.location.href = `/complaints?borrow_request_id=${req.id}`} 
+        />
       )}
     </div>
   );

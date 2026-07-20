@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { chatEventBus } from "../utils/chatEventBus";
 
 const WS_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1")
   .replace(/^http/, "ws")
@@ -29,15 +30,25 @@ export function useNotificationSocket(onNotification) {
       socket.onmessage = (event) => {
         try {
           const payload = JSON.parse(event.data);
+          
+          // Route chat messages directly to open threads
+          if (payload.type === "chat_message") {
+            const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
+            // If the thread is open (handled), we might not want to show a toast,
+            // or we could show a quieter one. Let's just return if handled so it doesn't toast
+            if (isHandled) return;
+          }
+          
           toast((t) => (
             <div 
               onClick={() => {
                 if (payload.link) navigate(payload.link);
+                else if (payload.type === "chat_message") navigate(`/borrow-requests`);
                 toast.dismiss(t.id);
               }}
-              style={{ cursor: payload.link ? "pointer" : "default" }}
+              style={{ cursor: (payload.link || payload.type === "chat_message") ? "pointer" : "default" }}
             >
-              {payload.title}
+              {payload.title || (payload.type === "chat_message" ? "New message received" : "New Notification")}
             </div>
           ), { icon: "🔔" });
           onNotification?.(payload);
