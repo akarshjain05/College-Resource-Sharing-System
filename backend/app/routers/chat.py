@@ -15,7 +15,7 @@ from app.schemas.chat import ChatMessageCreate, ChatMessageResponse
 from app.services.notification_service import create_notification
 from app.core.limiter import limiter
 from starlette.requests import Request
-from app.ws_manager import manager
+from app.services.ws_manager import manager
 
 router = APIRouter(prefix="/borrow-requests/{request_id}/messages", tags=["Chat"])
 
