@@ -13,7 +13,7 @@ from app.models.chat import ChatMessage
 from app.models.enums import NotificationType
 from app.schemas.chat import ChatMessageCreate, ChatMessageResponse
 from app.services.notification_service import create_notification
-from app.core.limiter import limiter
+from app.core.rate_limit import limiter
 from starlette.requests import Request
 from app.services.ws_manager import manager
 
