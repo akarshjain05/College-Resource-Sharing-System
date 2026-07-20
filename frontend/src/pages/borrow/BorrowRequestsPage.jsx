@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star } from "lucide-react";
+import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star, BellRing } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
 
 const STATUS_STYLE = {
@@ -27,6 +27,9 @@ function RequestCard({ request, isIncoming, onAction }) {
   const end = new Date(request.requested_end_date);
   end.setHours(0, 0, 0, 0);
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+
+  const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
+  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 24;
 
   const handleActionClick = (action) => {
     if (action === "return" || action === "confirm_return") {
@@ -122,9 +125,16 @@ function RequestCard({ request, isIncoming, onAction }) {
             </>
           )}
           {!isIncoming && request.status === "requested" && (
-            <button onClick={() => handleActionClick("cancel")} className="btn-secondary !py-1.5 !px-3 text-xs">
-              <Ban className="h-3.5 w-3.5" /> Cancel
-            </button>
+            <>
+              {canNudge && (
+                <button onClick={() => handleActionClick("nudge")} className="btn-secondary !py-1.5 !px-3 text-xs">
+                  <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                </button>
+              )}
+              <button onClick={() => handleActionClick("cancel")} className="btn-secondary !py-1.5 !px-3 text-xs">
+                <Ban className="h-3.5 w-3.5" /> Cancel
+              </button>
+            </>
           )}
           {!isIncoming && request.status === "approved" && (
             <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
@@ -239,6 +249,11 @@ export default function BorrowRequestsPage() {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
       if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
+      if (newStatus === "nudge") {
+        await borrowApi.nudge(bookingId);
+        toast.success("Nudge sent successfully!");
+        return;
+      }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, ""); 
@@ -257,6 +272,11 @@ export default function BorrowRequestsPage() {
     try {
       if (action === "approve") await borrowApi.approve(id);
       if (action === "reject") await borrowApi.reject(id, "Not available right now");
+      if (action === "nudge") {
+        await borrowApi.nudge(id);
+        toast.success("Nudge sent successfully!");
+        return;
+      }
       if (action === "handover") await borrowApi.handover(id);
       if (action === "cancel") await borrowApi.cancel(id);
       if (action === "return") await borrowApi.returnItem(id, null, rating, review);

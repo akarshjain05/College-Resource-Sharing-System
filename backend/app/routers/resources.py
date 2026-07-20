@@ -11,7 +11,9 @@ from app.core.exceptions import NotFoundException, ForbiddenException
 from app.models.enums import ResourceCondition, ResourceStatus, UserRole
 from app.models.resource import Resource, ResourceImage
 from app.models.user import User
+from app.models.wishlist import WishlistItem
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
+from app.core.deps import get_current_user_optional
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -31,6 +33,7 @@ def list_resources(
     sort_dir: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     query = db.query(Resource)
 
@@ -65,17 +68,44 @@ def list_resources(
 
     items = query.offset((page - 1) * page_size).limit(page_size).all()
 
-    return ResourceListResponse(total=total, page=page, page_size=page_size, items=items)
+    # Populate is_wishlisted
+    if current_user:
+        wishlist_ids = {
+            w.resource_id for w in db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id).all()
+        }
+        for item in items:
+            item.is_wishlisted = item.id in wishlist_ids
+    else:
+        for item in items:
+            item.is_wishlisted = False
+
+    return ResourceListResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        items=items,
+    )
 
 
 @router.get("/{resource_id}", response_model=ResourceResponse)
-def get_resource(resource_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_resource(
+    resource_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
     if not resource:
         raise NotFoundException("Resource not found")
     resource.view_count += 1
     db.commit()
     db.refresh(resource)
+
+    if current_user:
+        w = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id, WishlistItem.resource_id == resource.id).first()
+        resource.is_wishlisted = bool(w)
+    else:
+        resource.is_wishlisted = False
+
     return resource
 
 

@@ -1,7 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
-from sqlalchemy import ForeignKey, Enum as SAEnum, Date, Text, Numeric
+from sqlalchemy import ForeignKey, Enum as SAEnum, Date, Text, Numeric, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,6 +34,8 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     deposit_paid: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
     damage_report: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_nudged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     borrower_rating: Mapped[Optional[int]] = mapped_column(nullable=True)
     borrower_review: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

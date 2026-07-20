@@ -91,6 +91,7 @@ class UserResponse(UserBase):
     is_suspended: bool
     trust_score: int
     sharing_score: int
+    avg_response_seconds: Optional[int] = None
     created_at: datetime
 
 
