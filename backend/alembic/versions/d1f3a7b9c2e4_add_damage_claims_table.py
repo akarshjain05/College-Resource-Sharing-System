@@ -10,6 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -44,7 +45,7 @@ def upgrade() -> None:
         sa.Column('description', sa.Text(), nullable=False),
         sa.Column('estimated_cost', sa.Numeric(precision=10, scale=2), nullable=True),
         sa.Column('dispute_reason', sa.Text(), nullable=True),
-        sa.Column('status', sa.Enum('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial', name='damageclaimstatus', create_type=False), nullable=False),
+        sa.Column('status', postgresql.ENUM('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial', name='damageclaimstatus', create_type=False), nullable=False),
         sa.Column('admin_resolution', sa.Text(), nullable=True),
         sa.Column('final_cost', sa.Numeric(precision=10, scale=2), nullable=True),
         sa.Column('trust_penalty_applied', sa.Integer(), server_default='0', nullable=False),
