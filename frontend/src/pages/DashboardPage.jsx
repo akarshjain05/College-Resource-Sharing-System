@@ -25,10 +25,13 @@ import {
   Moon,
   Trash2,
   Bookmark,
+  Filter,
+  CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { resourceApi } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
+import DueBadge from "../components/DueBadge";
 
 // Large Mock items dataset with more items per neighborhood
 const LOCAL_MOCK_ITEMS = {
@@ -931,15 +934,21 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Return Reminder Card (Screen 8 Clock icon) */}
+          {/* Active Borrows / Return Reminder Card (Screen 8 Clock icon) */}
           <div className="rounded-3xl border border-rose-100 dark:border-rose-950/20 bg-rose-50/40 dark:bg-rose-950/5 p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500 text-white shadow-sm flex-shrink-0">
                 <Clock className="h-4.5 w-4.5" />
               </div>
               <div>
-                <h4 className="text-xs font-extrabold text-rose-700 dark:text-rose-450 leading-none">Due Tomorrow</h4>
-                <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mt-1">Return Alert</p>
+                <h4 className="text-xs font-extrabold text-rose-700 dark:text-rose-450 leading-none flex items-center gap-2">
+                  Active Borrows
+                  <DueBadge 
+                    endDate={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]} 
+                    status="active" 
+                  />
+                </h4>
+                <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mt-1">1 urgent item</p>
               </div>
             </div>
             

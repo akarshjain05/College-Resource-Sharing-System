@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star, BellRing } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
+import DueBadge from "../../components/DueBadge";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -77,9 +78,10 @@ function RequestCard({ request, isIncoming, onAction }) {
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-ink-500">
-        {request.requested_start_date} → {request.requested_end_date}
-      </p>
+      <div className="mt-2 flex items-center gap-2 text-xs text-ink-500">
+        <span>{request.requested_start_date} → {request.requested_end_date}</span>
+        <DueBadge endDate={request.requested_end_date} status={request.status} />
+      </div>
       {request.purpose && <p className="mt-1 text-sm text-ink-700">{request.purpose}</p>}
 
       {showRating ? (

@@ -41,11 +41,23 @@ def create_borrow_request(
     if resource.quantity_available < 1:
         raise AppException("This resource is currently unavailable", status_code=status.HTTP_400_BAD_REQUEST, error_code="OUT_OF_STOCK")
         
-    requested_days = (payload.requested_end_date - payload.requested_start_date).days
+    requested_days = (payload.requested_end_date - payload.requested_start_date).days + 1
     if requested_days > resource.max_borrow_days:
         raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
-    if requested_days < 0:
-        raise AppException("End date must be after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+    if requested_days <= 0:
+        raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+
+    # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
+    if resource.quantity_available <= 1:
+        overlap_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
+        conflict = db.query(BorrowRequest).filter(
+            BorrowRequest.resource_id == resource.id,
+            BorrowRequest.status.in_(overlap_statuses),
+            BorrowRequest.requested_start_date <= payload.requested_end_date,
+            BorrowRequest.requested_end_date >= payload.requested_start_date,
+        ).first()
+        if conflict:
+            raise AppException("Those dates overlap an existing approved borrow", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_CONFLICT")
 
     borrow_request = BorrowRequest(
         resource_id=resource.id,

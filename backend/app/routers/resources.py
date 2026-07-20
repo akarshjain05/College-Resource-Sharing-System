@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, ForbiddenException
-from app.models.enums import ResourceCondition, ResourceStatus, UserRole
+from app.models.enums import ResourceCondition, ResourceStatus, UserRole, BorrowStatus
 from app.models.resource import Resource, ResourceImage
 from app.models.user import User
 from app.models.wishlist import WishlistItem
+from app.models.borrow import BorrowRequest
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
 from app.core.deps import get_current_user_optional
 
@@ -124,6 +125,26 @@ def create_resource(
     db.commit()
     db.refresh(resource)
     return resource
+
+
+@router.get("/{resource_id}/availability")
+def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Get all blocking bookings for a resource to show in the availability calendar."""
+    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+
+    blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
+    bookings = (
+        db.query(BorrowRequest.requested_start_date, BorrowRequest.requested_end_date, BorrowRequest.status)
+        .filter(BorrowRequest.resource_id == resource_id, BorrowRequest.status.in_(blocking_statuses))
+        .all()
+    )
+    
+    return [
+        {"start": b.requested_start_date, "end": b.requested_end_date, "status": b.status}
+        for b in bookings
+    ]
 
 
 @router.put("/{resource_id}", response_model=ResourceResponse)
