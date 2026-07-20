@@ -11,3 +11,4 @@ from app.models.misc import Review, Notification, AuditLog, Complaint  # noqa: F
 from app.models.wanted import WantedRequest  # noqa: F401
 from app.models.damage_claim import DamageClaim  # noqa: F401
 from app.models.wishlist import WishlistItem  # noqa: F401
+from app.models.chat import ChatMessage  # noqa: F401
