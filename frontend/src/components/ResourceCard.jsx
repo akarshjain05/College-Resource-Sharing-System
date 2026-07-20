@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom";
-import { Star, MapPin } from "lucide-react";
-import { getImageUrl } from "../api/endpoints";
+import { useState } from "react";
+import { Star, MapPin, Heart } from "lucide-react";
+import { getImageUrl, wishlistApi } from "../api/endpoints";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const CONDITION_LABEL = {
   new: "New",
@@ -16,8 +19,35 @@ const STATUS_STYLE = {
   pending_approval: "bg-brass-50 text-brass-700",
 };
 
-export default function ResourceCard({ resource }) {
+export default function ResourceCard({ resource, onWishlistUpdate }) {
+  const { user } = useAuth();
   const primaryImage = resource.images?.find((img) => img.is_primary) || resource.images?.[0];
+  const [isWishlisted, setIsWishlisted] = useState(resource.is_wishlisted || false);
+
+  const handleWishlistToggle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Please login to wishlist items");
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        await wishlistApi.remove(resource.id);
+        setIsWishlisted(false);
+        if (onWishlistUpdate) onWishlistUpdate(resource.id, false);
+      } else {
+        await wishlistApi.add(resource.id);
+        setIsWishlisted(true);
+        if (onWishlistUpdate) onWishlistUpdate(resource.id, true);
+        toast.success("Added to wishlist");
+      }
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    }
+  };
 
   return (
     // <Link to={`/resources/${resource.id}`} className="index-card block pl-4 transition-shadow hover:shadow-lg">
@@ -96,11 +126,17 @@ export default function ResourceCard({ resource }) {
       {resource.category?.name}
     </span>
 
-    <span
-      className={`absolute right-2 top-2 rounded px-2 py-0.5 text-[10px] font-semibold capitalize ${STATUS_STYLE[resource.status]}`}
+    <button 
+      onClick={handleWishlistToggle}
+      className={`absolute right-2 top-2 p-1.5 rounded-full backdrop-blur-sm transition-all ${
+        isWishlisted 
+          ? "bg-red-50 text-red-500 shadow-sm" 
+          : "bg-white/60 text-slate-500 hover:bg-white hover:text-red-500 hover:shadow-sm"
+      }`}
+      aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
     >
-      {resource.status?.replace("_", " ")}
-    </span>
+      <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
+    </button>
   </div>
 
   {/* Details */}

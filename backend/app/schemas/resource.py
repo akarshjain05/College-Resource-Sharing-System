@@ -59,6 +59,7 @@ class ResourceResponse(ResourceBase):
     owner: UserResponse
     category: CategoryResponse
     images: List[ResourceImageResponse] = []
+    is_wishlisted: Optional[bool] = False
     created_at: datetime
 
 

@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 const NAV_ITEMS = [
   // { to: "/dashboard", label: "Explore Items", icon: Home },
   { to: "/resources", label: "Explore Items", icon: HelpCircle },
+  { to: "/wishlist", label: "Wishlist", icon: BookMarked },
   { to: "/wanted", label: "Campus Needs", icon: Globe },
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },

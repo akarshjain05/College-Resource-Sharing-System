@@ -13,8 +13,10 @@ import {
   ArrowRight,
   Wallet,
   CreditCard,
+  Heart,
+  Clock
 } from "lucide-react";
-import { resourceApi, borrowApi, reviewApi, categoryApi, getImageUrl } from "../../api/endpoints";
+import { resourceApi, borrowApi, reviewApi, categoryApi, wishlistApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
 // Local Mock Items list matching Dashboard page to load details offline
@@ -351,6 +353,7 @@ export default function ResourceDetailPage() {
   const [endDate, setEndDate] = useState("2026-09-17");
   const [submittingBorrow, setSubmittingBorrow] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [isWishlisted, setIsWishlisted] = useState(false);
   
   // Availability strip selected day (for mock calendar strip visual toggles)
   const [selectedCalendarDay, setSelectedCalendarDay] = useState(15);
@@ -431,13 +434,21 @@ export default function ResourceDetailPage() {
           reviews_count: 15,
           total_borrows: 45,
           category: { id: "cat-1", name: "Tools" },
-          owner: { id: "owner-1", full_name: "Rahul Sharma", trust_score: 98 },
+          owner: { id: "owner-1", full_name: "Rahul Sharma", trust_score: 98, avg_response_seconds: 3600 },
           images: [{ id: "img-1", image_url: "🪜", is_primary: true }],
+          is_wishlisted: false,
         };
         setResource(fallback);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        if (resource) setIsWishlisted(resource.is_wishlisted);
+      });
   };
+
+  useEffect(() => {
+    if (resource) setIsWishlisted(resource.is_wishlisted);
+  }, [resource]);
 
   useEffect(() => {
     load();
@@ -536,6 +547,32 @@ export default function ResourceDetailPage() {
 
   const isOwner = resource.owner?.id === user?.id;
 
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      toast.error("Please login to wishlist items");
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await wishlistApi.remove(resource.id);
+        setIsWishlisted(false);
+      } else {
+        await wishlistApi.add(resource.id);
+        setIsWishlisted(true);
+        toast.success("Added to wishlist");
+      }
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  const formatAvgResponseTime = (seconds) => {
+    if (seconds == null) return "No response data";
+    if (seconds < 3600) return "Usually responds within an hour";
+    if (seconds < 86400) return `Usually responds within ${Math.round(seconds / 3600)} hours`;
+    return `Usually responds in ${Math.round(seconds / 86400)} days`;
+  };
+
   // Visual Mock Calendar Strip selector
   const handleCalendarStripClick = (dayNumber) => {
     setSelectedCalendarDay(dayNumber);
@@ -571,6 +608,18 @@ export default function ResourceDetailPage() {
                 <span className="text-xs font-bold text-slate-800">{resource.average_rating}</span>
                 <span className="text-[10px] text-slate-400 font-semibold">({resource.reviews_count} reviews)</span>
               </div>
+              
+              <button 
+                onClick={handleWishlistToggle}
+                className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-sm transition-all ${
+                  isWishlisted 
+                    ? "bg-red-50 text-red-500 shadow-sm border border-red-100" 
+                    : "bg-white/80 text-slate-500 hover:bg-white hover:text-red-500 hover:shadow-sm border border-slate-200"
+                }`}
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
+              </button>
             </div>
 
             {/* Title & Stats */}
@@ -602,7 +651,18 @@ export default function ResourceDetailPage() {
               <div>
                 <p className="text-xs text-slate-400 font-medium leading-none">Listed by Owner</p>
                 <h3 className="font-bold text-slate-800 text-sm mt-1">{resource.owner?.full_name}</h3>
-                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{resource.pickup_location?.split("away")[0]} away</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[10px] text-slate-400 font-semibold">{resource.pickup_location?.split("away")[0]} away</p>
+                  {resource.owner?.avg_response_seconds != null && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <p className="text-[10px] text-primary-600 font-semibold flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatAvgResponseTime(resource.owner?.avg_response_seconds)}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <button

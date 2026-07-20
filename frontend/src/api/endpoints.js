@@ -50,6 +50,7 @@ export const borrowApi = {
   incoming: (status) => api.get("/borrow-requests/incoming", { params: { status } }),
   approve: (id) => api.post(`/borrow-requests/${id}/approve`),
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
+  nudge: (id) => api.post(`/borrow-requests/${id}/nudge`),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
   returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
@@ -81,6 +82,12 @@ export const wantedApi = {
 
 export const usersApi = {
   getPublicProfile: (id) => api.get(`/users/${id}/public`),
+};
+
+export const wishlistApi = {
+  list: () => api.get("/wishlist"),
+  add: (resourceId) => api.post(`/wishlist/${resourceId}`),
+  remove: (resourceId) => api.delete(`/wishlist/${resourceId}`),
 };
 
 export const adminApi = {

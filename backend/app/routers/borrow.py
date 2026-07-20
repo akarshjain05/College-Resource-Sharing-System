@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
@@ -12,6 +12,7 @@ from app.models.borrow import BorrowRequest
 from app.models.resource import Resource
 from app.models.enums import BorrowStatus, ResourceStatus, NotificationType, UserRole
 from app.models.user import User
+from app.models.wishlist import WishlistItem
 from app.schemas.borrow import (
     BorrowRequestCreate,
     BorrowRequestDecision,
@@ -123,6 +124,19 @@ def approve_borrow_request(
         raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
 
     br.status = BorrowStatus.APPROVED
+    br.decided_at = datetime.now(timezone.utc)
+
+    # Update lender's running average response time
+    elapsed = (br.decided_at - br.created_at).total_seconds()
+    lender = current_user
+    if lender.response_count == 0:
+        lender.avg_response_seconds = int(elapsed)
+    else:
+        lender.avg_response_seconds = int(
+            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+        )
+    lender.response_count += 1
+
     resource.quantity_available -= 1
     if resource.quantity_available <= 0:
         resource.status = ResourceStatus.BORROWED
@@ -151,6 +165,19 @@ def reject_borrow_request(
 
     br.status = BorrowStatus.REJECTED
     br.rejection_reason = payload.rejection_reason
+    br.decided_at = datetime.now(timezone.utc)
+
+    # Update lender's running average response time
+    elapsed = (br.decided_at - br.created_at).total_seconds()
+    lender = current_user
+    if lender.response_count == 0:
+        lender.avg_response_seconds = int(elapsed)
+    else:
+        lender.avg_response_seconds = int(
+            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+        )
+    lender.response_count += 1
+
     db.commit()
     db.refresh(br)
 
@@ -209,6 +236,36 @@ def cancel_borrow_request(
     db.refresh(br)
     return br
 
+
+@router.post("/{request_id}/nudge", status_code=status.HTTP_200_OK)
+def nudge_request(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Borrower nudges a pending request to remind the owner to respond."""
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the requester can nudge")
+    if br.status != BorrowStatus.REQUESTED:
+        raise AppException("This request is no longer pending", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    # Rate-limit: one nudge per 24 hours
+    if br.last_nudged_at and (datetime.now(timezone.utc) - br.last_nudged_at).total_seconds() < 86400:
+        raise AppException("You already nudged this request recently. Try again in 24 hours.", status_code=status.HTTP_429_TOO_MANY_REQUESTS, error_code="NUDGE_COOLDOWN")
+
+    br.last_nudged_at = datetime.now(timezone.utc)
+    db.commit()
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "A borrower is waiting on your response",
+        f"{current_user.full_name} is still waiting on your decision for '{br.resource.title}'.",
+        link=f"/borrow-requests?tab=incoming",
+    )
+    return {"detail": "Nudge sent"}
 
 @router.post("/{request_id}/return", response_model=BorrowRequestResponse)
 def return_resource(
@@ -319,5 +376,16 @@ def confirm_return_resource(
         f"'{resource.title}' return has been confirmed.",
         link=f"/borrow-requests/{br.id}",
     )
+
+    # Notify wishlisters that the resource is available again
+    wishlisters = db.query(WishlistItem).filter(WishlistItem.resource_id == resource.id).all()
+    for item in wishlisters:
+        create_notification(
+            db, item.user_id, NotificationType.SYSTEM,
+            "Wishlist item available",
+            f"An item on your wishlist, '{resource.title}', is now available to borrow!",
+            link=f"/resources/{resource.id}",
+        )
+
     return br
 
