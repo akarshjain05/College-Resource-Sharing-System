@@ -1,25 +1,307 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED        STATUS                PORTS                                                                                             NAMES
-d0cf4340aea4   crss_frontend_prod                              "caddy run --config …"   11 hours ago   Up 11 hours           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-0a8cc7ce9bfc   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   11 hours ago   Up 11 hours           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-481e23a63362   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   11 hours ago   Up 11 hours           8000/tcp                                                                                          crss_celery_worker
-93949ff27788   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   11 hours ago   Up 11 hours           8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago     Up 2 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago     Up 2 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                         PORTS                                                                                             NAMES
+311cc839e663   crss_frontend_prod                              "caddy run --config …"   18 minutes ago   Up 18 minutes                  0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+e8c6f78f11d1   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   18 minutes ago   Restarting (1) 3 seconds ago                                                                                                     crss_backend
+6bcc18730dee   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   18 minutes ago   Up 18 minutes                  8000/tcp                                                                                          crss_celery_worker
+1c8f11a43724   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   18 minutes ago   Up 18 minutes                  8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago       Up 2 days (healthy)            5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago       Up 2 days (healthy)            6379/tcp                                                                                          crss_redis
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
+crss_backend  |     sys.exit(main())
+crss_backend  |              ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
+crss_backend  |     CommandLine(prog=prog).main(argv=argv)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
+crss_backend  |     self.run_cmd(cfg, options)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
+crss_backend  |     fn(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
+crss_backend  |     script.run_env()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
+crss_backend  |     util.load_python_file(self.dir, "env.py")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+crss_backend  |     module = load_module_py(module_id, path)
+crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+crss_backend  |     spec.loader.exec_module(module)  # type: ignore
+crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
+crss_backend  |     run_migrations_online()
+crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
+crss_backend  |     context.run_migrations()
+crss_backend  |   File "<string>", line 8, in run_migrations
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
+crss_backend  |     self.get_context().run_migrations(**kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
+crss_backend  |     op.create_table(
+crss_backend  |   File "<string>", line 8, in create_table
+crss_backend  |   File "<string>", line 3, in create_table
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
+crss_backend  |     operations.impl.create_table(table)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
+crss_backend  |     table.dispatch.before_create(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
+crss_backend  |     fn(*args, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
+crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
+crss_backend  |     t._on_table_create(target, bind, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
+crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
+crss_backend  |     super().create(bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
+crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
+crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
+crss_backend  |     return meth(obj, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
+crss_backend  |     self.connection.execute(CreateEnumType(enum))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | INFO:     Started server process [9]
-crss_backend  | INFO:     Waiting for application startup.
-crss_backend  | INFO:     Application startup complete.
-crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:42252 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42252 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42258 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42272 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42272 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48480 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48488 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48486 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48486 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48480 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48488 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52290 - "HEAD /api/config HTTP/1.1" 404 Not Found
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade c7f260b43a82 -> d1f3a7b9c2e4, add_damage_claims_table
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
+crss_backend  |     sys.exit(main())
+crss_backend  |              ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
+crss_backend  |     CommandLine(prog=prog).main(argv=argv)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
+crss_backend  |     self.run_cmd(cfg, options)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
+crss_backend  |     fn(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
+crss_backend  |     script.run_env()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
+crss_backend  |     util.load_python_file(self.dir, "env.py")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+crss_backend  |     module = load_module_py(module_id, path)
+crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+crss_backend  |     spec.loader.exec_module(module)  # type: ignore
+crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
+crss_backend  |     run_migrations_online()
+crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
+crss_backend  |     context.run_migrations()
+crss_backend  |   File "<string>", line 8, in run_migrations
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
+crss_backend  |     self.get_context().run_migrations(**kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
+crss_backend  |     op.create_table(
+crss_backend  |   File "<string>", line 8, in create_table
+crss_backend  |   File "<string>", line 3, in create_table
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
+crss_backend  |     operations.impl.create_table(table)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
+crss_backend  |     table.dispatch.before_create(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
+crss_backend  |     fn(*args, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
+crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
+crss_backend  |     t._on_table_create(target, bind, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
+crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
+crss_backend  |     super().create(bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
+crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
+crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
+crss_backend  |     return meth(obj, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
+crss_backend  |     self.connection.execute(CreateEnumType(enum))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade c7f260b43a82 -> d1f3a7b9c2e4, add_damage_claims_table
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
+crss_backend  |     sys.exit(main())
+crss_backend  |              ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
+crss_backend  |     CommandLine(prog=prog).main(argv=argv)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
+crss_backend  |     self.run_cmd(cfg, options)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
+crss_backend  |     fn(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
+crss_backend  |     script.run_env()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
+crss_backend  |     util.load_python_file(self.dir, "env.py")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
+crss_backend  |     module = load_module_py(module_id, path)
+crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
+crss_backend  |     spec.loader.exec_module(module)  # type: ignore
+crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
+crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
+crss_backend  |     run_migrations_online()
+crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
+crss_backend  |     context.run_migrations()
+crss_backend  |   File "<string>", line 8, in run_migrations
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
+crss_backend  |     self.get_context().run_migrations(**kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
+crss_backend  |     step.migration_fn(**kw)
+crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
+crss_backend  |     op.create_table(
+crss_backend  |   File "<string>", line 8, in create_table
+crss_backend  |   File "<string>", line 3, in create_table
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
+crss_backend  |     return operations.invoke(op)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
+crss_backend  |     return fn(self, operation)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
+crss_backend  |     operations.impl.create_table(table)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
+crss_backend  |     table.dispatch.before_create(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
+crss_backend  |     fn(*args, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
+crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
+crss_backend  |     t._on_table_create(target, bind, **kw)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
+crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
+crss_backend  |     super().create(bind, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
+crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
+crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
+crss_backend  |     return meth(obj, **kw)
+crss_backend  |            ^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
+crss_backend  |     self.connection.execute(CreateEnumType(enum))
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
+crss_backend  |     return connection._execute_ddl(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
+crss_backend  | 
+crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
