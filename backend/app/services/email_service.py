@@ -190,9 +190,18 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                 return True
             else:
                 logger.error("Brevo API request failed with status code %s: %s", response.status_code, response.text)
-                if settings.DEBUG:
+                # Try fallback via standard SMTP if configured
+                if settings.SMTP_USER and settings.SMTP_PASSWORD:
+                    logger.info("Attempting fallback OTP email dispatch via configured SMTP for %s", to_email)
+                    try:
+                        await send_email(to_email, subject, html_content)
+                        return True
+                    except Exception:
+                        logger.exception("SMTP fallback dispatch failed for %s", to_email)
+
+                if settings.DEBUG or settings.ENVIRONMENT == "development":
                     logger.warning(
-                        "[DEV MODE FALLBACK] Brevo delivery error (e.g. SMTP account pending activation). Development OTP for %s: %s",
+                        "[DEV MODE FALLBACK] Brevo delivery error (SMTP account pending activation). Development OTP for %s: %s",
                         to_email,
                         otp,
                     )
@@ -200,7 +209,13 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                 return False
     except Exception as exc:
         logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
-        if settings.DEBUG:
+        if settings.SMTP_USER and settings.SMTP_PASSWORD:
+            try:
+                await send_email(to_email, subject, html_content)
+                return True
+            except Exception:
+                pass
+        if settings.DEBUG or settings.ENVIRONMENT == "development":
             logger.warning(
                 "[DEV MODE FALLBACK] Exception calling Brevo. Development OTP for %s: %s",
                 to_email,
@@ -208,6 +223,7 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
             )
             return True
         return False
+
 
 
 
