@@ -1,186 +1,18 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
-a22297a4426b   crss_frontend_prod                              "caddy run --config …"   11 minutes ago   Up 11 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-fa5a74f6e976   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   12 minutes ago   Up 11 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-8b822eaca41b   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   12 minutes ago   Up 11 minutes          8000/tcp                                                                                          crss_celery_worker
-09c2b73ad552   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   12 minutes ago   Up 11 minutes          8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
+dcf76d990c51   crss_frontend_prod                              "caddy run --config …"   8 minutes ago   Up 8 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+8ef9fb1b7845   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   8 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_worker
+c4c7d0ddc0cf   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   8 minutes ago   Up 8 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+fc9aaa2edb30   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   8 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | INFO:     Started server process [8]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:57998 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57998 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58010 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58016 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51420 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:21:44 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$MT7NdyhUdMUiOpTmq8i6MOw2j.IoQgd5RtcgRk.Yl1STGgz4XsQZO', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('818fd31b-e26a-40a2-8356-6ab67e6ca944')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51420 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51442 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | 2026-07-28 18:21:48 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$83cY/eVYnXx3K2D9P6wjtOJwOG5Mrlcaqaqb9qJ2eeCrBhmffdOMC', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('340685dc-ab6b-4c20-bddf-6a98cead7c2a')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59038 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59052 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:22:04 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$NYA0LPSR4Y4MTzZKu1jiZeQ3YKFNNyYJlu8GlcewUAsQ5g0ZhNbhW', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('eab4c36a-2fc7-4f23-872a-59484bad3915')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:59028 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | 2026-07-28 18:22:19 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$HT55i9zZ.luY/cuVBiTMuO.WR.aTtwLBxbMstOGiGPdcg0E6tNU/e', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('d4a1ace7-e116-407c-9c56-38a96a337484')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:39992 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | 2026-07-28 18:22:27 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$70ts7xrQDfV./0Gj7lJALeD3TUXef33D/xsQi879.R6E4R6taFlEW', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('77724fbb-d814-4153-b133-49d6b6d5292a')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:37962 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56774 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56778 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56780 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56780 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:22:57 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$NkwmMCB75q2gEQ6ZxaMayOkjupV6OKuTgTcCwvh3KMTTyuvKthLY2', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('7a7277e9-a0a0-4787-afa7-16a415f7549c')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:48964 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:57362 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57362 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57376 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57388 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:52536 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52550 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51460 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51460 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51462 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51488 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51476 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:24:15 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$LCOnQr8M0YjvgWouOpFPF.HFR8LE94MdhnTVkS2s5jc81djI7QmWC', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('ed1fde2e-669a-468e-9dd1-fd5055b5ef91')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:56280 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | 2026-07-28 18:24:25 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$q3aMW78TKcBPXHO5uHgnnek4P6ExiFxlVRqcxIqbWNC7qlgeUNoUy', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('7246664e-a5b8-4cd4-bd22-de67ee9efcf0')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:36232 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:52342 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52356 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52342 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52352 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56220 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56230 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55182 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35888 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35910 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35896 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35926 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57242 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:27:29 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$8Oj0eVmfegDQZm.M65jJG.vdSS8oSq/XDQdqKxCvMQqmgDREg1KVm', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('a02409dd-12b5-4074-b46c-689aee7d483e')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:54494 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43806 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43806 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55964 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/users/f204c318-65ea-47f6-a855-2cf812a1cb09/public HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53088 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1 HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:28:26 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
-crss_backend  | INFO:     172.18.0.7:49012 - "POST /api/v1/borrow-requests HTTP/1.1" 201 Created
-crss_backend  | INFO:     172.18.0.7:49028 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49012 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49040 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:28:26 | ERROR    | crss | Failed to send email to u24cs145@coed.svnit.ac.in
+crss_backend  | INFO:     172.18.0.7:58158 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
+crss_backend  | 2026-07-28 18:36:42 | ERROR    | crss | Failed to send email to mannatdebnath05@gmail.com
 crss_backend  | Traceback (most recent call last):
 crss_backend  |   File "/app/app/services/email_service.py", line 33, in send_email
 crss_backend  |     await aiosmtplib.send(
@@ -200,59 +32,268 @@ crss_backend  |     response = await auth_method(username, password, timeout=tim
 crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
 crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
-crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83fb11c8sm15764966b.52 - gsmtp')
-crss_backend  | INFO:     172.18.0.7:51796 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51810 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51780 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:40634 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:40634 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41308 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41310 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41334 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45854 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45846 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45852 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "POST /api/v1/notifications/4644587a-98eb-4805-8159-7fd7532f98a3/read HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60954 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:60932 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:29:54 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
-crss_backend  | INFO:     172.18.0.7:53324 - "POST /api/v1/borrow-requests/fc82eedf-763d-4004-862e-37f09743793a/approve HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53324 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53328 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 18:30:04 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
-crss_backend  | DETAIL:  Key (student_id)=() already exists.
-crss_backend  | 
-crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
-crss_backend  | [parameters: {'full_name': 'njkkjh', 'email': 'jhgjgkkj@gmail.com', 'hashed_password': '$2b$12$.RQumEzxpN2VV6x9omG6I.wDfKgcABaOGW/avEw6HsnZoSIqiNH6a', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('dd1c785e-af9b-46b7-bc7f-9f08dce2800a')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
-crss_backend  | INFO:     172.18.0.7:55058 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
-crss_backend  | INFO:     172.18.0.7:59582 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59582 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59582 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59596 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59610 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35766 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:59610 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35776 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55372 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44054 - "GET /api/v1/resources?search=c&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44054 - "GET /api/v1/resources?search=ca&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57366 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:57376 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49218 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83f4e079sm16703266b.30 - gsmtp')
+crss_backend  | 2026-07-28 18:36:42 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:51724 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51724 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51724 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51728 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51740 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=01852106-3f22-4e37-90a5-ee16e5745f22 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51740 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=01852106-3f22-4e37-90a5-ee16e5745f22 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51746 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52112 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52130 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52112 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52120 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36666 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36672 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36664 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36676 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36676 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36676 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36686 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36686 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36696 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:36686 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49408 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:36676 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49432 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49432 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49432 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49432 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49432 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49426 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49416 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39096 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39102 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39104 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39096 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39104 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39104 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39096 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39102 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39102 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39096 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39104 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39102 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58640 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58666 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58652 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58674 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:58640 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58666 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58652 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58652 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58666 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58640 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42008 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42020 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:41998 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:41998 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42030 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:38860 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38878 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38886 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38874 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38874 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38878 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38886 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38886 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:39:41 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:43872 - "POST /api/v1/borrow-requests HTTP/1.1" 201 Created
+crss_backend  | 2026-07-28 18:39:42 | ERROR    | crss | Failed to send email to u24ai057@aid.svnit.ac.in
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/app/app/services/email_service.py", line 33, in send_email
+crss_backend  |     await aiosmtplib.send(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
+crss_backend  |     async with client:
+crss_backend  |                ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
+crss_backend  |     await self.connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
+crss_backend  |     await self._maybe_login_on_connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
+crss_backend  |     await self.login(self._login_username, login_password)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
+crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
+crss_backend  |     response = await auth_method(username, password, timeout=timeout)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
+crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83fe70d0sm17219166b.53 - gsmtp')
+crss_backend  | INFO:     172.18.0.7:43886 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43872 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43880 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43890 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43890 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43890 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43910 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43904 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43890 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60438 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60432 - "GET /api/v1/resources?owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60452 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60452 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60432 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60432 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60452 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60432 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60452 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60416 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60452 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60432 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33420 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33442 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33428 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55806 - "POST /api/v1/resources HTTP/1.1" 201 Created
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 18:40:23 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:55806 - "POST /api/v1/wanted/606550ab-750f-42e6-9aea-8e97b5da9011/offer HTTP/1.1" 201 Created
+crss_backend  | INFO:     172.18.0.7:55806 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55818 - "GET /api/v1/resources?owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55818 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "POST /api/v1/notifications/7c125289-1b08-4484-9d25-24b511189658/read HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55842 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55858 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55858 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55864 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:55832 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55842 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55858 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/users/directory/public HTTP/1.1" 422 Unprocessable Entity
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/complaints/my-complaints HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/resources?limit=1000 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/users/directory/public HTTP/1.1" 422 Unprocessable Entity
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/complaints/my-complaints HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/resources?limit=1000 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54514 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34562 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34576 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34592 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57880 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57878 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57898 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34598 - "POST /api/v1/borrow-requests/dda9ee48-0873-4b0a-a911-47620bbf2738/approve HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:52000 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52010 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52012 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52000 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52000 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60134 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60134 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60148 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60150 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60150 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60166 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60150 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60150 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60134 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60148 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60180 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:39444 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39460 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39430 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60704 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60704 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60704 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60714 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60730 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60730 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60738 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60704 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60714 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60730 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60730 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60714 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60704 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60730 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:46750 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:46766 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:46776 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:46750 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38862 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38862 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38862 - "POST /api/v1/notifications/0ce0248b-e8c0-4c3e-b06f-fc1b107b03e5/read HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38862 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38866 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38874 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38888 - "GET /api/v1/resources?owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38950 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:38950 - "GET /api/v1/notifications HTTP/1.1" 200 OK
