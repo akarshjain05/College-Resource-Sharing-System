@@ -781,6 +781,8 @@ export default function ResourceDetailPage() {
                     selectedRange={selectedDateRange}
                     onSelectRange={setSelectedDateRange}
                     maxDays={resource.max_borrow_days}
+                    availableFrom={resource.available_from}
+                    availableTo={resource.available_to}
                   />
                 </div>
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
