@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, ForbiddenException
+from app.core.exceptions import NotFoundException, ForbiddenException, AppException
 from app.models.user import User
 from app.models.wanted import WantedRequest
 from app.models.category import Category
@@ -36,9 +36,26 @@ def create_wanted_request(
 
 
 @router.get("", response_model=list[WantedResponse])
-def list_wanted_requests(db: Session = Depends(get_db)):
-    # Sort by newest first and only unfulfilled
-    return db.query(WantedRequest).filter(WantedRequest.is_fulfilled == False).order_by(WantedRequest.created_at.desc()).all()
+def list_wanted_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Sort by newest first and only unfulfilled, excluding current user's own requests
+    return db.query(WantedRequest).filter(
+        WantedRequest.is_fulfilled == False,
+        WantedRequest.user_id != current_user.id
+    ).order_by(WantedRequest.created_at.desc()).all()
+
+
+@router.get("/me", response_model=list[WantedResponse])
+def my_wanted_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Sort by newest first, include both unfulfilled and fulfilled for own requests
+    return db.query(WantedRequest).filter(
+        WantedRequest.user_id == current_user.id
+    ).order_by(WantedRequest.created_at.desc()).all()
 
 
 @router.post("/{wanted_id}/fulfill", response_model=WantedResponse)
@@ -79,7 +96,7 @@ from app.models.wanted import WantedRequest, WantedOffer
 from app.schemas.wanted import WantedCreate, WantedResponse, WantedOfferCreate, WantedOfferResponse
 from app.models.resource import Resource
 from app.models.borrow import BorrowRequest
-from app.models.enums import NotificationType, BorrowStatus
+from app.models.enums import NotificationType, BorrowStatus, ResourceStatus
 
 
 @router.post("/{wanted_id}/offer", response_model=WantedOfferResponse, status_code=status.HTTP_201_CREATED)
@@ -156,6 +173,7 @@ def accept_wanted_offer(
     db: Session = Depends(get_db),
 ):
     from app.services.notification_service import create_notification
+    from datetime import date, timedelta
 
     offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
     if not offer:
@@ -168,8 +186,38 @@ def accept_wanted_offer(
     if wanted.is_fulfilled:
         raise ForbiddenException("This request has already been fulfilled")
 
+    # Lock resource to prevent concurrent borrows
+    resource = db.query(Resource).filter(Resource.id == offer.resource_id).with_for_update().first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+        
+    if resource.quantity_available < 1:
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+
+    # Decrement resource quantity
+    resource.quantity_available -= 1
+    if resource.quantity_available <= 0:
+        resource.status = ResourceStatus.BORROWED
+
     offer.status = "ACCEPTED"
     wanted.is_fulfilled = True
+    
+    # Auto-create BorrowRequest
+    start_date = date.today()
+    end_date = start_date + timedelta(days=resource.max_borrow_days)
+    
+    borrow_request = BorrowRequest(
+        resource_id=resource.id,
+        borrower_id=wanted.user_id,
+        lender_id=offer.offerer_id,
+        status=BorrowStatus.APPROVED,
+        requested_start_date=start_date,
+        requested_end_date=end_date,
+        purpose=f"Auto-generated for wanted request: {wanted.title}",
+        deposit_paid=0,
+        wanted_request_id=wanted.id
+    )
+    db.add(borrow_request)
     
     # Reject other offers
     other_offers = db.query(WantedOffer).filter(
@@ -181,14 +229,24 @@ def accept_wanted_offer(
 
     db.commit()
     db.refresh(wanted)
+    db.refresh(borrow_request)
 
     create_notification(
         db,
         user_id=offer.offerer_id,
         notif_type=NotificationType.SYSTEM,
         title="Your offer was accepted!",
-        message=f"{current_user.full_name} has accepted your offer for '{offer.resource.title}'. They will create a borrow request soon.",
-        link=f"/resources/{offer.resource_id}"
+        message=f"{current_user.full_name} has accepted your offer for '{resource.title}'. A borrow request has been auto-created.",
+        link=f"/borrow-requests/{borrow_request.id}"
+    )
+    
+    create_notification(
+        db,
+        user_id=wanted.user_id,
+        notif_type=NotificationType.SYSTEM,
+        title="Borrow request created",
+        message=f"A borrow request for '{resource.title}' has been auto-created based on your accepted offer.",
+        link=f"/borrow-requests/{borrow_request.id}"
     )
 
     return wanted

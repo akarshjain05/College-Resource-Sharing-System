@@ -69,7 +69,7 @@ export default function RegisterPage() {
         });
       } else {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate("/resources");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Google sign-up failed. Please try again.");
@@ -95,7 +95,7 @@ export default function RegisterPage() {
               registrationToken={googleSignup.registrationToken}
               fullName={googleSignup.fullName}
               email={googleSignup.email}
-              onDone={() => navigate("/dashboard")}
+              onDone={() => navigate("/resources")}
               onCancel={() => setGoogleSignup(null)}
             />
           ) : (

@@ -88,9 +88,10 @@ class UserResponse(UserBase):
     profile_picture_url: Optional[str] = None
     is_verified: bool
     is_active: bool
-    is_suspended: bool = False
+    is_suspended: bool
     trust_score: int
     sharing_score: int
+    avg_response_seconds: Optional[int] = None
     created_at: datetime
 
 

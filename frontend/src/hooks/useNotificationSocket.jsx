@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { chatEventBus } from "../utils/chatEventBus";
 
 const NOTIFICATION_WS_URL = (import.meta.env.VITE_NOTIFICATION_API_URL || "http://localhost:10000")
   .replace(/^http/, "ws");
@@ -28,16 +29,32 @@ export function useNotificationSocket(onNotification, user) {
         try {
           const rawPayload = JSON.parse(event.data);
           const payload = rawPayload.payload || rawPayload;
+          
+          // Route chat messages directly to open threads
+          if (payload.type === "chat_message") {
+            const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
+            // If the thread is open (handled), we might not want to show a toast,
+            // or we could show a quieter one. Let's just return if handled so it doesn't toast
+            if (isHandled) return;
+          }
+          
           toast((t) => (
             <div 
               onClick={() => {
                 if (payload.link) navigate(payload.link);
+                else if (payload.type === "chat_message") navigate(`/borrow-requests`);
                 toast.dismiss(t.id);
               }}
-              style={{ cursor: payload.link ? "pointer" : "default" }}
+              style={{ cursor: (payload.link || payload.type === "chat_message") ? "pointer" : "default" }}
             >
-              <div style={{ fontWeight: "bold" }}>{payload.title}</div>
-              <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>{payload.message}</div>
+              <div style={{ fontWeight: "bold" }}>
+                {payload.title || (payload.type === "chat_message" ? "New message received" : "New Notification")}
+              </div>
+              {payload.message && (
+                <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>
+                  {payload.message}
+                </div>
+              )}
             </div>
           ), { icon: "🔔" });
           onNotification?.(payload);
@@ -67,4 +84,3 @@ export function useNotificationSocket(onNotification, user) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 }
-

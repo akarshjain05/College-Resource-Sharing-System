@@ -8,12 +8,14 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, ForbiddenException
-from app.models.enums import ResourceCondition, ResourceStatus, UserRole
+from app.models.enums import ResourceCondition, ResourceStatus, UserRole, BorrowStatus
 from app.models.resource import Resource, ResourceImage
 from app.models.user import User
+from app.models.wishlist import WishlistItem
+from app.models.borrow import BorrowRequest
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
+from app.core.deps import get_current_user_optional
 from app.services.notification_service import notify_all_except_owner_bg
-
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
 
@@ -32,6 +34,7 @@ def list_resources(
     sort_dir: str = Query("desc", pattern="^(asc|desc)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
     query = db.query(Resource)
 
@@ -46,6 +49,9 @@ def list_resources(
         query = query.filter(Resource.condition == condition)
     if status_filter:
         query = query.filter(Resource.status == status_filter)
+    elif not owner_id:
+        # Default to available for public explore page
+        query = query.filter(Resource.status == ResourceStatus.AVAILABLE)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
     if owner_id:
@@ -63,17 +69,44 @@ def list_resources(
 
     items = query.offset((page - 1) * page_size).limit(page_size).all()
 
-    return ResourceListResponse(total=total, page=page, page_size=page_size, items=items)
+    # Populate is_wishlisted
+    if current_user:
+        wishlist_ids = {
+            w.resource_id for w in db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id).all()
+        }
+        for item in items:
+            item.is_wishlisted = item.id in wishlist_ids
+    else:
+        for item in items:
+            item.is_wishlisted = False
+
+    return ResourceListResponse(
+        total=total,
+        page=page,
+        page_size=page_size,
+        items=items,
+    )
 
 
 @router.get("/{resource_id}", response_model=ResourceResponse)
-def get_resource(resource_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_resource(
+    resource_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
     if not resource:
         raise NotFoundException("Resource not found")
     resource.view_count += 1
     db.commit()
     db.refresh(resource)
+
+    if current_user:
+        w = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id, WishlistItem.resource_id == resource.id).first()
+        resource.is_wishlisted = bool(w)
+    else:
+        resource.is_wishlisted = False
+
     return resource
 
 
@@ -85,7 +118,7 @@ def create_resource(
     db: Session = Depends(get_db),
 ):
     resource = Resource(
-        **payload.model_dump(),
+        **payload.model_dump(exclude_unset=True),
         owner_id=current_user.id,
         quantity_available=payload.quantity,
     )
@@ -102,6 +135,26 @@ def create_resource(
     )
 
     return resource
+
+
+@router.get("/{resource_id}/availability")
+def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
+    """Get all blocking bookings for a resource to show in the availability calendar."""
+    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+
+    blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
+    bookings = (
+        db.query(BorrowRequest.requested_start_date, BorrowRequest.requested_end_date, BorrowRequest.status)
+        .filter(BorrowRequest.resource_id == resource_id, BorrowRequest.status.in_(blocking_statuses))
+        .all()
+    )
+    
+    return [
+        {"start": b.requested_start_date, "end": b.requested_end_date, "status": b.status}
+        for b in bookings
+    ]
 
 
 @router.put("/{resource_id}", response_model=ResourceResponse)

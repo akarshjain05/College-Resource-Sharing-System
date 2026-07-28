@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
@@ -12,6 +12,7 @@ from app.models.borrow import BorrowRequest
 from app.models.resource import Resource
 from app.models.enums import BorrowStatus, ResourceStatus, NotificationType, UserRole
 from app.models.user import User
+from app.models.wishlist import WishlistItem
 from app.schemas.borrow import (
     BorrowRequestCreate,
     BorrowRequestDecision,
@@ -32,7 +33,7 @@ def create_borrow_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    resource = db.query(Resource).filter(Resource.id == payload.resource_id).first()
+    resource = db.query(Resource).filter(Resource.id == payload.resource_id).with_for_update().first()
     if not resource:
         raise NotFoundException("Resource not found")
     if resource.owner_id == current_user.id:
@@ -40,11 +41,23 @@ def create_borrow_request(
     if resource.quantity_available < 1:
         raise AppException("This resource is currently unavailable", status_code=status.HTTP_400_BAD_REQUEST, error_code="OUT_OF_STOCK")
         
-    requested_days = (payload.requested_end_date - payload.requested_start_date).days
+    requested_days = (payload.requested_end_date - payload.requested_start_date).days + 1
     if requested_days > resource.max_borrow_days:
         raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
-    if requested_days < 0:
-        raise AppException("End date must be after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+    if requested_days <= 0:
+        raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+
+    # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
+    if resource.quantity_available <= 1:
+        overlap_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
+        conflict = db.query(BorrowRequest).filter(
+            BorrowRequest.resource_id == resource.id,
+            BorrowRequest.status.in_(overlap_statuses),
+            BorrowRequest.requested_start_date <= payload.requested_end_date,
+            BorrowRequest.requested_end_date >= payload.requested_start_date,
+        ).first()
+        if conflict:
+            raise AppException("Those dates overlap an existing approved borrow", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_CONFLICT")
 
     borrow_request = BorrowRequest(
         resource_id=resource.id,
@@ -93,8 +106,11 @@ def incoming_borrow_requests(status: Optional[BorrowStatus] = None, current_user
     return query.all()
 
 
-def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User) -> BorrowRequest:
-    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User, for_update: bool = False) -> BorrowRequest:
+    query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
+    if for_update:
+        query = query.with_for_update()
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
     if br.lender_id != lender.id and lender.role != UserRole.ADMIN:
@@ -108,12 +124,31 @@ def approve_borrow_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    br = _get_owned_request(db, request_id, current_user)
+    br = _get_owned_request(db, request_id, current_user, for_update=True)
     if br.status != BorrowStatus.REQUESTED:
         raise AppException("Only pending requests can be approved", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
+    # Lock resource explicitly to prevent concurrent approvals on the last unit
+    resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+    if resource.quantity_available < 1:
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+
     br.status = BorrowStatus.APPROVED
-    resource = br.resource
+    br.decided_at = datetime.now(timezone.utc)
+
+    # Update lender's running average response time
+    elapsed = (br.decided_at - br.created_at).total_seconds()
+    lender = current_user
+    if lender.response_count == 0:
+        lender.avg_response_seconds = int(elapsed)
+    else:
+        lender.avg_response_seconds = int(
+            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+        )
+    lender.response_count += 1
+
     resource.quantity_available -= 1
     if resource.quantity_available <= 0:
         resource.status = ResourceStatus.BORROWED
@@ -142,6 +177,19 @@ def reject_borrow_request(
 
     br.status = BorrowStatus.REJECTED
     br.rejection_reason = payload.rejection_reason
+    br.decided_at = datetime.now(timezone.utc)
+
+    # Update lender's running average response time
+    elapsed = (br.decided_at - br.created_at).total_seconds()
+    lender = current_user
+    if lender.response_count == 0:
+        lender.avg_response_seconds = int(elapsed)
+    else:
+        lender.avg_response_seconds = int(
+            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+        )
+    lender.response_count += 1
+
     db.commit()
     db.refresh(br)
 
@@ -201,6 +249,36 @@ def cancel_borrow_request(
     return br
 
 
+@router.post("/{request_id}/nudge", status_code=status.HTTP_200_OK)
+def nudge_request(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Borrower nudges a pending request to remind the owner to respond."""
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the requester can nudge")
+    if br.status != BorrowStatus.REQUESTED:
+        raise AppException("This request is no longer pending", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    # Rate-limit: one nudge per 24 hours
+    if br.last_nudged_at and (datetime.now(timezone.utc) - br.last_nudged_at).total_seconds() < 86400:
+        raise AppException("You already nudged this request recently. Try again in 24 hours.", status_code=status.HTTP_429_TOO_MANY_REQUESTS, error_code="NUDGE_COOLDOWN")
+
+    br.last_nudged_at = datetime.now(timezone.utc)
+    db.commit()
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "A borrower is waiting on your response",
+        f"{current_user.full_name} is still waiting on your decision for '{br.resource.title}'.",
+        link=f"/borrow-requests?tab=incoming",
+    )
+    return {"detail": "Nudge sent"}
+
 @router.post("/{request_id}/return", response_model=BorrowRequestResponse)
 def return_resource(
     request_id: uuid.UUID,
@@ -245,7 +323,8 @@ def confirm_return_resource(
     if br.status != BorrowStatus.RETURN_REQUESTED:
         raise AppException("Only pending returns can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    br.status = BorrowStatus.DAMAGED if br.damage_report else BorrowStatus.RETURNED
+    is_damaged = bool(br.damage_report)
+    br.status = BorrowStatus.DAMAGED if is_damaged else BorrowStatus.RETURNED
     br.borrower_rating = payload.borrower_rating
     br.borrower_review = payload.borrower_review
 
@@ -254,33 +333,54 @@ def confirm_return_resource(
     resource.total_borrows += 1
     resource.status = ResourceStatus.AVAILABLE
 
-    # Trust Score Logic (Borrower)
+    # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
     if borrower:
-        if br.status == BorrowStatus.DAMAGED:
-            borrower.trust_score -= 20
-        else:
+        if not is_damaged:
+            # Only apply normal trust adjustments for non-damaged returns
             if br.actual_return_date and br.actual_return_date > br.requested_end_date:
                 borrower.trust_score -= 5
             else:
                 borrower.trust_score += 2
 
         if br.borrower_rating is not None:
-            # e.g., 5 star = +5, 1 star = -5 (linear: rating * 2.5 - 7.5, or simpler map)
             rating_adj = {1: -5, 2: -2, 3: 0, 4: +2, 5: +5}
             borrower.trust_score += rating_adj.get(br.borrower_rating, 0)
 
     # Sharing Score Logic (Lender)
-    if br.status != BorrowStatus.DAMAGED:
+    if not is_damaged:
         current_user.sharing_score += 10
     
     if br.lender_rating is not None:
-        # Bonus for good sharing experience
         rating_adj = {1: -2, 2: -1, 3: 0, 4: +2, 5: +5}
         current_user.sharing_score += rating_adj.get(br.lender_rating, 0)
 
     db.commit()
     db.refresh(br)
+
+    # If damaged, auto-create a DamageClaim for admin adjudication
+    if is_damaged:
+        from app.models.damage_claim import DamageClaim
+        from app.models.enums import DamageClaimStatus
+
+        claim = DamageClaim(
+            borrow_request_id=br.id,
+            filed_by_id=current_user.id,
+            against_user_id=br.borrower_id,
+            description=br.damage_report,
+            status=DamageClaimStatus.OPEN,
+        )
+        db.add(claim)
+        db.commit()
+        db.refresh(claim)
+
+        # Notify borrower about the damage claim
+        create_notification(
+            db, br.borrower_id, NotificationType.SYSTEM,
+            "Damage claim filed",
+            f"A damage claim has been filed for '{resource.title}'. You can dispute it within your dashboard.",
+            link=f"/damage-claims/{claim.id}",
+        )
 
     create_notification(
         db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
@@ -288,4 +388,16 @@ def confirm_return_resource(
         f"'{resource.title}' return has been confirmed.",
         link=f"/borrow-requests/{br.id}",
     )
+
+    # Notify wishlisters that the resource is available again
+    wishlisters = db.query(WishlistItem).filter(WishlistItem.resource_id == resource.id).all()
+    for item in wishlisters:
+        create_notification(
+            db, item.user_id, NotificationType.SYSTEM,
+            "Wishlist item available",
+            f"An item on your wishlist, '{resource.title}', is now available to borrow!",
+            link=f"/resources/{resource.id}",
+        )
+
     return br
+

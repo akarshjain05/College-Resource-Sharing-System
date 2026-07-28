@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import datetime
 
 from sqlalchemy import String, Boolean, Enum as SAEnum, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -39,6 +40,9 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     trust_score: Mapped[int] = mapped_column(default=100)
     sharing_score: Mapped[int] = mapped_column(default=0)
+
+    avg_response_seconds: Mapped[Optional[int]] = mapped_column(nullable=True)
+    response_count: Mapped[int] = mapped_column(default=0)
 
     resources: Mapped[List["Resource"]] = relationship(
         "Resource", back_populates="owner", cascade="all, delete-orphan"

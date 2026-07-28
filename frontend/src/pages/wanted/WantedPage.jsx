@@ -16,8 +16,16 @@ export default function WantedPage() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
   
-  const [offerModalData, setOfferModalData] = useState(null); // { wantedId: "..." }
+  const [offerModalData, setOfferModalData] = useState(null); // The whole wanted request object
   const [selectedResourceId, setSelectedResourceId] = useState("");
+  const [offerMode, setOfferMode] = useState("existing");
+  const [newOfferForm, setNewOfferForm] = useState({
+    title: "",
+    description: "",
+    condition: "good",
+    deposit_amount: 0,
+    max_borrow_days: 7,
+  });
   
   const [expandedOffers, setExpandedOffers] = useState({}); // { [wantedId]: [offers...] }
   const [loadingOffers, setLoadingOffers] = useState({});
@@ -85,17 +93,42 @@ export default function WantedPage() {
     }
   };
 
-  const openOfferModal = (id) => {
-    setOfferModalData({ wantedId: id });
+  const openOfferModal = (request) => {
+    setOfferModalData(request);
     setSelectedResourceId("");
+    setOfferMode(myResources.length === 0 ? "new" : "existing");
+    setNewOfferForm({
+      title: request.title,
+      description: "Available for borrowing.",
+      condition: "good",
+      deposit_amount: 0,
+      max_borrow_days: 7,
+    });
   };
 
   const submitOffer = async () => {
-    if (!selectedResourceId) return toast.error("Please select an item to offer");
     try {
-      await wantedApi.offer(offerModalData.wantedId, selectedResourceId);
+      let resourceIdToOffer = selectedResourceId;
+
+      if (offerMode === "new") {
+        if (!newOfferForm.title) return toast.error("Please provide an item name");
+        const payload = {
+          ...newOfferForm,
+          category_id: offerModalData.category_id,
+          deposit_amount: Number(newOfferForm.deposit_amount),
+          max_borrow_days: Number(newOfferForm.max_borrow_days),
+          status: "unavailable",
+        };
+        const res = await resourceApi.create(payload);
+        resourceIdToOffer = res.data.id;
+      } else {
+        if (!resourceIdToOffer) return toast.error("Please select an item to offer");
+      }
+
+      await wantedApi.offer(offerModalData.id, resourceIdToOffer);
       toast.success("Offer sent! The requester has been notified.");
       setOfferModalData(null);
+      loadData(); // refresh resources list
     } catch (err) {
       toast.error(err.response?.data?.detail || "Action failed");
     }
@@ -148,13 +181,10 @@ export default function WantedPage() {
       ) : requests.length === 0 ? (
         <div className="card p-10 text-center text-sm text-ink-500">No active wanted requests.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests.map((r) => {
-            const isOwner = r.user_id === user?.id;
-            const offersList = expandedOffers[r.id];
-            
             return (
-              <div key={r.id} className="card p-5 flex flex-col justify-between">
+              <div key={r.id} className="card p-5 flex flex-col justify-between h-fit">
                 <div>
                   <div className="flex justify-between items-start">
                     <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
@@ -179,54 +209,13 @@ export default function WantedPage() {
                       </div>
                     </div>
                     
-                    {isOwner ? (
-                      <div className="flex gap-2">
-                        <button onClick={() => toggleOffers(r.id)} className="btn-secondary !py-1 !px-3 text-xs flex items-center gap-1">
-                          Offers {offersList ? <ChevronUp className="h-3 w-3"/> : <ChevronDown className="h-3 w-3"/>}
-                        </button>
-                        <button onClick={() => handleFulfill(r.id)} className="rounded p-1.5 text-forest-600 hover:bg-forest-50" title="Mark as Fulfilled">
-                          <Check className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => handleDelete(r.id)} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => openOfferModal(r.id)}
-                        className="btn-primary !py-1 !px-3 text-xs"
-                      >
-                        I have this
-                      </button>
-                    )}
+                    <button
+                      onClick={() => openOfferModal(r)}
+                      className="btn-primary !py-1 !px-3 text-xs"
+                    >
+                      I have this
+                    </button>
                   </div>
-
-                  {/* Offers Dropdown */}
-                  {isOwner && offersList && (
-                    <div className="mt-3 rounded-lg bg-ink-50 p-3 space-y-2">
-                      <h4 className="text-xs font-bold text-ink-900">Received Offers</h4>
-                      {offersList.length === 0 ? (
-                        <p className="text-xs text-ink-500">No offers yet.</p>
-                      ) : (
-                        offersList.map(offer => (
-                          <div key={offer.id} className="flex items-center justify-between bg-white p-2 rounded border border-ink-100">
-                            <div>
-                              <p className="text-xs font-semibold text-ink-900">{offer.offerer.full_name}</p>
-                              <Link to={`/resources/${offer.resource_id}`} className="text-[10px] text-brand-600 hover:underline">
-                                {offer.resource.title}
-                              </Link>
-                            </div>
-                            <button
-                              onClick={() => acceptOffer(offer.id, offer.resource_id)}
-                              className="rounded bg-brand-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-brand-700"
-                            >
-                              Accept
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -301,37 +290,100 @@ export default function WantedPage() {
               </button>
             </div>
             <div className="space-y-4">
-              <p className="text-sm text-ink-600">
-                Select one of your listed items to offer. If you haven't listed it yet, you'll need to list it first.
-              </p>
+              <div className="flex rounded-lg bg-ink-50 p-1 mb-4">
+                <button
+                  className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+                    offerMode === "existing" ? "bg-white shadow-sm text-ink-900" : "text-ink-600 hover:text-ink-900"
+                  }`}
+                  onClick={() => setOfferMode("existing")}
+                >
+                  From Inventory
+                </button>
+                <button
+                  className={`flex-1 rounded-md py-1.5 text-sm font-medium transition-colors ${
+                    offerMode === "new" ? "bg-white shadow-sm text-ink-900" : "text-ink-600 hover:text-ink-900"
+                  }`}
+                  onClick={() => setOfferMode("new")}
+                >
+                  Offer New Item
+                </button>
+              </div>
               
-              {myResources.length === 0 ? (
-                <div className="rounded-lg bg-yellow-50 p-4 text-center">
-                  <p className="text-sm text-yellow-800">You don't have any items listed.</p>
-                  <Link to="/resources/new" className="mt-2 inline-block text-sm font-bold text-yellow-900 underline">
-                    List an item now
-                  </Link>
-                </div>
+              {offerMode === "existing" ? (
+                <>
+                  <p className="text-sm text-ink-600">
+                    Select one of your already listed items to offer.
+                  </p>
+                  
+                  {myResources.length === 0 ? (
+                    <div className="rounded-lg bg-yellow-50 p-4 text-center">
+                      <p className="text-sm text-yellow-800">You don't have any items listed yet.</p>
+                      <button onClick={() => setOfferMode("new")} className="mt-2 inline-block text-sm font-bold text-yellow-900 underline">
+                        Offer a new item instead
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-ink-700">Select Item</label>
+                      <select
+                        className="input"
+                        value={selectedResourceId}
+                        onChange={(e) => setSelectedResourceId(e.target.value)}
+                      >
+                        <option value="">-- Choose an item --</option>
+                        {myResources.map(r => (
+                          <option key={r.id} value={r.id}>{r.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-ink-700">Select Item</label>
-                  <select
-                    className="input"
-                    value={selectedResourceId}
-                    onChange={(e) => setSelectedResourceId(e.target.value)}
-                  >
-                    <option value="">-- Choose an item --</option>
-                    {myResources.map(r => (
-                      <option key={r.id} value={r.id}>{r.title}</option>
-                    ))}
-                  </select>
+                <div className="space-y-3">
+                  <p className="text-sm text-ink-600">
+                    Quickly list an item to offer. It will be added to your inventory.
+                  </p>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-ink-700">Item Name</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={newOfferForm.title}
+                      onChange={(e) => setNewOfferForm({ ...newOfferForm, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-ink-700">Deposit (₹)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="input"
+                        value={newOfferForm.deposit_amount}
+                        onChange={(e) => setNewOfferForm({ ...newOfferForm, deposit_amount: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-ink-700">Condition</label>
+                      <select
+                        className="input"
+                        value={newOfferForm.condition}
+                        onChange={(e) => setNewOfferForm({ ...newOfferForm, condition: e.target.value })}
+                      >
+                        <option value="new">New</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="worn">Worn</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
               
               <div className="flex gap-3 pt-4">
                 <button 
                   onClick={submitOffer} 
-                  disabled={!selectedResourceId}
+                  disabled={offerMode === "existing" && !selectedResourceId}
                   className="btn-primary flex-1 disabled:opacity-50"
                 >
                   Send Offer

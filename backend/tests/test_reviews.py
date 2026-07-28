@@ -78,7 +78,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
-    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={})
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
     # Submit review -> Should succeed
     resp1 = client.post(
@@ -103,7 +103,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     client.post(f"/api/v1/borrow-requests/{req_id2}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id2}/handover", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id2}/return", headers=borrower_headers, json={})
-    client.post(f"/api/v1/borrow-requests/{req_id2}/confirm-return", headers=owner_headers, json={})
+    client.post(f"/api/v1/borrow-requests/{req_id2}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
     # Submit review again -> Should succeed now
     resp3 = client.post(
@@ -136,7 +136,7 @@ def test_admin_can_delete_any_review(client, test_user, second_user, admin_user,
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
-    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={})
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
     review_resp = client.post(
         "/api/v1/reviews",
@@ -166,7 +166,7 @@ def test_non_admin_cannot_delete_review(client, test_user, second_user, test_cat
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
-    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={})
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
     review_resp = client.post(
         "/api/v1/reviews",

@@ -13,9 +13,12 @@ import {
   ArrowRight,
   Wallet,
   CreditCard,
+  Heart,
+  Clock
 } from "lucide-react";
-import { resourceApi, borrowApi, reviewApi, categoryApi, getImageUrl } from "../../api/endpoints";
+import { resourceApi, borrowApi, reviewApi, categoryApi, wishlistApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
+import AvailabilityCalendar from "../../components/AvailabilityCalendar";
 
 // Local Mock Items list matching Dashboard page to load details offline
 const LOCAL_MOCK_ITEMS = {
@@ -347,10 +350,11 @@ export default function ResourceDetailPage() {
   const [loading, setLoading] = useState(true);
   
   // Dates state
-  const [startDate, setStartDate] = useState("2026-09-15");
-  const [endDate, setEndDate] = useState("2026-09-17");
+  const [selectedDateRange, setSelectedDateRange] = useState({ start: null, end: null, error: null });
+  const [bookings, setBookings] = useState([]);
   const [submittingBorrow, setSubmittingBorrow] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [isWishlisted, setIsWishlisted] = useState(false);
   
   // Availability strip selected day (for mock calendar strip visual toggles)
   const [selectedCalendarDay, setSelectedCalendarDay] = useState(15);
@@ -411,10 +415,11 @@ export default function ResourceDetailPage() {
     }
 
     // Actual database resource load
-    Promise.all([resourceApi.get(id), reviewApi.listForResource(id)])
-      .then(([resResp, revResp]) => {
+    Promise.all([resourceApi.get(id), reviewApi.listForResource(id), resourceApi.getAvailability(id)])
+      .then(([resResp, revResp, availResp]) => {
         setResource(resResp.data);
         setReviews(revResp.data);
+        setBookings(availResp.data);
       })
       .catch((err) => {
         // Fallback item if DB throws error during demo
@@ -431,13 +436,21 @@ export default function ResourceDetailPage() {
           reviews_count: 15,
           total_borrows: 45,
           category: { id: "cat-1", name: "Tools" },
-          owner: { id: "owner-1", full_name: "Rahul Sharma", trust_score: 98 },
+          owner: { id: "owner-1", full_name: "Rahul Sharma", trust_score: 98, avg_response_seconds: 3600 },
           images: [{ id: "img-1", image_url: "🪜", is_primary: true }],
+          is_wishlisted: false,
         };
         setResource(fallback);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        if (resource) setIsWishlisted(resource.is_wishlisted);
+      });
   };
+
+  useEffect(() => {
+    if (resource) setIsWishlisted(resource.is_wishlisted);
+  }, [resource]);
 
   useEffect(() => {
     load();
@@ -455,86 +468,86 @@ export default function ResourceDetailPage() {
     );
   }
 
-  // Calculate days difference
-  const getDaysCount = () => {
-    if (!startDate || !endDate) return 1;
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // inclusive
-    return isNaN(diffDays) ? 1 : diffDays;
-  };
+  const sDate = selectedDateRange.start;
+  const eDate = selectedDateRange.end || selectedDateRange.start;
+  
+  const daysCount = sDate && eDate 
+    ? Math.max(1, Math.ceil((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1)
+    : 0;
 
-  const daysCount = getDaysCount();
-  const dailyPrice = resource.daily_price || 90;
-  const rentAmount = dailyPrice * daysCount;
-  const securityDeposit = resource.deposit_amount || 500;
+  // Simple pricing model based on deposit
+  const dailyPrice = Math.floor(resource.deposit_amount * 0.05); // 5% of deposit per day
+  const rentAmount = daysCount * dailyPrice;
+  const securityDeposit = resource.deposit_amount;
   const totalAmount = rentAmount + securityDeposit;
 
   const handleBorrowRequest = async (e) => {
     e.preventDefault();
-    setSubmittingBorrow(true);
-
-    const bookingRequestPayload = {
-      id: "mock-book-" + Date.now(),
-      resource: {
-        id: resource.id,
-        title: resource.title,
-        image_placeholder: resource.images?.[0]?.image_url || "🪜",
-      },
-      requested_start_date: startDate,
-      requested_end_date: endDate,
-      total_days: daysCount,
-      rent_amount: rentAmount,
-      deposit_amount: securityDeposit,
-      total_amount: totalAmount,
-      payment_method: paymentMethod,
-      status: "requested",
-      created_at: new Date().toISOString(),
-      lender: {
-        full_name: resource.owner.full_name,
-      },
-    };
-
-    // Save mock booking locally
-    const savedBookings = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-    savedBookings.unshift(bookingRequestPayload);
-    localStorage.setItem("share_neighbour_bookings", JSON.stringify(savedBookings));
-
-    // Also trigger the API call if it's a real resource
-    if (!id.startsWith("mock-")) {
-      try {
-        await borrowApi.create({
-          resource_id: resource.id,
-          requested_start_date: startDate,
-          requested_end_date: endDate,
-          purpose: "Borrowed via ShareNeighbour",
-        });
-      } catch (err) {
-        console.log("Database booking request failed (might be offline):", err);
-      }
+    if (!user) {
+      toast.error("Please login to request items");
+      navigate("/login");
+      return;
+    }
+    
+    if (!selectedDateRange.start || !selectedDateRange.end) {
+      toast.error("Please select a complete date range");
+      return;
     }
 
-    // Add visual notification
-    const savedNotifs = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-    savedNotifs.unshift({
-      id: "notif-" + Date.now(),
-      title: "Booking request sent",
-      message: `Your request to borrow ${resource.title} from ${resource.owner.full_name} has been sent successfully.`,
-      created_at: new Date().toISOString(),
-      is_read: false,
-      type: "calendar",
-    });
-    localStorage.setItem("share_neighbour_notifs", JSON.stringify(savedNotifs));
+    if (selectedDateRange.error) {
+      toast.error(selectedDateRange.error);
+      return;
+    }
 
-    setTimeout(() => {
-      setSubmittingBorrow(false);
-      toast.success("Request sent to neighbor!");
+    setSubmittingBorrow(true);
+    
+    // Format dates for backend
+    const formattedStart = selectedDateRange.start.toISOString().split("T")[0];
+    const formattedEnd = selectedDateRange.end.toISOString().split("T")[0];
+
+    try {
+      await borrowApi.create({
+        resource_id: resource.id,
+        requested_start_date: formattedStart,
+        requested_end_date: formattedEnd,
+        purpose: "I need this item for a few days."
+      });
+      toast.success("Borrow request sent to owner!");
       navigate("/borrow-requests");
-    }, 800);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to submit request");
+    } finally {
+      setSubmittingBorrow(false);
+    }
   };
 
   const isOwner = resource.owner?.id === user?.id;
+
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      toast.error("Please login to wishlist items");
+      return;
+    }
+    try {
+      if (isWishlisted) {
+        await wishlistApi.remove(resource.id);
+        setIsWishlisted(false);
+      } else {
+        await wishlistApi.add(resource.id);
+        setIsWishlisted(true);
+        toast.success("Added to wishlist");
+      }
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  const formatAvgResponseTime = (seconds) => {
+    if (seconds == null) return "No response data";
+    if (seconds < 3600) return "Usually responds within an hour";
+    if (seconds < 86400) return `Usually responds within ${Math.round(seconds / 3600)} hours`;
+    return `Usually responds in ${Math.round(seconds / 86400)} days`;
+  };
 
   // Visual Mock Calendar Strip selector
   const handleCalendarStripClick = (dayNumber) => {
@@ -583,6 +596,18 @@ export default function ResourceDetailPage() {
                 <span className="text-xs font-bold text-slate-800">{resource.average_rating}</span>
                 <span className="text-[10px] text-slate-400 font-semibold">({resource.reviews_count} reviews)</span>
               </div>
+              
+              <button 
+                onClick={handleWishlistToggle}
+                className={`absolute top-4 right-4 p-2.5 rounded-full backdrop-blur-sm transition-all ${
+                  isWishlisted 
+                    ? "bg-red-50 text-red-500 shadow-sm border border-red-100" 
+                    : "bg-white/80 text-slate-500 hover:bg-white hover:text-red-500 hover:shadow-sm border border-slate-200"
+                }`}
+                aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                <Heart className={`h-5 w-5 ${isWishlisted ? "fill-current" : ""}`} />
+              </button>
             </div>
 
             {/* Title & Stats */}
@@ -614,7 +639,18 @@ export default function ResourceDetailPage() {
               <div>
                 <p className="text-xs text-slate-400 font-medium leading-none">Listed by Owner</p>
                 <h3 className="font-bold text-slate-800 text-sm mt-1">{resource.owner?.full_name}</h3>
-                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{resource.pickup_location?.split("away")[0]} away</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-[10px] text-slate-400 font-semibold">{resource.pickup_location?.split("away")[0]} away</p>
+                  {resource.owner?.avg_response_seconds != null && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <p className="text-[10px] text-primary-600 font-semibold flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatAvgResponseTime(resource.owner?.avg_response_seconds)}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             <button
@@ -777,42 +813,13 @@ export default function ResourceDetailPage() {
               {/* Date selections */}
               <div className="space-y-2.5">
                 <label className="label">Select Dates</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-0.5">FROM</label>
-                    <input
-                      type="date"
-                      required
-                      value={startDate}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={(e) => {
-                        setStartDate(e.target.value);
-                        if (e.target.value && endDate) {
-                          const s = new Date(e.target.value);
-                          const eDate = new Date(endDate);
-                          const diffDays = Math.ceil((eDate - s) / (1000 * 60 * 60 * 24));
-                          if (diffDays > resource.max_borrow_days) setEndDate("");
-                        }
-                      }}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 block mb-0.5">TO</label>
-                    <input
-                      type="date"
-                      required
-                      value={endDate}
-                      min={startDate || new Date().toISOString().split("T")[0]}
-                      max={
-                        startDate
-                          ? new Date(new Date(startDate).setDate(new Date(startDate).getDate() + resource.max_borrow_days)).toISOString().split("T")[0]
-                          : undefined
-                      }
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100/50 px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                    />
-                  </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+                  <AvailabilityCalendar 
+                    bookings={bookings}
+                    selectedRange={selectedDateRange}
+                    onSelectRange={setSelectedDateRange}
+                    maxDays={resource.max_borrow_days}
+                  />
                 </div>
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                   <span>Total Days</span>

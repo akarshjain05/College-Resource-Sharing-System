@@ -42,6 +42,14 @@ class BorrowStatus(str, enum.Enum):
     DAMAGED = "damaged"
 
 
+class DamageClaimStatus(str, enum.Enum):
+    OPEN = "open"
+    DISPUTED = "disputed"
+    RESOLVED_VALID = "resolved_valid"
+    RESOLVED_INVALID = "resolved_invalid"
+    RESOLVED_PARTIAL = "resolved_partial"
+
+
 class NotificationType(str, enum.Enum):
     BORROW_REQUEST = "borrow_request"
     BORROW_APPROVED = "borrow_approved"
@@ -49,6 +57,9 @@ class NotificationType(str, enum.Enum):
     RETURN_REMINDER = "return_reminder"
     RETURN_CONFIRMED = "return_confirmed"
     NEW_REVIEW = "new_review"
+    DAMAGE_CLAIM_FILED = "damage_claim_filed"
+    DAMAGE_CLAIM_DISPUTED = "damage_claim_disputed"
+    DAMAGE_CLAIM_RESOLVED = "damage_claim_resolved"
     SYSTEM = "system"
 
 

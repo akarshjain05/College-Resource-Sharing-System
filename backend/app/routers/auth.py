@@ -39,7 +39,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, payload: UserRegister, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == payload.email).first()
     if existing:
         raise ConflictException("An account with this email already exists")
@@ -94,7 +95,8 @@ def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db
 
 
 @router.post("/google", response_model=GoogleAuthResponse)
-def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def google_login(request: Request, payload: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not settings.GOOGLE_CLIENT_ID:
         raise AppException(
             "Google Sign-In is not configured on this server (missing GOOGLE_CLIENT_ID).",
@@ -165,7 +167,8 @@ def google_login(payload: GoogleAuthRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/google/complete-profile", response_model=Token, status_code=status.HTTP_201_CREATED)
-def complete_google_profile(payload: GoogleProfileCompletion, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def complete_google_profile(request: Request, payload: GoogleProfileCompletion, db: Session = Depends(get_db)):
     data = decode_token(payload.registration_token)
     if not data or data.get("purpose") != "google_registration":
         raise AppException(
@@ -261,7 +264,8 @@ def change_password(
 
 
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
-def forgot_password(payload: PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password(request: Request, payload: PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
     if user:
         reset_token = create_access_token(str(user.id), {"purpose": "password_reset"})
@@ -272,7 +276,8 @@ def forgot_password(payload: PasswordResetRequest, background_tasks: BackgroundT
 
 
 @router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
-def reset_password(payload: PasswordResetConfirm, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def reset_password(request: Request, payload: PasswordResetConfirm, db: Session = Depends(get_db)):
     data = decode_token(payload.token)
     if not data or data.get("purpose") != "password_reset":
         raise AppException("Invalid or expired reset token", status_code=status.HTTP_400_BAD_REQUEST, error_code="BAD_RESET_TOKEN")

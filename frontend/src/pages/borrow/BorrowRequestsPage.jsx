@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star } from "lucide-react";
+import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
+import DueBadge from "../../components/DueBadge";
+import ChatThread from "../../components/ChatThread";
+import { chatEventBus } from "../../utils/chatEventBus";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -18,15 +21,31 @@ const STATUS_STYLE = {
 
 function RequestCard({ request, isIncoming, onAction }) {
   const [showRating, setShowRating] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [rating, setRating] = useState(5);
   const [review, setReview] = useState("");
   const [actionType, setActionType] = useState("");
+  const [hasUnread, setHasUnread] = useState(false); // Can be set by websocket
+
+  // Listen for websocket messages to show dot if chat is closed
+  useEffect(() => {
+    const handleNewMessage = (newMsg) => {
+      if (!showChat) {
+        setHasUnread(true);
+      }
+    };
+    const unsubscribe = chatEventBus.subscribe(request.id, handleNewMessage);
+    return () => unsubscribe();
+  }, [request.id, showChat]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const end = new Date(request.requested_end_date);
   end.setHours(0, 0, 0, 0);
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+
+  const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
+  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 24;
 
   const handleActionClick = (action) => {
     if (action === "return" || action === "confirm_return") {
@@ -74,9 +93,10 @@ function RequestCard({ request, isIncoming, onAction }) {
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-ink-500">
-        {request.requested_start_date} → {request.requested_end_date}
-      </p>
+      <div className="mt-2 flex items-center gap-2 text-xs text-ink-500">
+        <span>{request.requested_start_date} → {request.requested_end_date}</span>
+        <DueBadge endDate={request.requested_end_date} status={request.status} />
+      </div>
       {request.purpose && <p className="mt-1 text-sm text-ink-700">{request.purpose}</p>}
 
       {showRating ? (
@@ -122,9 +142,16 @@ function RequestCard({ request, isIncoming, onAction }) {
             </>
           )}
           {!isIncoming && request.status === "requested" && (
-            <button onClick={() => handleActionClick("cancel")} className="btn-secondary !py-1.5 !px-3 text-xs">
-              <Ban className="h-3.5 w-3.5" /> Cancel
-            </button>
+            <>
+              {canNudge && (
+                <button onClick={() => handleActionClick("nudge")} className="btn-secondary !py-1.5 !px-3 text-xs">
+                  <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                </button>
+              )}
+              <button onClick={() => handleActionClick("cancel")} className="btn-secondary !py-1.5 !px-3 text-xs">
+                <Ban className="h-3.5 w-3.5" /> Cancel
+              </button>
+            </>
           )}
           {!isIncoming && request.status === "approved" && (
             <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
@@ -154,6 +181,31 @@ function RequestCard({ request, isIncoming, onAction }) {
           )}
         </div>
       )}
+      
+      <div className="mt-3 flex justify-end">
+        <button 
+          onClick={() => {
+            setShowChat(!showChat);
+            if (!showChat) setHasUnread(false);
+          }} 
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors relative ${
+            showChat ? "bg-slate-100 text-slate-800" : "bg-primary-50 text-primary-600 hover:bg-primary-100"
+          }`}
+        >
+          <MessageCircle className="h-4 w-4" />
+          {showChat ? "Close Chat" : "Message"}
+          {hasUnread && !showChat && (
+            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-rose-500 translate-x-1/3 -translate-y-1/3 border border-white"></span>
+          )}
+        </button>
+      </div>
+
+      {showChat && (
+        <ChatThread 
+          request={request} 
+          onReportIssue={(req) => window.location.href = `/complaints?borrow_request_id=${req.id}`} 
+        />
+      )}
     </div>
   );
 }
@@ -175,20 +227,11 @@ export default function BorrowRequestsPage() {
   const loadBookingsList = () => {
     setLoading(true);
     
-    // Fetch actual API requests if backend works
     Promise.all([
       borrowApi.myRequests().catch(() => ({ data: [] })),
       borrowApi.incoming().catch(() => ({ data: [] }))
     ])
       .then(([myReqsResp, incomingReqsResp]) => {
-        // Load custom requests from localStorage
-        const stored = JSON.parse(localStorage.getItem("share_neighbour_bookings"));
-        if (!stored) {
-          localStorage.setItem("share_neighbour_bookings", JSON.stringify(DEFAULT_MOCK_BOOKINGS));
-        }
-        
-        const local = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-        
         // Map database requests to match structure
         const dbMyReqs = (myReqsResp.data || []).map(r => ({
           id: r.id,
@@ -199,9 +242,9 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: r.deposit_amount + 100, // mock total
+          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: r.lender.full_name },
+          lender: { full_name: r.lender?.full_name || "Unknown" },
           borrower: { full_name: "You" },
         }));
 
@@ -214,24 +257,20 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: r.deposit_amount + 100,
+          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
           lender: { full_name: "You" },
-          borrower: { full_name: r.borrower.full_name },
+          borrower: { full_name: r.borrower?.full_name || "Unknown" },
         }));
 
-        // Combine
-        const allBorrows = [...dbMyReqs, ...local.filter(x => x.borrower?.full_name === "You")];
-        const allLends = [...dbIncomingReqs, ...local.filter(x => x.lender?.full_name === "You" || x.borrower?.full_name !== "You")];
-        
-        // Remove duplicates
-        const uniqueBorrows = allBorrows.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-        const uniqueLends = allLends.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-
         setBookings({
-          borrowing: uniqueBorrows,
-          lending: uniqueLends
+          borrowing: dbMyReqs,
+          lending: dbIncomingReqs
         });
+      })
+      .catch((err) => {
+        console.error("Failed to load bookings:", err);
+        toast.error("Failed to load bookings");
       })
       .finally(() => setLoading(false));
   };
@@ -252,6 +291,11 @@ export default function BorrowRequestsPage() {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
       if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
+      if (newStatus === "nudge") {
+        await borrowApi.nudge(bookingId);
+        toast.success("Nudge sent successfully!");
+        return;
+      }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, ""); 
@@ -270,6 +314,11 @@ export default function BorrowRequestsPage() {
     try {
       if (action === "approve") await borrowApi.approve(id);
       if (action === "reject") await borrowApi.reject(id, "Not available right now");
+      if (action === "nudge") {
+        await borrowApi.nudge(id);
+        toast.success("Nudge sent successfully!");
+        return;
+      }
       if (action === "handover") await borrowApi.handover(id);
       if (action === "cancel") await borrowApi.cancel(id);
       if (action === "return") await borrowApi.returnItem(id, null, rating, review);

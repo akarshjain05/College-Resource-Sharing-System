@@ -26,8 +26,11 @@ from app.routers import (
     admin_analytics,
     uploads,
     complaints,
+    damage_claims,
     wanted,
+    wishlist,
     websocket,
+    chat,
     health,
 )
 from app.middleware.csrf import CSRFMiddleware
@@ -72,8 +75,11 @@ app.include_router(reviews.router, prefix=API_PREFIX)
 app.include_router(admin_analytics.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(complaints.router, prefix=API_PREFIX)
-app.include_router(wanted.router, prefix=API_PREFIX)
-app.include_router(websocket.router)
+app.include_router(damage_claims.router, prefix="/api/v1")
+app.include_router(wanted.router, prefix="/api/v1")
+app.include_router(wishlist.router, prefix="/api/v1")
+app.include_router(chat.router, prefix="/api/v1")
+app.include_router(websocket.router, prefix="/api/v1")
 
 
 @app.on_event("startup")

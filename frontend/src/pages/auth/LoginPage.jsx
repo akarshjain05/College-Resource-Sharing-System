@@ -22,7 +22,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      navigate("/dashboard");
+      navigate("/resources");
     } catch (err) {
       const errorCode = err.response?.data?.error_code;
       if (errorCode === "GOOGLE_ACCOUNT_NO_PASSWORD") {
@@ -49,7 +49,7 @@ export default function LoginPage() {
         });
       } else {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate("/resources");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Google sign-in failed. Please try again.");
@@ -75,7 +75,7 @@ export default function LoginPage() {
               registrationToken={googleSignup.registrationToken}
               fullName={googleSignup.fullName}
               email={googleSignup.email}
-              onDone={() => navigate("/dashboard")}
+              onDone={() => navigate("/resources")}
               onCancel={() => setGoogleSignup(null)}
             />
           ) : (
