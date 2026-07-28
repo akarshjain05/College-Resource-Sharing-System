@@ -1,132 +1,49 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
-7bc6e149478d   crss_frontend_prod                              "caddy run --config …"   16 minutes ago   Up 16 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-8d83b5a6a2d9   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   16 minutes ago   Up 16 minutes          8000/tcp                                                                                          crss_celery_worker
-0d69b1b681f6   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   16 minutes ago   Up 16 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-a399f44717f0   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   16 minutes ago   Up 16 minutes          8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
+de40ff50177b   crss_frontend_prod                              "caddy run --config …"   2 minutes ago   Up 2 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+8bc2aff06f63   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   2 minutes ago   Up 2 minutes           8000/tcp                                                                                          crss_celery_worker
+f43545c40743   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   2 minutes ago   Up 2 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+7ffd818380eb   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   2 minutes ago   Up 2 minutes           8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | INFO:     Started server process [8]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:47720 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:34060 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:34060 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:34078 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:34064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41060 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41058 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41052 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41052 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41062 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:41072 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41060 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41052 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41058 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48766 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48736 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48750 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48196 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48210 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48222 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48222 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48226 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48226 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48240 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48226 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48226 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39036 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39036 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39050 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39076 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39036 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39066 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39038 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39080 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:39038 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39036 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39066 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39038 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39038 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39066 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39038 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41074 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41084 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41098 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:41098 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45372 - "GET /api/v1/resources?search=c&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45372 - "GET /api/v1/resources?search=ca&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45372 - "GET /api/v1/resources?search=cal&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54916 - "GET /api/v1/resources/e1fa8850-20ba-4b06-94b8-32d87d3dcc5a/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54894 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54908 - "GET /api/v1/resources/e1fa8850-20ba-4b06-94b8-32d87d3dcc5a/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45372 - "GET /api/v1/resources/e1fa8850-20ba-4b06-94b8-32d87d3dcc5a HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54926 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54942 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54926 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54926 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44610 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44600 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44606 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44606 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44600 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:44610 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51372 - "GET /api/v1/notifications HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:51368 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:51368 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51368 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:51372 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 19:02:13 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
-crss_backend  | INFO:     172.18.0.7:60868 - "POST /api/v1/borrow-requests/fc82eedf-763d-4004-862e-37f09743793a/handover HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60878 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60868 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60894 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60906 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60908 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60894 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33404 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33436 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33420 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33450 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:33420 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33472 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33470 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:33454 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55532 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55558 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55516 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55544 - "GET /api/v1/resources?owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55516 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55532 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55544 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55532 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55544 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55558 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55516 - "GET /api/v1/resources?owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53704 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53716 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53742 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53732 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53734 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53700 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53732 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53734 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53734 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53732 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53734 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53734 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53732 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:47938 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46102 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46084 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46100 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:47360 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:47372 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:47366 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52702 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52704 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52728 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52728 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52738 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:49286 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49298 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49296 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
