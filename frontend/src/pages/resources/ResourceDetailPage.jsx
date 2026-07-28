@@ -356,8 +356,7 @@ export default function ResourceDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isWishlisted, setIsWishlisted] = useState(false);
   
-  // Availability strip selected day (for mock calendar strip visual toggles)
-  const [selectedCalendarDay, setSelectedCalendarDay] = useState(15);
+
 
   const load = () => {
     setLoading(true);
@@ -556,15 +555,7 @@ export default function ResourceDetailPage() {
     return `Usually responds in ${Math.round(seconds / 86400)} days`;
   };
 
-  // Visual Mock Calendar Strip selector
-  const handleCalendarStripClick = (dayNumber) => {
-    setSelectedCalendarDay(dayNumber);
-    // Auto-update dates inputs to match Sept 13-16 flow in mockup
-    setStartDate(`2026-09-${dayNumber}`);
-    const nextDay = dayNumber + 2;
-    setEndDate(`2026-09-${nextDay}`);
-    toast.success(`Selected Dates: Sept ${dayNumber} to Sept ${nextDay}`);
-  };
+
 
   return (
     <div className="space-y-6">
@@ -664,43 +655,7 @@ export default function ResourceDetailPage() {
             </p>
           </div>
 
-          {/* Availability Strips component (Screen 3) */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Availability Calendar</h3>
-              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Select a start date from the calendar ribbon</p>
-            </div>
-            
-            <div className="grid grid-cols-5 gap-2.5">
-              {[
-                { dayNum: 13, dayName: "SAT", isAvail: true },
-                { dayNum: 14, dayName: "SUN", isAvail: true },
-                { dayNum: 15, dayName: "MON", isAvail: true },
-                { dayNum: 16, dayName: "TUE", isAvail: true },
-              ].map((day) => (
-                <button
-                  key={day.dayNum}
-                  onClick={() => handleCalendarStripClick(day.dayNum)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                    selectedCalendarDay === day.dayNum
-                      ? "bg-primary-600 border-primary-600 text-white shadow-md shadow-primary-600/10 scale-102"
-                      : "bg-slate-50 border-slate-200/60 text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                  }`}
-                >
-                  <span className="text-[9px] font-bold tracking-wider opacity-80">{day.dayName}</span>
-                  <span className="text-base font-extrabold mt-1">{day.dayNum}</span>
-                </button>
-              ))}
-              
-              <button
-                onClick={() => toast.success("Opening full calendar view...")}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 font-semibold text-center transition-all"
-              >
-                <span className="text-[9px] font-bold tracking-wider">MORE</span>
-                <Calendar className="h-4 w-4 mt-1.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
+
 
           {/* Reviews & Overall score card (Screen 6) */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
