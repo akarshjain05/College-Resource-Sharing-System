@@ -10,7 +10,7 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
+import app.core.database as core_db
 from app.core.security import decode_token
 from app.models.user import User
 from app.services.ws_manager import manager
@@ -31,7 +31,7 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 
 @router.websocket("/ws/notifications")
 async def notifications_websocket(websocket: WebSocket, token: str = Query(...)):
-    db = SessionLocal()
+    db = core_db.SessionLocal()
     try:
         user = _authenticate_ws_token(token, db)
         if not user:

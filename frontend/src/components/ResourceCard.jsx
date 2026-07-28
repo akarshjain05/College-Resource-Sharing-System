@@ -110,15 +110,19 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
 >
   {/* Image */}
   <div className="relative aspect-square w-full bg-white p-4">
-    {primaryImage ? (
+    {primaryImage && (
+      primaryImage.image_url.startsWith("/") ||
+      primaryImage.image_url.startsWith("http") ||
+      primaryImage.image_url.startsWith("data:")
+    ) ? (
       <img
         src={getImageUrl(primaryImage.image_url)}
         alt={resource.title}
         className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
       />
     ) : (
-      <div className="flex h-full w-full items-center justify-center rounded-md bg-ink-50 font-display text-3xl text-ink-300">
-        {resource.title.charAt(0)}
+      <div className="flex h-full w-full items-center justify-center rounded-md bg-ink-50 font-display text-5xl select-none">
+        {primaryImage ? primaryImage.image_url : resource.title.charAt(0)}
       </div>
     )}
 

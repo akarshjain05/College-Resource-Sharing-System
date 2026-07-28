@@ -64,6 +64,22 @@ async def send_verification_email(to_email: str, full_name: str, verify_link: st
     )
     await send_email(to_email, "Verify your CRSS account", html)
 
+    # Forward event to notification microservice
+    try:
+        from app.services.notification_service import forward_to_microservice
+        forward_to_microservice(
+            user_id=to_email,
+            email=to_email,
+            title="Verify your CRSS account",
+            message=f"Hi {full_name}, please verify your email address.",
+            link=verify_link,
+            event_type="auth.verification",
+            channels=["email"],
+            force_delivery=True,
+        )
+    except Exception:
+        pass
+
 
 async def send_password_reset_email(to_email: str, full_name: str, reset_link: str) -> None:
     html = _wrap_template(
@@ -74,6 +90,22 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
         f'border-radius:6px;text-decoration:none;">Reset password</a>',
     )
     await send_email(to_email, "Reset your CRSS password", html)
+
+    # Forward event to notification microservice
+    try:
+        from app.services.notification_service import forward_to_microservice
+        forward_to_microservice(
+            user_id=to_email,
+            email=to_email,
+            title="Reset your CRSS password",
+            message=f"Hi {full_name}, click the link to reset your password.",
+            link=reset_link,
+            event_type="auth.reset_password",
+            channels=["email"],
+            force_delivery=True,
+        )
+    except Exception:
+        pass
 
 
 async def send_borrow_request_email(to_email: str, owner_name: str, borrower_name: str, resource_title: str) -> None:
@@ -92,3 +124,4 @@ async def send_return_reminder_email(to_email: str, borrower_name: str, resource
         f"<strong>{due_date}</strong>. Please return it on time to keep your trust score high.",
     )
     await send_email(to_email, f"Reminder: return {resource_title} soon", html)
+
