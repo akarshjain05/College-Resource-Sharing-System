@@ -46,6 +46,8 @@ def create_borrow_request(
         raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
     if requested_days <= 0:
         raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+    if payload.requested_start_date < date.today():
+        raise AppException("Cannot request to borrow in the past", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
 
     if resource.available_from and payload.requested_start_date < resource.available_from:
         raise AppException(f"Resource is not available before {resource.available_from}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")

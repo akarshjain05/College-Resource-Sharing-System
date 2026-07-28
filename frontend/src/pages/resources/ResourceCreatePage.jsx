@@ -60,6 +60,14 @@ export default function ResourceCreatePage() {
     available_to: "",
   });
 
+  const formatLocalDate = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayDateString = formatLocalDate(new Date());
+
   useEffect(() => {
     categoryApi.list()
       .then(({ data }) => {
@@ -122,6 +130,16 @@ export default function ResourceCreatePage() {
     }
     if (form.deposit_amount < 0) {
       toast.error("Deposit amount must be 0 or more.");
+      return;
+    }
+    if (form.available_from && form.available_to) {
+      if (form.available_from > form.available_to) {
+        toast.error("Available From date cannot be later than Available To date.");
+        return;
+      }
+    }
+    if (form.available_from && form.available_from < todayDateString) {
+      toast.error("Available dates cannot be in the past.");
       return;
     }
     setSubmitting(true);
@@ -429,6 +447,7 @@ export default function ResourceCreatePage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available From</label>
                 <input
                   type="date"
+                  min={todayDateString}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
                   value={form.available_from}
                   onChange={update("available_from")}
@@ -438,6 +457,7 @@ export default function ResourceCreatePage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available To</label>
                 <input
                   type="date"
+                  min={form.available_from || todayDateString}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
                   value={form.available_to}
                   onChange={update("available_to")}
