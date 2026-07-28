@@ -56,6 +56,8 @@ export default function ResourceCreatePage() {
     daily_price: 150,
     deposit_amount: 500,
     location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+    available_from: "",
+    available_to: "",
   });
 
   useEffect(() => {
@@ -198,6 +200,8 @@ export default function ResourceCreatePage() {
         deposit_amount: form.deposit_amount,
         max_borrow_days: 7,
         category_id: form.category_id,
+        available_from: form.available_from || null,
+        available_to: form.available_to || null,
       });
 
       const createdId = response.data.id;
@@ -414,7 +418,35 @@ export default function ResourceCreatePage() {
             </div>
           </div>
 
-          {/* Section 4: Price & Trust Escrow Deposit */}
+          {/* Section 3.5: Available Dates (Optional) */}
+          <div className="space-y-4 pt-6 border-t border-slate-200/60 dark:border-slate-800">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Availability Dates (Optional)</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Specify if this item is only available for a certain period. Leave blank to make it available indefinitely.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available From</label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_from}
+                  onChange={update("available_from")}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available To</label>
+                <input
+                  type="date"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_to}
+                  onChange={update("available_to")}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Pricing & Trust Escrow Deposit */}
           <div className="space-y-4">
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Pricing details</h3>

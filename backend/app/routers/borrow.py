@@ -47,6 +47,11 @@ def create_borrow_request(
     if requested_days <= 0:
         raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
 
+    if resource.available_from and payload.requested_start_date < resource.available_from:
+        raise AppException(f"Resource is not available before {resource.available_from}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
+    if resource.available_to and payload.requested_end_date > resource.available_to:
+        raise AppException(f"Resource is not available after {resource.available_to}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
+
     # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
     if resource.quantity_available <= 1:
         overlap_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
