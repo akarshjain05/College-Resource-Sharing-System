@@ -59,5 +59,9 @@ class Settings(BaseSettings):
     # ---- Rate limiting ----
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # ---- Notification Microservice ----
+    NOTIFICATION_SERVICE_URL: str = "http://localhost:10000"
+    NOTIFICATION_SERVICE_API_KEY: str = "default-dev-key"
+
 
 settings = Settings()

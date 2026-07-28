@@ -213,8 +213,8 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status != BorrowStatus.ACTIVE:
-        raise AppException("Only active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE):
+        raise AppException("Only approved or active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report

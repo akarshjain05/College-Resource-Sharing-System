@@ -27,7 +27,7 @@ import {
   Bookmark,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { resourceApi } from "../api/endpoints";
+import { resourceApi, getImageUrl } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
 
 // Large Mock items dataset with more items per neighborhood
@@ -514,7 +514,7 @@ export default function DashboardPage() {
             reviews_count: dbItem.total_borrows || 0,
             distance: "0.6 km",
             owner: dbItem.owner?.full_name || "Neighbor",
-            image_placeholder: "🛠️",
+            image_placeholder: dbItem.images?.[0]?.image_url || "🛠️",
             description: dbItem.description,
             is_primary: true,
             condition: dbItem.condition || "Good",
@@ -709,7 +709,19 @@ export default function DashboardPage() {
                 >
                   {/* REDESIGNED Item Image Container */}
                   <div className="relative aspect-4/3 w-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center overflow-hidden border-b border-slate-100 dark:border-slate-800">
-                    <span className="text-6xl transition-transform duration-500 group-hover:scale-115 select-none">{item.image_placeholder}</span>
+                    {item.image_placeholder && (
+                      item.image_placeholder.startsWith("/") ||
+                      item.image_placeholder.startsWith("http") ||
+                      item.image_placeholder.startsWith("data:")
+                    ) ? (
+                      <img
+                        src={getImageUrl(item.image_placeholder)}
+                        alt={item.title}
+                        className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <span className="text-6xl transition-transform duration-500 group-hover:scale-115 select-none">{item.image_placeholder}</span>
+                    )}
                     
                     {/* Floating Distance Badge */}
                     <span className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[9px] font-bold text-white backdrop-blur-xs select-none">

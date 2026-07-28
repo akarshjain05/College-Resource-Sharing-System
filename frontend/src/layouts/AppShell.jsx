@@ -60,7 +60,7 @@ export default function AppShell() {
     };
   }, [location.pathname]);
 
-  useNotificationSocket(() => setUnreadCount((prev) => prev + 1));
+  useNotificationSocket(() => setUnreadCount((prev) => prev + 1), user);
 
   // Theme dark/light mode state and logic
   const [theme, setTheme] = useState(

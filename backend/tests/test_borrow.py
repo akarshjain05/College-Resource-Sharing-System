@@ -53,10 +53,20 @@ def test_full_borrow_lifecycle(client, test_user, second_user, test_category):
     assert resource_resp.json()["quantity_available"] == 0
     assert resource_resp.json()["status"] == "borrowed"
 
-    # Borrower returns the item
+    # Owner hands over item
+    handover_resp = client.post(f"/api/v1/borrow-requests/{request_id}/handover", headers=owner_headers)
+    assert handover_resp.status_code == 200
+    assert handover_resp.json()["status"] == "active"
+
+    # Borrower requests return
     return_resp = client.post(f"/api/v1/borrow-requests/{request_id}/return", headers=borrower_headers, json={})
     assert return_resp.status_code == 200
-    assert return_resp.json()["status"] == "returned"
+    assert return_resp.json()["status"] == "return_requested"
+
+    # Owner confirms return
+    confirm_resp = client.post(f"/api/v1/borrow-requests/{request_id}/confirm-return", headers=owner_headers, json={})
+    assert confirm_resp.status_code == 200
+    assert confirm_resp.json()["status"] == "returned"
 
     resource_resp_2 = client.get(f"/api/v1/resources/{resource['id']}")
     assert resource_resp_2.json()["quantity_available"] == 1

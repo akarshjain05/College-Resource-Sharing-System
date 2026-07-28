@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, BackgroundTasks
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from app.models.enums import ResourceCondition, ResourceStatus, UserRole
 from app.models.resource import Resource, ResourceImage
 from app.models.user import User
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
+from app.services.notification_service import notify_all_except_owner_bg
 
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -79,6 +80,7 @@ def get_resource(resource_id: uuid.UUID, db: Session = Depends(get_db)):
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
 def create_resource(
     payload: ResourceCreate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -90,6 +92,15 @@ def create_resource(
     db.add(resource)
     db.commit()
     db.refresh(resource)
+
+    background_tasks.add_task(
+        notify_all_except_owner_bg,
+        current_user.id,
+        resource.id,
+        resource.title,
+        current_user.full_name,
+    )
+
     return resource
 
 
