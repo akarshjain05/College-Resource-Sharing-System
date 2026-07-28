@@ -501,9 +501,16 @@ export default function ResourceDetailPage() {
 
     setSubmittingBorrow(true);
     
-    // Format dates for backend
-    const formattedStart = selectedDateRange.start.toISOString().split("T")[0];
-    const formattedEnd = selectedDateRange.end.toISOString().split("T")[0];
+    // Format dates for backend in local timezone (YYYY-MM-DD)
+    const formatLocalDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formattedStart = formatLocalDate(selectedDateRange.start);
+    const formattedEnd = formatLocalDate(selectedDateRange.end);
 
     try {
       await borrowApi.create({

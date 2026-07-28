@@ -14,6 +14,15 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// Helper to correctly parse YYYY-MM-DD strings as local dates instead of UTC
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  if (dateStr.includes("T")) return new Date(dateStr);
+  const [y, m, d] = dateStr.split('-');
+  return new Date(y, m - 1, d);
+};
+
+
 export default function AvailabilityCalendar({ bookings = [], selectedRange, onSelectRange, maxDays }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const today = startOfDay(new Date());
@@ -28,7 +37,7 @@ export default function AvailabilityCalendar({ bookings = [], selectedRange, onS
   // Determine if a day is booked
   const isBooked = (day) => {
     return bookings.some(b => 
-      isWithinInterval(day, { start: startOfDay(new Date(b.start)), end: startOfDay(new Date(b.end)) })
+      isWithinInterval(day, { start: startOfDay(parseLocalDate(b.start)), end: startOfDay(parseLocalDate(b.end)) })
     );
   };
 
