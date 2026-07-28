@@ -158,55 +158,7 @@ export default function ResourceCreatePage() {
     const finalPlaceholder = photos[0]?.previewUrl || emojiMap[categoryName] || "🛠️";
 
     // 1. Add to localStorage mocks
-    const currentLoc = form.location;
-    const rawMocks = localStorage.getItem("share_neighbour_mocks");
-    let savedMocks = {};
-    if (rawMocks) {
-      savedMocks = JSON.parse(rawMocks);
-    } else {
-      savedMocks = {
-        "Koramangala, Bengaluru": []
-      };
-    }
-
-    const newItem = {
-      id: generatedId,
-      title: form.title,
-      category: categoryName,
-      daily_price: form.daily_price,
-      deposit_amount: form.deposit_amount,
-      average_rating: 5.0,
-      reviews_count: 0,
-      distance: "0.1 km",
-      owner: user?.full_name || "You",
-      image_placeholder: finalPlaceholder,
-      description: form.description,
-      coordinates: { x: 30 + Math.random() * 40, y: 25 + Math.random() * 40 },
-      is_primary: true,
-      condition: form.condition.charAt(0).toUpperCase() + form.condition.slice(1),
-    };
-
-    if (!savedMocks[currentLoc]) savedMocks[currentLoc] = [];
-    savedMocks[currentLoc].unshift(newItem);
-    localStorage.setItem("share_neighbour_mocks", JSON.stringify(savedMocks));
-
-    // Update user sharing score in localStorage
-    const localUser = JSON.parse(sessionStorage.getItem("share_neighbour_user_score") || "15");
-    sessionStorage.setItem("share_neighbour_user_score", String(localUser + 1));
-
-    // 2. Add notification log
-    const savedNotifs = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-    savedNotifs.unshift({
-      id: "notif-" + Date.now(),
-      title: "New Item Published",
-      message: `Your item "${form.title}" is now active in ${currentLoc}.`,
-      created_at: new Date().toISOString(),
-      is_read: false,
-      type: "star",
-    });
-    localStorage.setItem("share_neighbour_notifs", JSON.stringify(savedNotifs));
-
-    // 3. Trigger actual endpoint
+    // 1. Trigger actual endpoint
     try {
       const response = await resourceApi.create({
         title: form.title,
@@ -235,13 +187,14 @@ export default function ResourceCreatePage() {
         }
       }
       toast.success("Listing created successfully!");
-    } catch (dbErr) {
-      console.log("Database upload bypassed. Local listing created.");
+      setCreatedItem({ ...response.data, image_placeholder: finalPlaceholder });
+      setSubmitting(false);
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || "Failed to create listing on the server.");
+      setSubmitting(false);
     }
-
-    setCreatedItem(newItem);
-    setSubmitting(false);
-    setShowSuccessModal(true);
   };
 
   return (
