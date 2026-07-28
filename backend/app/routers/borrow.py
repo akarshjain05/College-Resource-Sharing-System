@@ -149,9 +149,6 @@ def approve_borrow_request(
         )
     lender.response_count += 1
 
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
     db.commit()
     db.refresh(br)
 
@@ -239,10 +236,6 @@ def cancel_borrow_request(
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request can no longer be cancelled", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    if br.status == BorrowStatus.APPROVED:
-        br.resource.quantity_available += 1
-        br.resource.status = ResourceStatus.AVAILABLE
-
     br.status = BorrowStatus.CANCELLED
     db.commit()
     db.refresh(br)
@@ -329,9 +322,7 @@ def confirm_return_resource(
     br.borrower_review = payload.borrower_review
 
     resource = br.resource
-    resource.quantity_available += 1
     resource.total_borrows += 1
-    resource.status = ResourceStatus.AVAILABLE
 
     # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
