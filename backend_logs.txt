@@ -1,10 +1,244 @@
 CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
-b15a86252592   crss_frontend_prod                              "caddy run --config …"   8 minutes ago   Up 8 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-55534066731c   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   9 minutes ago   Up 8 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-6508ae99c064   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   9 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_worker
-088613dce1b5   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   9 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_beat
+003aab043078   crss_frontend_prod                              "caddy run --config …"   9 minutes ago   Up 8 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+d95b99c61f72   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   9 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_worker
+2824525a2d3d   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   9 minutes ago   Up 8 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+a2500226883d   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   9 minutes ago   Up 8 minutes           8000/tcp                                                                                          crss_celery_beat
 14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   5432/tcp                                                                                          crss_db
 4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | [SQL: SELECT count(*) AS count_1 
+crss_backend  | FROM (SELECT resources.title AS resources_title, resources.description AS resources_description, resources.condition AS resources_condition, resources.status AS resources_status, resources.quantity AS resources_quantity, resources.quantity_available AS resources_quantity_available, resources.available_from AS resources_available_from, resources.available_to AS resources_available_to, resources.pickup_location AS resources_pickup_location, resources.tags AS resources_tags, resources.barcode AS resources_barcode, resources.qr_code_url AS resources_qr_code_url, resources.deposit_amount AS resources_deposit_amount, resources.max_borrow_days AS resources_max_borrow_days, resources.average_rating AS resources_average_rating, resources.total_borrows AS resources_total_borrows, resources.view_count AS resources_view_count, resources.owner_id AS resources_owner_id, resources.category_id AS resources_category_id, resources.id AS resources_id, resources.created_at AS resources_created_at, resources.updated_at AS resources_updated_at 
+crss_backend  | FROM resources 
+crss_backend  | WHERE resources.status = %(status_1)s AND resources.owner_id != %(owner_id_1)s::UUID) AS anon_1]
+crss_backend  | [parameters: {'status_1': 'AVAILABLE', 'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | INFO:     172.18.0.7:42628 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
+crss_backend  | INFO:     172.18.0.7:42636 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 20:23:53 | ERROR    | crss | Unhandled DB error
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.UndefinedColumn: column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+crss_backend  |     await app(scope, receive, sender)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+crss_backend  |     response = await func(request)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 278, in app
+crss_backend  |     raw_response = await run_endpoint_function(
+crss_backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 193, in run_endpoint_function
+crss_backend  |     return await run_in_threadpool(dependant.call, **values)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 42, in run_in_threadpool
+crss_backend  |     return await anyio.to_thread.run_sync(func, *args)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+crss_backend  |     return await get_async_backend().run_sync_in_worker_thread(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
+crss_backend  |     return await future
+crss_backend  |            ^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
+crss_backend  |     result = context.run(func, *args)
+crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/app/app/routers/resources.py", line 64, in list_resources
+crss_backend  |     total = query.count()
+crss_backend  |             ^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 3112, in count
+crss_backend  |     self._legacy_from_self(col).enable_eagerloads(False).scalar()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2805, in scalar
+crss_backend  |     ret = self.one()
+crss_backend  |           ^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2778, in one
+crss_backend  |     return self._iter().one()  # type: ignore
+crss_backend  |            ^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+crss_backend  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+crss_backend  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+crss_backend  |     return self._execute_internal(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+crss_backend  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
+crss_backend  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+crss_backend  |     result = conn.execute(
+crss_backend  |              ^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+crss_backend  |     return connection._execute_clauseelement(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | [SQL: SELECT count(*) AS count_1 
+crss_backend  | FROM (SELECT resources.title AS resources_title, resources.description AS resources_description, resources.condition AS resources_condition, resources.status AS resources_status, resources.quantity AS resources_quantity, resources.quantity_available AS resources_quantity_available, resources.available_from AS resources_available_from, resources.available_to AS resources_available_to, resources.pickup_location AS resources_pickup_location, resources.tags AS resources_tags, resources.barcode AS resources_barcode, resources.qr_code_url AS resources_qr_code_url, resources.deposit_amount AS resources_deposit_amount, resources.max_borrow_days AS resources_max_borrow_days, resources.average_rating AS resources_average_rating, resources.total_borrows AS resources_total_borrows, resources.view_count AS resources_view_count, resources.owner_id AS resources_owner_id, resources.category_id AS resources_category_id, resources.id AS resources_id, resources.created_at AS resources_created_at, resources.updated_at AS resources_updated_at 
+crss_backend  | FROM resources 
+crss_backend  | WHERE resources.status = %(status_1)s AND resources.owner_id != %(owner_id_1)s::UUID) AS anon_1]
+crss_backend  | [parameters: {'status_1': 'AVAILABLE', 'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | INFO:     172.18.0.7:42636 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
+crss_backend  | 2026-07-28 20:24:00 | ERROR    | crss | Unhandled DB error
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.UndefinedColumn: column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+crss_backend  |     await app(scope, receive, sender)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+crss_backend  |     response = await func(request)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 278, in app
+crss_backend  |     raw_response = await run_endpoint_function(
+crss_backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 193, in run_endpoint_function
+crss_backend  |     return await run_in_threadpool(dependant.call, **values)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 42, in run_in_threadpool
+crss_backend  |     return await anyio.to_thread.run_sync(func, *args)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+crss_backend  |     return await get_async_backend().run_sync_in_worker_thread(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
+crss_backend  |     return await future
+crss_backend  |            ^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
+crss_backend  |     result = context.run(func, *args)
+crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/app/app/routers/resources.py", line 64, in list_resources
+crss_backend  |     total = query.count()
+crss_backend  |             ^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 3112, in count
+crss_backend  |     self._legacy_from_self(col).enable_eagerloads(False).scalar()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2805, in scalar
+crss_backend  |     ret = self.one()
+crss_backend  |           ^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2778, in one
+crss_backend  |     return self._iter().one()  # type: ignore
+crss_backend  |            ^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
+crss_backend  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+crss_backend  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+crss_backend  |     return self._execute_internal(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
+crss_backend  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
+crss_backend  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
+crss_backend  |     result = conn.execute(
+crss_backend  |              ^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
+crss_backend  |     return meth(
+crss_backend  |            ^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
+crss_backend  |     return connection._execute_clauseelement(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
+crss_backend  |     ret = self._execute_context(
+crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+crss_backend  |     return self._exec_single_context(
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+crss_backend  |     self._handle_dbapi_exception(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
+crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | [SQL: SELECT count(*) AS count_1 
+crss_backend  | FROM (SELECT resources.title AS resources_title, resources.description AS resources_description, resources.condition AS resources_condition, resources.status AS resources_status, resources.quantity AS resources_quantity, resources.quantity_available AS resources_quantity_available, resources.available_from AS resources_available_from, resources.available_to AS resources_available_to, resources.pickup_location AS resources_pickup_location, resources.tags AS resources_tags, resources.barcode AS resources_barcode, resources.qr_code_url AS resources_qr_code_url, resources.deposit_amount AS resources_deposit_amount, resources.max_borrow_days AS resources_max_borrow_days, resources.average_rating AS resources_average_rating, resources.total_borrows AS resources_total_borrows, resources.view_count AS resources_view_count, resources.owner_id AS resources_owner_id, resources.category_id AS resources_category_id, resources.id AS resources_id, resources.created_at AS resources_created_at, resources.updated_at AS resources_updated_at 
+crss_backend  | FROM resources 
+crss_backend  | WHERE resources.status = %(status_1)s AND resources.owner_id != %(owner_id_1)s::UUID) AS anon_1]
+crss_backend  | [parameters: {'status_1': 'AVAILABLE', 'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | INFO:     172.18.0.7:49692 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=2&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
+crss_backend  | INFO:     172.18.0.7:35170 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49692 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 20:24:02 | ERROR    | crss | Unhandled DB error
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+crss_backend  |     self.dialect.do_execute(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
+crss_backend  |     cursor.execute(statement, parameters)
+crss_backend  | psycopg2.errors.UndefinedColumn: column resources.available_from does not exist
+crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
+crss_backend  |                                                              ^
+crss_backend  | 
+crss_backend  | 
+crss_backend  | The above exception was the direct cause of the following exception:
+crss_backend  | 
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+crss_backend  |     await app(scope, receive, sender)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
+crss_backend  |     response = await func(request)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 278, in app
+crss_backend  |     raw_response = await run_endpoint_function(
+crss_backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 193, in run_endpoint_function
+crss_backend  |     return await run_in_threadpool(dependant.call, **values)
+crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 42, in run_in_threadpool
 crss_backend  |     return await anyio.to_thread.run_sync(func, *args)
 crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,238 +304,4 @@ crss_backend  | FROM resources
 crss_backend  | WHERE resources.owner_id = %(owner_id_1)s::UUID) AS anon_1]
 crss_backend  | [parameters: {'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
 crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
-crss_backend  | INFO:     172.18.0.7:38714 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
-crss_backend  | INFO:     172.18.0.7:38714 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:38706 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 20:02:54 | ERROR    | crss | Unhandled DB error
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | psycopg2.errors.UndefinedColumn: column resources.available_from does not exist
-crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
-crss_backend  |                                                              ^
-crss_backend  | 
-crss_backend  | 
-crss_backend  | The above exception was the direct cause of the following exception:
-crss_backend  | 
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-crss_backend  |     await app(scope, receive, sender)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
-crss_backend  |     response = await func(request)
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 278, in app
-crss_backend  |     raw_response = await run_endpoint_function(
-crss_backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 193, in run_endpoint_function
-crss_backend  |     return await run_in_threadpool(dependant.call, **values)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 42, in run_in_threadpool
-crss_backend  |     return await anyio.to_thread.run_sync(func, *args)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
-crss_backend  |     return await get_async_backend().run_sync_in_worker_thread(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
-crss_backend  |     return await future
-crss_backend  |            ^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
-crss_backend  |     result = context.run(func, *args)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/app/app/routers/resources.py", line 64, in list_resources
-crss_backend  |     total = query.count()
-crss_backend  |             ^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 3112, in count
-crss_backend  |     self._legacy_from_self(col).enable_eagerloads(False).scalar()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2805, in scalar
-crss_backend  |     ret = self.one()
-crss_backend  |           ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2778, in one
-crss_backend  |     return self._iter().one()  # type: ignore
-crss_backend  |            ^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
-crss_backend  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
-crss_backend  |                                                   ^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-crss_backend  |     return self._execute_internal(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
-crss_backend  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
-crss_backend  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
-crss_backend  |     result = conn.execute(
-crss_backend  |              ^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
-crss_backend  |     return meth(
-crss_backend  |            ^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
-crss_backend  |     return connection._execute_clauseelement(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
-crss_backend  |     ret = self._execute_context(
-crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-crss_backend  |     return self._exec_single_context(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-crss_backend  |     self._handle_dbapi_exception(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
-crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column resources.available_from does not exist
-crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
-crss_backend  |                                                              ^
-crss_backend  | 
-crss_backend  | [SQL: SELECT count(*) AS count_1 
-crss_backend  | FROM (SELECT resources.title AS resources_title, resources.description AS resources_description, resources.condition AS resources_condition, resources.status AS resources_status, resources.quantity AS resources_quantity, resources.quantity_available AS resources_quantity_available, resources.available_from AS resources_available_from, resources.available_to AS resources_available_to, resources.pickup_location AS resources_pickup_location, resources.tags AS resources_tags, resources.barcode AS resources_barcode, resources.qr_code_url AS resources_qr_code_url, resources.deposit_amount AS resources_deposit_amount, resources.max_borrow_days AS resources_max_borrow_days, resources.average_rating AS resources_average_rating, resources.total_borrows AS resources_total_borrows, resources.view_count AS resources_view_count, resources.owner_id AS resources_owner_id, resources.category_id AS resources_category_id, resources.id AS resources_id, resources.created_at AS resources_created_at, resources.updated_at AS resources_updated_at 
-crss_backend  | FROM resources 
-crss_backend  | WHERE resources.status = %(status_1)s AND resources.owner_id != %(owner_id_1)s::UUID) AS anon_1]
-crss_backend  | [parameters: {'status_1': 'AVAILABLE', 'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
-crss_backend  | INFO:     172.18.0.7:38714 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
-crss_backend  | 2026-07-28 20:02:54 | ERROR    | crss | Unhandled DB error
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | psycopg2.errors.UndefinedColumn: column resources.available_from does not exist
-crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
-crss_backend  |                                                              ^
-crss_backend  | 
-crss_backend  | 
-crss_backend  | The above exception was the direct cause of the following exception:
-crss_backend  | 
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
-crss_backend  |     await app(scope, receive, sender)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 72, in app
-crss_backend  |     response = await func(request)
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 278, in app
-crss_backend  |     raw_response = await run_endpoint_function(
-crss_backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 193, in run_endpoint_function
-crss_backend  |     return await run_in_threadpool(dependant.call, **values)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 42, in run_in_threadpool
-crss_backend  |     return await anyio.to_thread.run_sync(func, *args)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
-crss_backend  |     return await get_async_backend().run_sync_in_worker_thread(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
-crss_backend  |     return await future
-crss_backend  |            ^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
-crss_backend  |     result = context.run(func, *args)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/app/app/routers/resources.py", line 64, in list_resources
-crss_backend  |     total = query.count()
-crss_backend  |             ^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 3112, in count
-crss_backend  |     self._legacy_from_self(col).enable_eagerloads(False).scalar()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2805, in scalar
-crss_backend  |     ret = self.one()
-crss_backend  |           ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2778, in one
-crss_backend  |     return self._iter().one()  # type: ignore
-crss_backend  |            ^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2827, in _iter
-crss_backend  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
-crss_backend  |                                                   ^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-crss_backend  |     return self._execute_internal(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2236, in _execute_internal
-crss_backend  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
-crss_backend  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/orm/context.py", line 293, in orm_execute_statement
-crss_backend  |     result = conn.execute(
-crss_backend  |              ^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
-crss_backend  |     return meth(
-crss_backend  |            ^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 515, in _execute_on_connection
-crss_backend  |     return connection._execute_clauseelement(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1640, in _execute_clauseelement
-crss_backend  |     ret = self._execute_context(
-crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-crss_backend  |     return self._exec_single_context(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-crss_backend  |     self._handle_dbapi_exception(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
-crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column resources.available_from does not exist
-crss_backend  | LINE 2: ...antity_available AS resources_quantity_available, resources....
-crss_backend  |                                                              ^
-crss_backend  | 
-crss_backend  | [SQL: SELECT count(*) AS count_1 
-crss_backend  | FROM (SELECT resources.title AS resources_title, resources.description AS resources_description, resources.condition AS resources_condition, resources.status AS resources_status, resources.quantity AS resources_quantity, resources.quantity_available AS resources_quantity_available, resources.available_from AS resources_available_from, resources.available_to AS resources_available_to, resources.pickup_location AS resources_pickup_location, resources.tags AS resources_tags, resources.barcode AS resources_barcode, resources.qr_code_url AS resources_qr_code_url, resources.deposit_amount AS resources_deposit_amount, resources.max_borrow_days AS resources_max_borrow_days, resources.average_rating AS resources_average_rating, resources.total_borrows AS resources_total_borrows, resources.view_count AS resources_view_count, resources.owner_id AS resources_owner_id, resources.category_id AS resources_category_id, resources.id AS resources_id, resources.created_at AS resources_created_at, resources.updated_at AS resources_updated_at 
-crss_backend  | FROM resources 
-crss_backend  | WHERE resources.status = %(status_1)s AND resources.owner_id != %(owner_id_1)s::UUID) AS anon_1]
-crss_backend  | [parameters: {'status_1': 'AVAILABLE', 'owner_id_1': UUID('f204c318-65ea-47f6-a855-2cf812a1cb09')}]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
-crss_backend  | INFO:     172.18.0.7:38714 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
-crss_backend  | 2026-07-28 20:03:14 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
-crss_backend  | 
-crss_backend  | 2026-07-28 20:03:14 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for ojash03gupta@gmail.com
-crss_backend  | 2026-07-28 20:03:15 | ERROR    | crss | Failed to send email to ojash03gupta@gmail.com
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/app/app/services/email_service.py", line 35, in send_email
-crss_backend  |     await aiosmtplib.send(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
-crss_backend  |     async with client:
-crss_backend  |                ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
-crss_backend  |     await self.connect()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
-crss_backend  |     await self._maybe_login_on_connect()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
-crss_backend  |     await self.login(self._login_username, login_password)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
-crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
-crss_backend  |     response = await auth_method(username, password, timeout=timeout)
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
-crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
-crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f8401bcbdsm23200866b.61 - gsmtp')
-crss_backend  | INFO:     172.18.0.7:48418 - "POST /api/v1/auth/resend-signup-otp HTTP/1.1" 200 OK
-crss_backend  | 2026-07-28 20:05:42 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
-crss_backend  | 
-crss_backend  | 2026-07-28 20:05:42 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for ojash03gupta@gmail.com
-crss_backend  | 2026-07-28 20:05:42 | ERROR    | crss | Failed to send email to ojash03gupta@gmail.com
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/app/app/services/email_service.py", line 35, in send_email
-crss_backend  |     await aiosmtplib.send(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
-crss_backend  |     async with client:
-crss_backend  |                ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
-crss_backend  |     await self.connect()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
-crss_backend  |     await self._maybe_login_on_connect()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
-crss_backend  |     await self.login(self._login_username, login_password)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
-crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
-crss_backend  |     response = await auth_method(username, password, timeout=timeout)
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
-crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
-crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials 4fb4d7f45d1cf-6a050be87bdsm96238a12.11 - gsmtp')
-crss_backend  | INFO:     172.18.0.7:45106 - "POST /api/v1/auth/resend-signup-otp HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35158 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 500 Internal Server Error
