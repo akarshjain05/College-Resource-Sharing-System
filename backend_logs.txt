@@ -1,307 +1,258 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                          PORTS                                                                                             NAMES
-db04fe7cee90   crss_frontend_prod                              "caddy run --config …"   11 minutes ago   Up 11 minutes                   0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-07c8bc8b24d5   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   11 minutes ago   Up 11 minutes                   8000/tcp                                                                                          crss_celery_worker
-5edb0091ac1a   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   11 minutes ago   Restarting (1) 57 seconds ago                                                                                                     crss_backend
-35754d3769d3   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   11 minutes ago   Up 11 minutes                   8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   5 days ago       Up 3 days (healthy)             5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   5 days ago       Up 3 days (healthy)             6379/tcp                                                                                          crss_redis
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
-crss_backend  | 
-crss_backend  | 
-crss_backend  | The above exception was the direct cause of the following exception:
-crss_backend  | 
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
-crss_backend  |     step.migration_fn(**kw)
-crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
-crss_backend  |     op.create_table(
-crss_backend  |   File "<string>", line 8, in create_table
-crss_backend  |   File "<string>", line 3, in create_table
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
-crss_backend  |     return operations.invoke(op)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
-crss_backend  |     return fn(self, operation)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
-crss_backend  |     operations.impl.create_table(table)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
-crss_backend  |     table.dispatch.before_create(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
-crss_backend  |     fn(*args, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
-crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
-crss_backend  |     t._on_table_create(target, bind, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
-crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
-crss_backend  |     super().create(bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
-crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
-crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
-crss_backend  |     return meth(obj, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
-crss_backend  |     self.connection.execute(CreateEnumType(enum))
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
-crss_backend  |     return meth(
-crss_backend  |            ^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
-crss_backend  |     return connection._execute_ddl(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
-crss_backend  |     ret = self._execute_context(
-crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-crss_backend  |     return self._exec_single_context(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-crss_backend  |     self._handle_dbapi_exception(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
-crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
-crss_backend  | 
-crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
+a22297a4426b   crss_frontend_prod                              "caddy run --config …"   11 minutes ago   Up 11 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+fa5a74f6e976   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   12 minutes ago   Up 11 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+8b822eaca41b   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   12 minutes ago   Up 11 minutes          8000/tcp                                                                                          crss_celery_worker
+09c2b73ad552   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   12 minutes ago   Up 11 minutes          8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | INFO  [alembic.runtime.migration] Running upgrade c7f260b43a82 -> d1f3a7b9c2e4, add_damage_claims_table
+crss_backend  | INFO:     Started server process [8]
+crss_backend  | INFO:     Waiting for application startup.
+crss_backend  | INFO:     Application startup complete.
+crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+crss_backend  | INFO:     172.18.0.7:57998 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57998 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58010 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58016 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51420 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:21:44 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$MT7NdyhUdMUiOpTmq8i6MOw2j.IoQgd5RtcgRk.Yl1STGgz4XsQZO', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('818fd31b-e26a-40a2-8356-6ab67e6ca944')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:58012 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51420 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51442 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | 2026-07-28 18:21:48 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$83cY/eVYnXx3K2D9P6wjtOJwOG5Mrlcaqaqb9qJ2eeCrBhmffdOMC', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('340685dc-ab6b-4c20-bddf-6a98cead7c2a')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:51418 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59038 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51418 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59052 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:22:04 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'ashishgoyal220055@gmail.com', 'hashed_password': '$2b$12$NYA0LPSR4Y4MTzZKu1jiZeQ3YKFNNyYJlu8GlcewUAsQ5g0ZhNbhW', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('eab4c36a-2fc7-4f23-872a-59484bad3915')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:59028 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | 2026-07-28 18:22:19 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'Ashish', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$HT55i9zZ.luY/cuVBiTMuO.WR.aTtwLBxbMstOGiGPdcg0E6tNU/e', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('d4a1ace7-e116-407c-9c56-38a96a337484')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:39992 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | 2026-07-28 18:22:27 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$70ts7xrQDfV./0Gj7lJALeD3TUXef33D/xsQi879.R6E4R6taFlEW', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('77724fbb-d814-4153-b133-49d6b6d5292a')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:37962 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56774 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56774 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56778 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56780 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56780 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:22:57 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$NkwmMCB75q2gEQ6ZxaMayOkjupV6OKuTgTcCwvh3KMTTyuvKthLY2', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('7a7277e9-a0a0-4787-afa7-16a415f7549c')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:48964 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:57362 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57362 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57376 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57388 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:52536 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52522 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52550 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52536 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51460 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51460 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51462 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51488 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51476 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:24:15 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$LCOnQr8M0YjvgWouOpFPF.HFR8LE94MdhnTVkS2s5jc81djI7QmWC', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('ed1fde2e-669a-468e-9dd1-fd5055b5ef91')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:56280 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | 2026-07-28 18:24:25 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$q3aMW78TKcBPXHO5uHgnnek4P6ExiFxlVRqcxIqbWNC7qlgeUNoUy', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('7246664e-a5b8-4cd4-bd22-de67ee9efcf0')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:36232 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:52342 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52356 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52342 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52352 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56220 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56212 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56230 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56222 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:46472 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55182 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35888 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35910 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35896 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35926 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57242 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:27:29 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
+crss_backend  | 
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'jkhkhh', 'email': 'jkhdfgjkdhkasf@gmail.com', 'hashed_password': '$2b$12$8Oj0eVmfegDQZm.M65jJG.vdSS8oSq/XDQdqKxCvMQqmgDREg1KVm', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('a02409dd-12b5-4074-b46c-689aee7d483e')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:54494 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43806 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43798 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43806 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:43804 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55964 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/users/f204c318-65ea-47f6-a855-2cf812a1cb09/public HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53088 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53058 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53064 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53076 - "GET /api/v1/resources/c494d9b3-c142-4911-b315-bd130f14b0e1 HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:28:26 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:49012 - "POST /api/v1/borrow-requests HTTP/1.1" 201 Created
+crss_backend  | INFO:     172.18.0.7:49028 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49012 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49040 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:28:26 | ERROR    | crss | Failed to send email to u24cs145@coed.svnit.ac.in
 crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
+crss_backend  |   File "/app/app/services/email_service.py", line 33, in send_email
+crss_backend  |     await aiosmtplib.send(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
+crss_backend  |     async with client:
+crss_backend  |                ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
+crss_backend  |     await self.connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
+crss_backend  |     await self._maybe_login_on_connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
+crss_backend  |     await self.login(self._login_username, login_password)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
+crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
+crss_backend  |     response = await auth_method(username, password, timeout=timeout)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
+crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83fb11c8sm15764966b.52 - gsmtp')
+crss_backend  | INFO:     172.18.0.7:51796 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51810 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51780 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40634 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40634 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:41308 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:41310 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:41334 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:54788 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:45854 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:45846 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:45852 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "POST /api/v1/notifications/4644587a-98eb-4805-8159-7fd7532f98a3/read HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60954 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:60932 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60928 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60946 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:29:54 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:53324 - "POST /api/v1/borrow-requests/fc82eedf-763d-4004-862e-37f09743793a/approve HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53324 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53328 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | 2026-07-28 18:30:04 | ERROR    | crss | Integrity error: (psycopg2.errors.UniqueViolation) duplicate key value violates unique constraint "users_student_id_key"
+crss_backend  | DETAIL:  Key (student_id)=() already exists.
 crss_backend  | 
-crss_backend  | 
-crss_backend  | The above exception was the direct cause of the following exception:
-crss_backend  | 
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
-crss_backend  |     step.migration_fn(**kw)
-crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
-crss_backend  |     op.create_table(
-crss_backend  |   File "<string>", line 8, in create_table
-crss_backend  |   File "<string>", line 3, in create_table
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
-crss_backend  |     return operations.invoke(op)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
-crss_backend  |     return fn(self, operation)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
-crss_backend  |     operations.impl.create_table(table)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
-crss_backend  |     table.dispatch.before_create(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
-crss_backend  |     fn(*args, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
-crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
-crss_backend  |     t._on_table_create(target, bind, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
-crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
-crss_backend  |     super().create(bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
-crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
-crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
-crss_backend  |     return meth(obj, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
-crss_backend  |     self.connection.execute(CreateEnumType(enum))
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
-crss_backend  |     return meth(
-crss_backend  |            ^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
-crss_backend  |     return connection._execute_ddl(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
-crss_backend  |     ret = self._execute_context(
-crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-crss_backend  |     return self._exec_single_context(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-crss_backend  |     self._handle_dbapi_exception(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
-crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
-crss_backend  | 
-crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | INFO  [alembic.runtime.migration] Running upgrade c7f260b43a82 -> d1f3a7b9c2e4, add_damage_claims_table
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | psycopg2.errors.DuplicateObject: type "damageclaimstatus" already exists
-crss_backend  | 
-crss_backend  | 
-crss_backend  | The above exception was the direct cause of the following exception:
-crss_backend  | 
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 627, in run_migrations
-crss_backend  |     step.migration_fn(**kw)
-crss_backend  |   File "/app/alembic/versions/d1f3a7b9c2e4_add_damage_claims_table.py", line 36, in upgrade
-crss_backend  |     op.create_table(
-crss_backend  |   File "<string>", line 8, in create_table
-crss_backend  |   File "<string>", line 3, in create_table
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/ops.py", line 1311, in create_table
-crss_backend  |     return operations.invoke(op)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/base.py", line 445, in invoke
-crss_backend  |     return fn(self, operation)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/operations/toimpl.py", line 131, in create_table
-crss_backend  |     operations.impl.create_table(table)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/ddl/impl.py", line 363, in create_table
-crss_backend  |     table.dispatch.before_create(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/event/attr.py", line 497, in __call__
-crss_backend  |     fn(*args, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 852, in __call__
-crss_backend  |     return getattr(self.target, self.name)(*arg, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py", line 1120, in _on_table_create
-crss_backend  |     t._on_table_create(target, bind, **kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 98, in _on_table_create
-crss_backend  |     self.create(bind=bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 338, in create
-crss_backend  |     super().create(bind, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 51, in create
-crss_backend  |     bind._run_ddl_visitor(self.DDLGenerator, self, checkfirst=checkfirst)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2457, in _run_ddl_visitor
-crss_backend  |     visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py", line 664, in traverse_single
-crss_backend  |     return meth(obj, **kw)
-crss_backend  |            ^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py", line 153, in visit_enum
-crss_backend  |     self.connection.execute(CreateEnumType(enum))
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1418, in execute
-crss_backend  |     return meth(
-crss_backend  |            ^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py", line 180, in _execute_on_connection
-crss_backend  |     return connection._execute_ddl(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1529, in _execute_ddl
-crss_backend  |     ret = self._execute_context(
-crss_backend  |           ^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-crss_backend  |     return self._exec_single_context(
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-crss_backend  |     self._handle_dbapi_exception(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2353, in _handle_dbapi_exception
-crss_backend  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-crss_backend  |     self.dialect.do_execute(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 924, in do_execute
-crss_backend  |     cursor.execute(statement, parameters)
-crss_backend  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.DuplicateObject) type "damageclaimstatus" already exists
-crss_backend  | 
-crss_backend  | [SQL: CREATE TYPE damageclaimstatus AS ENUM ('open', 'disputed', 'resolved_valid', 'resolved_invalid', 'resolved_partial')]
-crss_backend  | (Background on this error at: https://sqlalche.me/e/20/f405)
+crss_backend  | [SQL: INSERT INTO users (full_name, email, hashed_password, role, auth_provider, google_id, student_id, department, course, year_of_study, bio, skills, profile_picture_url, phone_number, is_verified, is_active, is_suspended, trust_score, sharing_score, avg_response_seconds, response_count, id) VALUES (%(full_name)s, %(email)s, %(hashed_password)s, %(role)s, %(auth_provider)s, %(google_id)s, %(student_id)s, %(department)s, %(course)s, %(year_of_study)s, %(bio)s, %(skills)s, %(profile_picture_url)s, %(phone_number)s, %(is_verified)s, %(is_active)s, %(is_suspended)s, %(trust_score)s, %(sharing_score)s, %(avg_response_seconds)s, %(response_count)s, %(id)s::UUID) RETURNING users.created_at, users.updated_at]
+crss_backend  | [parameters: {'full_name': 'njkkjh', 'email': 'jhgjgkkj@gmail.com', 'hashed_password': '$2b$12$.RQumEzxpN2VV6x9omG6I.wDfKgcABaOGW/avEw6HsnZoSIqiNH6a', 'role': 'STUDENT', 'auth_provider': 'local', 'google_id': None, 'student_id': '', 'department': '', 'course': '', 'year_of_study': None, 'bio': None, 'skills': None, 'profile_picture_url': None, 'phone_number': None, 'is_verified': False, 'is_active': True, 'is_suspended': False, 'trust_score': 100, 'sharing_score': 0, 'avg_response_seconds': None, 'response_count': 0, 'id': UUID('dd1c785e-af9b-46b7-bc7f-9f08dce2800a')}]
+crss_backend  | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+crss_backend  | INFO:     172.18.0.7:55058 - "POST /api/v1/auth/register HTTP/1.1" 409 Conflict
+crss_backend  | INFO:     172.18.0.7:59582 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59582 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59582 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59596 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59610 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35766 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:59610 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35776 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:55372 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:35776 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44054 - "GET /api/v1/resources?search=c&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44054 - "GET /api/v1/resources?search=ca&sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57370 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57366 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57376 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:49218 - "GET /api/v1/auth/me HTTP/1.1" 200 OK

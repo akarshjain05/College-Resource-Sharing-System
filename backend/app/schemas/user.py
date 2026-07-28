@@ -16,6 +16,15 @@ class UserBase(BaseModel):
     student_id: Optional[str] = None
     phone_number: Optional[str] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def empty_strings_to_none(cls, data: dict) -> dict:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str) and v.strip() == "":
+                    data[k] = None
+        return data
+
 
 class UserRegister(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
