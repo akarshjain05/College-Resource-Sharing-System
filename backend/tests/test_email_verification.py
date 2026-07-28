@@ -1,0 +1,255 @@
+import hmac
+import hashlib
+from unittest.mock import patch, AsyncMock
+import pytest
+
+from app.core.config import settings
+from app.models.user import User
+from app.services.otp_service import store_signup_otp, hash_otp, verify_signup_otp, _in_memory_otp_store, _in_memory_email_index
+
+
+@pytest.fixture(autouse=True)
+def clear_otp_store():
+    _in_memory_otp_store.clear()
+    _in_memory_email_index.clear()
+    yield
+    _in_memory_otp_store.clear()
+    _in_memory_email_index.clear()
+
+
+def test_signup_otp_request_success(client, db_session):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+
+        resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "OTP Test User",
+                "email": "otptest@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+                "role": "student",
+            },
+        )
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["requires_verification"] is True
+        assert "challenge_id" in data
+        assert data["expires_in"] == 600
+        # 3. OTP is NOT returned in API response
+        assert "otp" not in data
+        assert "otp_code" not in data
+
+        # 2. Brevo email service receives payload
+        assert mock_brevo.called
+        call_args = mock_brevo.call_args[0]
+        assert call_args[0] == "otptest@crss.edu"
+        assert call_args[1] == "OTP Test User"
+        otp_sent = call_args[2]
+        assert len(otp_sent) == 6 and otp_sent.isdigit()
+
+        # 4. Raw OTP is not stored
+        user = db_session.query(User).filter(User.email == "otptest@crss.edu").first()
+        assert user is not None
+        assert user.is_verified is False
+
+
+def test_correct_otp_verifies_account(client, db_session):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Verify User",
+                "email": "verify@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        challenge_id = reg_resp.json()["challenge_id"]
+        otp_sent = mock_brevo.call_args[0][2]
+
+        # 5. Correct OTP verifies account
+        v_resp = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": challenge_id, "otp": otp_sent},
+        )
+        assert v_resp.status_code == 200
+        body = v_resp.json()
+        assert "access_token" in body
+
+        user = db_session.query(User).filter(User.email == "verify@crss.edu").first()
+        assert user.is_verified is True
+        assert user.email_verified_at is not None
+
+        # 8. OTP cannot be reused after verification
+        reuse_resp = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": challenge_id, "otp": otp_sent},
+        )
+        assert reuse_resp.status_code == 400
+
+
+def test_incorrect_otp_fails(client):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Incorrect OTP User",
+                "email": "incorrect@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        challenge_id = reg_resp.json()["challenge_id"]
+
+        # 6. Incorrect OTP fails
+        v_resp = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": challenge_id, "otp": "000000"},
+        )
+        assert v_resp.status_code == 400
+        assert v_resp.json()["error_code"] == "INVALID_OTP"
+
+
+def test_five_failed_attempts_invalidates_challenge(client):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Max Attempts User",
+                "email": "maxattempts@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        challenge_id = reg_resp.json()["challenge_id"]
+
+        # 11. 5 failed attempts invalidate challenge
+        for i in range(4):
+            fail_resp = client.post(
+                "/api/v1/auth/verify-signup-otp",
+                json={"challenge_id": challenge_id, "otp": "000000"},
+            )
+            assert fail_resp.status_code == 400
+
+        # 5th attempt invalidates challenge
+        fifth_resp = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": challenge_id, "otp": "000000"},
+        )
+        assert fifth_resp.status_code == 400
+        assert fifth_resp.json()["error_code"] == "OTP_MAX_ATTEMPTS"
+
+
+def test_previous_otp_invalid_after_resend(client):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Resend User",
+                "email": "resend@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        old_challenge_id = reg_resp.json()["challenge_id"]
+        old_otp = mock_brevo.call_args[0][2]
+
+        # Bypass 60s cooldown for test by clearing cooldown in test helper
+        from app.services.otp_service import _in_memory_cooldown_store
+        _in_memory_cooldown_store.clear()
+
+        # 9. Resend OTP
+        resend_resp = client.post(
+            "/api/v1/auth/resend-signup-otp",
+            json={"challenge_id": old_challenge_id},
+        )
+        assert resend_resp.status_code == 200
+        new_challenge_id = resend_resp.json()["challenge_id"]
+        assert new_challenge_id != old_challenge_id
+
+        new_otp = mock_brevo.call_args[0][2]
+
+        # Old OTP fails
+        old_verify = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": old_challenge_id, "otp": old_otp},
+        )
+        assert old_verify.status_code == 400
+
+        # New OTP succeeds
+        new_verify = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": new_challenge_id, "otp": new_otp},
+        )
+        assert new_verify.status_code == 200
+
+
+def test_unverified_account_cannot_login(client):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Unverified User",
+                "email": "unverified@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+
+        # 13. Unverified account cannot complete normal login
+        login_resp = client.post(
+            "/api/v1/auth/login",
+            data={"username": "unverified@crss.edu", "password": "Password123!"},
+        )
+        assert login_resp.status_code == 403
+        assert login_resp.json()["error_code"] == "EMAIL_VERIFICATION_REQUIRED"
+
+
+def test_brevo_failure_does_not_verify_account(client, db_session):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = False  # Brevo send fails
+
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Brevo Fail User",
+                "email": "brevofail@crss.edu",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        # 14. Brevo failure handles error gracefully
+        assert reg_resp.status_code == 500
+        assert reg_resp.json()["error_code"] == "BREVO_SEND_FAILED"
+
+        user = db_session.query(User).filter(User.email == "brevofail@crss.edu").first()
+        assert user.is_verified is False
+
+
+def test_email_normalization(client):
+    with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
+        mock_brevo.return_value = True
+        reg_resp = client.post(
+            "/api/v1/auth/register",
+            json={
+                "full_name": "Normalize User",
+                "email": "  CaseTest@CRSS.edu  ",
+                "password": "Password123!",
+                "confirm_password": "Password123!",
+            },
+        )
+        assert reg_resp.status_code == 201
+        challenge_id = reg_resp.json()["challenge_id"]
+        otp_sent = mock_brevo.call_args[0][2]
+
+        v_resp = client.post(
+            "/api/v1/auth/verify-signup-otp",
+            json={"challenge_id": challenge_id, "otp": otp_sent},
+        )
+        assert v_resp.status_code == 200

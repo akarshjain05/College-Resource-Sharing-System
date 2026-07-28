@@ -16,8 +16,10 @@ def test_register_new_user(client, test_category):
     )
     assert resp.status_code == 201
     data = resp.json()
-    assert data["email"] == "new@crss.edu"
-    assert data["is_verified"] is False
+    assert data["requires_verification"] is True
+    assert "challenge_id" in data
+    assert data["expires_in"] == 600
+
 
 
 def test_register_password_mismatch_rejected(client):

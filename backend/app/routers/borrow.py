@@ -138,8 +138,10 @@ def approve_borrow_request(
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)
@@ -179,8 +181,10 @@ def reject_borrow_request(
     br.rejection_reason = payload.rejection_reason
     br.decided_at = datetime.now(timezone.utc)
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)

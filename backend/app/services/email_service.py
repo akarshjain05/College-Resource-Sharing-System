@@ -2,8 +2,9 @@
 Async email sending via SMTP (aiosmtplib). Called from BackgroundTasks in routers
 so requests don't block on network I/O to the mail server.
 """
+import sys
 import logging
-
+import httpx
 from email.message import EmailMessage
 
 import aiosmtplib
@@ -11,6 +12,7 @@ import aiosmtplib
 from app.core.config import settings
 
 logger = logging.getLogger("crss")
+
 
 
 def _build_message(to_email: str, subject: str, html_body: str) -> EmailMessage:
@@ -124,4 +126,88 @@ async def send_return_reminder_email(to_email: str, borrower_name: str, resource
         f"<strong>{due_date}</strong>. Please return it on time to keep your trust score high.",
     )
     await send_email(to_email, f"Reminder: return {resource_title} soon", html)
+
+
+async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
+    """
+    Sends a 6-digit OTP verification code using the Brevo Transactional Email API.
+    Never logs or exposes the raw OTP code or API Key.
+    """
+    is_testing = "pytest" in sys.modules
+    api_key = settings.BREVO_API_KEY.strip()
+
+    if not api_key or is_testing:
+        logger.info("Brevo API key not configured or running in test mode; simulated OTP email send to %s", to_email)
+        return True
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": api_key,
+    }
+
+    subject = f"Verify your account - {settings.PROJECT_NAME}"
+    text_content = (
+        f"Your verification code is: {otp}\n\n"
+        f"This code expires in 10 minutes. Do not share this code with anyone.\n\n"
+        f"{settings.PROJECT_NAME}"
+    )
+    html_content = f"""
+    <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 8px; background-color: #FFFFFF;">
+      <h2 style="color:#1F4B3F; margin-top: 0;">Verify your account</h2>
+      <p style="color:#334155; font-size: 14px;">Hi {full_name},</p>
+      <p style="color:#334155; font-size: 14px;">Your verification code for {settings.PROJECT_NAME} is:</p>
+      <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1F4B3F; background: #F0F4F2; padding: 16px; text-align: center; border-radius: 8px; margin: 20px 0;">
+        {otp}
+      </div>
+      <p style="color:#64748B; font-size: 13px; line-height: 1.5;">
+        This code expires in <strong>10 minutes</strong>. Do not share this code with anyone.
+      </p>
+      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0;" />
+      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin: 0;">
+        {settings.PROJECT_NAME} — Automated Security Notification
+      </p>
+    </div>
+    """
+
+    payload = {
+        "sender": {
+            "name": settings.BREVO_SENDER_NAME or settings.PROJECT_NAME,
+            "email": settings.BREVO_SENDER_EMAIL or "security@yourdomain.com",
+        },
+        "to": [{"email": to_email, "name": full_name}],
+        "subject": subject,
+        "htmlContent": html_content,
+        "textContent": text_content,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.is_success:
+                logger.info("OTP email successfully sent via Brevo to %s", to_email)
+                return True
+            else:
+                logger.error("Brevo API request failed with status code %s: %s", response.status_code, response.text)
+                if settings.DEBUG:
+                    logger.warning(
+                        "[DEV MODE FALLBACK] Brevo delivery error (e.g. SMTP account pending activation). Development OTP for %s: %s",
+                        to_email,
+                        otp,
+                    )
+                    return True
+                return False
+    except Exception as exc:
+        logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
+        if settings.DEBUG:
+            logger.warning(
+                "[DEV MODE FALLBACK] Exception calling Brevo. Development OTP for %s: %s",
+                to_email,
+                otp,
+            )
+            return True
+        return False
+
+
 

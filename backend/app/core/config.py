@@ -63,5 +63,17 @@ class Settings(BaseSettings):
     NOTIFICATION_SERVICE_URL: str = "http://localhost:10000"
     NOTIFICATION_SERVICE_API_KEY: str = "default-dev-key"
 
+    # ---- Brevo & OTP ----
+    BREVO_API_KEY: str = ""
+    BREVO_SENDER_EMAIL: str = "security@yourdomain.com"
+    BREVO_SENDER_NAME: str = "Campus Resources"
+    OTP_SECRET: str = "change-this-otp-secret-in-production"
+    OTP_PEPPER: str = ""
+    OTP_EXPIRY_SECONDS: int = 600
+    OTP_MAX_ATTEMPTS: int = 5
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+
 
 settings = Settings()
+
+
