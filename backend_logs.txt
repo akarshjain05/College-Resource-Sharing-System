@@ -1,49 +1,109 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
-de40ff50177b   crss_frontend_prod                              "caddy run --config …"   2 minutes ago   Up 2 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-8bc2aff06f63   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   2 minutes ago   Up 2 minutes           8000/tcp                                                                                          crss_celery_worker
-f43545c40743   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   2 minutes ago   Up 2 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-7ffd818380eb   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   2 minutes ago   Up 2 minutes           8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
+dd89969a3cb4   crss_frontend_prod                              "caddy run --config …"   12 minutes ago   Up 12 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+7dcd9c81864c   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   12 minutes ago   Up 12 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+0fc74a539230   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   12 minutes ago   Up 12 minutes          8000/tcp                                                                                          crss_celery_worker
+2a6304a75b7f   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   12 minutes ago   Up 12 minutes          8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 11 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | INFO:     Started server process [8]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:47360 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:47372 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:47366 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52702 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52704 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52728 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52728 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:52738 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48046 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/resources?owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48048 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48068 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:48056 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:49286 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49286 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49298 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:49296 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48962 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48952 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48952 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48962 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48952 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48974 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56058 - "GET /api/v1/notifications HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:56044 - "GET /api/v1/resources/d835b32b-37a4-4bc6-aba4-c17f70970095/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56076 - "GET /api/v1/resources/d835b32b-37a4-4bc6-aba4-c17f70970095/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56074 - "GET /api/v1/resources/d835b32b-37a4-4bc6-aba4-c17f70970095 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56074 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56074 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56074 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56074 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52186 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52186 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52190 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52202 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52190 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52186 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52202 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52230 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52210 - "GET /api/v1/borrow-requests/my-requests HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52226 - "GET /api/v1/borrow-requests/incoming HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52210 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52226 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52230 - "GET /api/v1/resources?owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52226 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52226 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52230 - "GET /api/v1/wanted/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52210 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52210 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52210 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52226 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52230 - "GET /api/v1/resources?owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34670 - "POST /api/v1/resources HTTP/1.1" 201 Created
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:37 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | 2026-07-28 19:22:38 | WARNING  | crss | Could not reach notification microservice at http://localhost:10000/events: HTTPConnectionPool(host='localhost', port=10000): Max retries exceeded with url: /events (Caused by NewConnectionError("HTTPConnection(host='localhost', port=10000): Failed to establish a new connection: [Errno 111] Connection refused"))
+crss_backend  | INFO:     172.18.0.7:34670 - "POST /api/v1/wanted/5facd3cb-76d0-467a-8bcc-be4d0a552b93/offer HTTP/1.1" 201 Created
+crss_backend  | INFO:     172.18.0.7:34670 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34686 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:34678 - "GET /api/v1/resources?owner_id=4dcd3f51-7b41-409c-83be-016509d76154 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51366 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51382 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51388 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51392 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51364 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60064 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60068 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60084 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60084 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=57ce72ce-3dd6-48b0-9801-ffe3ae960a0b HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:60090 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:59708 - "GET /api/v1/notifications HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:59680 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59694 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59694 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59694 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59694 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56770 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:56780 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59376 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59386 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:59370 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53638 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53654 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53668 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53638 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53660 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44244 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44252 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44228 - "GET /api/v1/wanted HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:44240 - "GET /api/v1/resources?owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57650 - "GET /api/v1/users/directory/public HTTP/1.1" 422 Unprocessable Entity
+crss_backend  | INFO:     172.18.0.7:57658 - "GET /api/v1/notifications HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:57652 - "GET /api/v1/complaints/my-complaints HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:57674 - "GET /api/v1/resources?limit=1000 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57674 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57652 - "GET /api/v1/complaints/my-complaints HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:57674 - "GET /api/v1/notifications HTTP/1.1" 200 OK
