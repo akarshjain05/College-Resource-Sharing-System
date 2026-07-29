@@ -1,63 +1,104 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                            PORTS                                                                                             NAMES
-7e8f9d0dafd3   crss_frontend_prod                              "caddy run --config …"   5 minutes ago   Up 5 minutes                      0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-edb21d6ef9a3   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   5 minutes ago   Up 5 minutes                      8000/tcp                                                                                          crss_celery_worker
-6d982e45da0e   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   5 minutes ago   Restarting (255) 14 seconds ago                                                                                                     crss_backend
-8eb48b1d915c   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   5 minutes ago   Up 5 minutes                      8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
+13554ad951a1   crss_frontend_prod                              "caddy run --config …"   14 minutes ago   Up 14 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+38fd6dc1423e   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   14 minutes ago   Up 14 minutes          8000/tcp                                                                                          crss_celery_worker
+2dd88c30e657   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   14 minutes ago   Up 14 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+a60b7d951a4e   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   14 minutes ago   Up 14 minutes          8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 12 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 12 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade f9g6c9b0d3f6 -> g8h7i6j5k4l3, add available_from and available_to
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade g8h7i6j5k4l3 -> h9i8j7k6l5m4, add available_from and available_to fix
+crss_backend  | INFO  [alembic.runtime.migration] Running upgrade 8f2a5c1e9b3d, h9i8j7k6l5m4 -> 2d993a09ff55, merge ojash and akarsh migrations
+crss_backend  | INFO:     Started server process [9]
+crss_backend  | INFO:     Waiting for application startup.
+crss_backend  | INFO:     Application startup complete.
+crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+crss_backend  | INFO:     172.18.0.7:50846 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:50846 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50846 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50846 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42238 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42238 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42238 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42264 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42254 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42254 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42268 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53618 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:53618 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53618 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40876 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40876 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40876 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40896 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40882 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40882 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=f204c318-65ea-47f6-a855-2cf812a1cb09 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40902 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 304 Not Modified
+crss_backend  | INFO:     172.18.0.7:51152 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51152 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:51152 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33866 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33874 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33874 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33874 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:33874 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33900 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33890 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:42988 - "POST /api/v1/auth/login HTTP/1.1" 403 Forbidden
+crss_backend  | INFO:     172.18.0.7:33734 - "POST /api/v1/auth/login HTTP/1.1" 403 Forbidden
+crss_backend  | INFO:     172.18.0.7:37570 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:37602 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:37572 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:37572 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
+crss_backend  | 2026-07-29 07:14:34 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
+crss_backend  | 
+crss_backend  | 2026-07-29 07:14:34 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for vikashonly88@gmail.com
+crss_backend  | 2026-07-29 07:14:34 | ERROR    | crss | Failed to send email to vikashonly88@gmail.com
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/app/app/services/email_service.py", line 35, in send_email
+crss_backend  |     await aiosmtplib.send(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
+crss_backend  |     async with client:
+crss_backend  |                ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
+crss_backend  |     await self.connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
+crss_backend  |     await self._maybe_login_on_connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
+crss_backend  |     await self.login(self._login_username, login_password)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
+crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
+crss_backend  |     response = await auth_method(username, password, timeout=timeout)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
+crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83f4e04esm73176566b.38 - gsmtp')
+crss_backend  | INFO:     172.18.0.7:59852 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
+crss_backend  | INFO:     172.18.0.7:44240 - "POST /api/v1/auth/verify-signup-otp HTTP/1.1" 400 Bad Request
+crss_backend  | 2026-07-29 07:17:50 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
+crss_backend  | 
+crss_backend  | 2026-07-29 07:17:50 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for vikashonly88@gmail.com
+crss_backend  | 2026-07-29 07:17:51 | ERROR    | crss | Failed to send email to vikashonly88@gmail.com
+crss_backend  | Traceback (most recent call last):
+crss_backend  |   File "/app/app/services/email_service.py", line 35, in send_email
+crss_backend  |     await aiosmtplib.send(
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/api.py", line 121, in send
+crss_backend  |     async with client:
+crss_backend  |                ^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 172, in __aenter__
+crss_backend  |     await self.connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 433, in connect
+crss_backend  |     await self._maybe_login_on_connect()
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 534, in _maybe_login_on_connect
+crss_backend  |     await self.login(self._login_username, login_password)
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1063, in login
+crss_backend  |     raise exception or SMTPException("No suitable authentication method found.")
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1055, in login
+crss_backend  |     response = await auth_method(username, password, timeout=timeout)
+crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
+crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83cebf3fsm75161366b.25 - gsmtp')
+crss_backend  | INFO:     172.18.0.7:44450 - "POST /api/v1/auth/resend-signup-otp HTTP/1.1" 200 OK
