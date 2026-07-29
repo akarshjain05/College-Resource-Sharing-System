@@ -62,7 +62,11 @@ export default function RegisterPage() {
         navigate("/login");
       }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Registration failed. Please try again.");
+      if (err.response?.status === 429) {
+        toast.error(err.response?.data?.error || "Too many attempts. Please try again later.");
+      } else {
+        toast.error(err.response?.data?.detail || "Registration failed. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
