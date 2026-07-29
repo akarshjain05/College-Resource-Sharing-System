@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -22,7 +23,9 @@ from app.models.user import User
 from app.models.enums import AuthProvider, UserRole
 from app.schemas.token import Token, RefreshRequest
 from app.schemas.user import (
+    CAMPUS_EMAIL_REGEX,
     UserRegister,
+
     UserResponse,
     PasswordResetRequest,
     PasswordResetConfirm,
@@ -243,6 +246,13 @@ def google_login(request: Request, payload: GoogleAuthRequest, db: Session = Dep
     user = db.query(User).filter(User.email == email).first()
 
     if user is None:
+        if not re.match(CAMPUS_EMAIL_REGEX, email, re.IGNORECASE):
+            raise AppException(
+                "Only official campus email addresses (@scnit.ac.in / @svnit.ac.in) can be registered.",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                error_code="INVALID_CAMPUS_EMAIL",
+            )
+
         # Brand new signup. Don't create the account yet -- Google only gives us
         # name/email/picture, and the app wants department/course/year/student ID
         # too. Package what Google verified into a short-lived registration token
@@ -293,6 +303,13 @@ def complete_google_profile(request: Request, payload: GoogleProfileCompletion, 
         )
 
     email = data["sub"]
+    if not re.match(CAMPUS_EMAIL_REGEX, email, re.IGNORECASE):
+        raise AppException(
+            "Only official campus email addresses (@scnit.ac.in / @svnit.ac.in) can be registered.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="INVALID_CAMPUS_EMAIL",
+        )
+
     google_sub = data.get("google_sub")
     full_name = data.get("full_name") or email.split("@")[0]
     picture = data.get("picture") or None
@@ -315,12 +332,14 @@ def complete_google_profile(request: Request, payload: GoogleProfileCompletion, 
         google_id=google_sub,
         profile_picture_url=picture,
         is_verified=True,
+        email_verified_at=datetime.now(timezone.utc),
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
     access_token = create_access_token(str(user.id), {"role": user.role.value})
+
     refresh_token = create_refresh_token(str(user.id))
     return Token(access_token=access_token, refresh_token=refresh_token)
 
