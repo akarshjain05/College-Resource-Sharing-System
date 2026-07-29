@@ -200,11 +200,11 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                         logger.exception("SMTP fallback dispatch failed for %s", to_email)
 
                 logger.warning(
-                    "[FALLBACK] Email delivery error (SMTP account pending activation). Manual OTP for %s: %s",
+                    "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
                     to_email,
                     otp,
                 )
-                return True
+                return False
     except Exception as exc:
         logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
         if settings.SMTP_USER and settings.SMTP_PASSWORD:
@@ -214,11 +214,11 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
             except Exception:
                 pass
             logger.warning(
-                "[FALLBACK] Email delivery failed. Manual OTP for %s: %s",
+                "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
                 to_email,
                 otp,
             )
-            return True
+            return False
 
 
 
