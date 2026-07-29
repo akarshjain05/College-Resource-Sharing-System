@@ -199,13 +199,11 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                     except Exception:
                         logger.exception("SMTP fallback dispatch failed for %s", to_email)
 
-                if settings.DEBUG or settings.ENVIRONMENT == "development":
-                    logger.warning(
-                        "[DEV MODE FALLBACK] Brevo delivery error (SMTP account pending activation). Development OTP for %s: %s",
-                        to_email,
-                        otp,
-                    )
-                    return True
+                logger.warning(
+                    "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
+                    to_email,
+                    otp,
+                )
                 return False
     except Exception as exc:
         logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
@@ -215,14 +213,12 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                 return True
             except Exception:
                 pass
-        if settings.DEBUG or settings.ENVIRONMENT == "development":
             logger.warning(
-                "[DEV MODE FALLBACK] Exception calling Brevo. Development OTP for %s: %s",
+                "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
                 to_email,
                 otp,
             )
-            return True
-        return False
+            return False
 
 
 

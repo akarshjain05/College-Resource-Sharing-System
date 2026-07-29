@@ -651,12 +651,12 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => toast.success(`Viewing profile of ${resource.owner?.full_name}`)}
+            <Link
+              to={`/users/${resource.owner?.id}`}
               className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition-all shadow-sm active:scale-95"
             >
               View Profile
-            </button>
+            </Link>
           </div>
 
           {/* Description */}
@@ -781,6 +781,8 @@ export default function ResourceDetailPage() {
                     selectedRange={selectedDateRange}
                     onSelectRange={setSelectedDateRange}
                     maxDays={resource.max_borrow_days}
+                    availableFrom={resource.available_from}
+                    availableTo={resource.available_to}
                   />
                 </div>
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">

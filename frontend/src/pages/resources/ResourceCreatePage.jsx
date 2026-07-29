@@ -56,7 +56,17 @@ export default function ResourceCreatePage() {
     daily_price: 150,
     deposit_amount: 500,
     location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+    available_from: "",
+    available_to: "",
   });
+
+  const formatLocalDate = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayDateString = formatLocalDate(new Date());
 
   useEffect(() => {
     categoryApi.list()
@@ -122,6 +132,16 @@ export default function ResourceCreatePage() {
       toast.error("Deposit amount must be 0 or more.");
       return;
     }
+    if (form.available_from && form.available_to) {
+      if (form.available_from > form.available_to) {
+        toast.error("Available From date cannot be later than Available To date.");
+        return;
+      }
+    }
+    if (form.available_from && form.available_from < todayDateString) {
+      toast.error("Available dates cannot be in the past.");
+      return;
+    }
     setSubmitting(true);
 
     const generatedId = "mock-user-item-" + Date.now();
@@ -138,55 +158,7 @@ export default function ResourceCreatePage() {
     const finalPlaceholder = photos[0]?.previewUrl || emojiMap[categoryName] || "🛠️";
 
     // 1. Add to localStorage mocks
-    const currentLoc = form.location;
-    const rawMocks = localStorage.getItem("share_neighbour_mocks");
-    let savedMocks = {};
-    if (rawMocks) {
-      savedMocks = JSON.parse(rawMocks);
-    } else {
-      savedMocks = {
-        "Koramangala, Bengaluru": []
-      };
-    }
-
-    const newItem = {
-      id: generatedId,
-      title: form.title,
-      category: categoryName,
-      daily_price: form.daily_price,
-      deposit_amount: form.deposit_amount,
-      average_rating: 5.0,
-      reviews_count: 0,
-      distance: "0.1 km",
-      owner: user?.full_name || "You",
-      image_placeholder: finalPlaceholder,
-      description: form.description,
-      coordinates: { x: 30 + Math.random() * 40, y: 25 + Math.random() * 40 },
-      is_primary: true,
-      condition: form.condition.charAt(0).toUpperCase() + form.condition.slice(1),
-    };
-
-    if (!savedMocks[currentLoc]) savedMocks[currentLoc] = [];
-    savedMocks[currentLoc].unshift(newItem);
-    localStorage.setItem("share_neighbour_mocks", JSON.stringify(savedMocks));
-
-    // Update user sharing score in localStorage
-    const localUser = JSON.parse(sessionStorage.getItem("share_neighbour_user_score") || "15");
-    sessionStorage.setItem("share_neighbour_user_score", String(localUser + 1));
-
-    // 2. Add notification log
-    const savedNotifs = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-    savedNotifs.unshift({
-      id: "notif-" + Date.now(),
-      title: "New Item Published",
-      message: `Your item "${form.title}" is now active in ${currentLoc}.`,
-      created_at: new Date().toISOString(),
-      is_read: false,
-      type: "star",
-    });
-    localStorage.setItem("share_neighbour_notifs", JSON.stringify(savedNotifs));
-
-    // 3. Trigger actual endpoint
+    // 1. Trigger actual endpoint
     try {
       const response = await resourceApi.create({
         title: form.title,
@@ -198,6 +170,8 @@ export default function ResourceCreatePage() {
         deposit_amount: form.deposit_amount,
         max_borrow_days: 7,
         category_id: form.category_id,
+        available_from: form.available_from || null,
+        available_to: form.available_to || null,
       });
 
       const createdId = response.data.id;
@@ -213,13 +187,14 @@ export default function ResourceCreatePage() {
         }
       }
       toast.success("Listing created successfully!");
-    } catch (dbErr) {
-      console.log("Database upload bypassed. Local listing created.");
+      setCreatedItem({ ...response.data, image_placeholder: finalPlaceholder });
+      setSubmitting(false);
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || "Failed to create listing on the server.");
+      setSubmitting(false);
     }
-
-    setCreatedItem(newItem);
-    setSubmitting(false);
-    setShowSuccessModal(true);
   };
 
   return (
@@ -414,7 +389,37 @@ export default function ResourceCreatePage() {
             </div>
           </div>
 
-          {/* Section 4: Price & Trust Escrow Deposit */}
+          {/* Section 3.5: Available Dates (Optional) */}
+          <div className="space-y-4 pt-6 border-t border-slate-200/60 dark:border-slate-800">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Availability Dates (Optional)</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Specify if this item is only available for a certain period. Leave blank to make it available indefinitely.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available From</label>
+                <input
+                  type="date"
+                  min={todayDateString}
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_from}
+                  onChange={update("available_from")}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available To</label>
+                <input
+                  type="date"
+                  min={form.available_from || todayDateString}
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_to}
+                  onChange={update("available_to")}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Pricing & Trust Escrow Deposit */}
           <div className="space-y-4">
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Pricing details</h3>

@@ -46,6 +46,13 @@ def create_borrow_request(
         raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
     if requested_days <= 0:
         raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+    if payload.requested_start_date < date.today():
+        raise AppException("Cannot request to borrow in the past", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+
+    if resource.available_from and payload.requested_start_date < resource.available_from:
+        raise AppException(f"Resource is not available before {resource.available_from}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
+    if resource.available_to and payload.requested_end_date > resource.available_to:
+        raise AppException(f"Resource is not available after {resource.available_to}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
 
     # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
     if resource.quantity_available <= 1:
@@ -151,9 +158,6 @@ def approve_borrow_request(
         )
     lender.response_count += 1
 
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
     db.commit()
     db.refresh(br)
 
@@ -243,10 +247,6 @@ def cancel_borrow_request(
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request can no longer be cancelled", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    if br.status == BorrowStatus.APPROVED:
-        br.resource.quantity_available += 1
-        br.resource.status = ResourceStatus.AVAILABLE
-
     br.status = BorrowStatus.CANCELLED
     db.commit()
     db.refresh(br)
@@ -333,9 +333,7 @@ def confirm_return_resource(
     br.borrower_review = payload.borrower_review
 
     resource = br.resource
-    resource.quantity_available += 1
     resource.total_borrows += 1
-    resource.status = ResourceStatus.AVAILABLE
 
     # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
