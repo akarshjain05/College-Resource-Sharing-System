@@ -1,8 +1,8 @@
 CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                            PORTS                                                                                             NAMES
-7a37689dcb99   crss_frontend_prod                              "caddy run --config …"   2 minutes ago   Up 2 minutes                      0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-1875121cddd9   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   2 minutes ago   Up 2 minutes                      8000/tcp                                                                                          crss_celery_worker
-959cd02d4dca   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   2 minutes ago   Restarting (255) 49 seconds ago                                                                                                     crss_backend
-7706b8552d73   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   2 minutes ago   Up 2 minutes                      8000/tcp                                                                                          crss_celery_beat
+7e8f9d0dafd3   crss_frontend_prod                              "caddy run --config …"   3 minutes ago   Up 3 minutes                      0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+edb21d6ef9a3   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   3 minutes ago   Up 3 minutes                      8000/tcp                                                                                          crss_celery_worker
+6d982e45da0e   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   3 minutes ago   Restarting (255) 13 seconds ago                                                                                                     crss_backend
+8eb48b1d915c   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   3 minutes ago   Up 3 minutes                      8000/tcp                                                                                          crss_celery_beat
 14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              5432/tcp                                                                                          crss_db
 4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
@@ -19,8 +19,24 @@ crss_backend  | FAILED: Multiple head revisions are present for given argument '
 crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
@@ -35,13 +51,5 @@ crss_backend  | FAILED: Multiple head revisions are present for given argument '
 crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
-crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
-crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
