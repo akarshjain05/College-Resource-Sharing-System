@@ -1,307 +1,47 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED        STATUS                          PORTS                                                                                             NAMES
-18ad54198209   crss_frontend_prod                              "caddy run --config …"   10 hours ago   Up 10 hours                     0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-9db657721de8   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   10 hours ago   Restarting (1) 12 seconds ago                                                                                                     crss_backend
-20ebd9533d61   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   10 hours ago   Up 10 hours                     8000/tcp                                                                                          crss_celery_worker
-96b197bc4890   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   10 hours ago   Up 10 hours                     8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago    Up 12 days (healthy)            5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago    Up 12 days (healthy)            6379/tcp                                                                                          crss_redis
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 246, in _revision_map
-crss_backend  |     down_revision = map_[downrev]
-crss_backend  |                     ~~~~^^^^^^^^^
-crss_backend  | KeyError: 'g8h7i6j5k4l3'
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                            PORTS                                                                                             NAMES
+7a37689dcb99   crss_frontend_prod                              "caddy run --config …"   2 minutes ago   Up 2 minutes                      0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+1875121cddd9   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   2 minutes ago   Up 2 minutes                      8000/tcp                                                                                          crss_celery_worker
+959cd02d4dca   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   2 minutes ago   Restarting (255) 49 seconds ago                                                                                                     crss_backend
+7706b8552d73   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   2 minutes ago   Up 2 minutes                      8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)              6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:242: UserWarning: Revision g8h7i6j5k4l3 referenced from g8h7i6j5k4l3 -> h9i8j7k6l5m4 (head), add available_from and available_to fix is not present
-crss_backend  |   util.warn(
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 246, in _revision_map
-crss_backend  |     down_revision = map_[downrev]
-crss_backend  |                     ~~~~^^^^^^^^^
-crss_backend  | KeyError: 'g8h7i6j5k4l3'
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:242: UserWarning: Revision g8h7i6j5k4l3 referenced from g8h7i6j5k4l3 -> h9i8j7k6l5m4 (head), add available_from and available_to fix is not present
-crss_backend  |   util.warn(
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 246, in _revision_map
-crss_backend  |     down_revision = map_[downrev]
-crss_backend  |                     ~~~~^^^^^^^^^
-crss_backend  | KeyError: 'g8h7i6j5k4l3'
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:242: UserWarning: Revision g8h7i6j5k4l3 referenced from g8h7i6j5k4l3 -> h9i8j7k6l5m4 (head), add available_from and available_to fix is not present
-crss_backend  |   util.warn(
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 246, in _revision_map
-crss_backend  |     down_revision = map_[downrev]
-crss_backend  |                     ~~~~^^^^^^^^^
-crss_backend  | KeyError: 'g8h7i6j5k4l3'
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | /usr/local/lib/python3.12/site-packages/alembic/script/revision.py:242: UserWarning: Revision g8h7i6j5k4l3 referenced from g8h7i6j5k4l3 -> h9i8j7k6l5m4 (head), add available_from and available_to fix is not present
-crss_backend  |   util.warn(
-crss_backend  | Traceback (most recent call last):
-crss_backend  |   File "/usr/local/bin/alembic", line 8, in <module>
-crss_backend  |     sys.exit(main())
-crss_backend  |              ^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 641, in main
-crss_backend  |     CommandLine(prog=prog).main(argv=argv)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 631, in main
-crss_backend  |     self.run_cmd(cfg, options)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/config.py", line 608, in run_cmd
-crss_backend  |     fn(
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 403, in upgrade
-crss_backend  |     script.run_env()
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 583, in run_env
-crss_backend  |     util.load_python_file(self.dir, "env.py")
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 95, in load_python_file
-crss_backend  |     module = load_module_py(module_id, path)
-crss_backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/util/pyfiles.py", line 113, in load_module_py
-crss_backend  |     spec.loader.exec_module(module)  # type: ignore
-crss_backend  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "<frozen importlib._bootstrap_external>", line 999, in exec_module
-crss_backend  |   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
-crss_backend  |   File "/app/alembic/env.py", line 50, in <module>
-crss_backend  |     run_migrations_online()
-crss_backend  |   File "/app/alembic/env.py", line 44, in run_migrations_online
-crss_backend  |     context.run_migrations()
-crss_backend  |   File "<string>", line 8, in run_migrations
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/environment.py", line 948, in run_migrations
-crss_backend  |     self.get_context().run_migrations(**kw)
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/runtime/migration.py", line 615, in run_migrations
-crss_backend  |     for step in self._migrations_fn(heads, self):
-crss_backend  |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/command.py", line 392, in upgrade
-crss_backend  |     return script._upgrade_revs(revision, rev)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/base.py", line 459, in _upgrade_revs
-crss_backend  |     for script in reversed(list(revs))
-crss_backend  |                            ^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 813, in iterate_revisions
-crss_backend  |     revisions, heads = fn(
-crss_backend  |                        ^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1438, in _collect_upgrade_revisions
-crss_backend  |     for rev in self._parse_upgrade_target(
-crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 1229, in _parse_upgrade_target
-crss_backend  |     return self.get_revisions(target)
-crss_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 545, in get_revisions
-crss_backend  |     resolved_id, branch_label = self._resolve_revision_number(id_)
-crss_backend  |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 767, in _resolve_revision_number
-crss_backend  |     self._revision_map
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 1141, in __get__
-crss_backend  |     obj.__dict__[self.__name__] = result = self.fget(obj)
-crss_backend  |                                            ^^^^^^^^^^^^^^
-crss_backend  |   File "/usr/local/lib/python3.12/site-packages/alembic/script/revision.py", line 246, in _revision_map
-crss_backend  |     down_revision = map_[downrev]
-crss_backend  |                     ~~~~^^^^^^^^^
-crss_backend  | KeyError: 'g8h7i6j5k4l3'
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+crss_backend  | ERROR [alembic.util.messaging] Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
+crss_backend  | FAILED: Multiple head revisions are present for given argument 'head'; please specify a specific target revision, '<branchname>@head' to narrow to a specific head, or 'heads' for all heads
