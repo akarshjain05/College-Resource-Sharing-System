@@ -22,9 +22,17 @@ inside containers.
    cd crss
    cp .env.example .env
    ```
-   Open `.env` and, at minimum for local development, you can leave the defaults —
-   they're wired to match the service names in `docker-compose.yml`. For anything beyond
-   local dev, change `SECRET_KEY` and the Postgres password.
+   Open `.env` and configure your Brevo Email OTP credentials:
+   ```env
+   BREVO_API_KEY=xkeysib-your-actual-api-key
+   BREVO_SENDER_EMAIL=your-verified-sender@domain.com
+   BREVO_SENDER_NAME=Campus Resources
+   OTP_SECRET=replace-with-a-long-random-secret
+   OTP_EXPIRY_SECONDS=600
+   OTP_MAX_ATTEMPTS=5
+   OTP_RESEND_COOLDOWN_SECONDS=60
+   ```
+
 
 3. **Build and start every service**
    ```bash

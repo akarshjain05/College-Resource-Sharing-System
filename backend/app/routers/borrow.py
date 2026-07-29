@@ -145,8 +145,10 @@ def approve_borrow_request(
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)
@@ -183,8 +185,10 @@ def reject_borrow_request(
     br.rejection_reason = payload.rejection_reason
     br.decided_at = datetime.now(timezone.utc)
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)
@@ -291,8 +295,8 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status != BorrowStatus.ACTIVE:
-        raise AppException("Only active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE):
+        raise AppException("Only approved or active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report

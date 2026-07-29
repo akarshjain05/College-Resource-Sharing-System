@@ -574,7 +574,19 @@ export default function ResourceDetailPage() {
           {/* Gallery showcase */}
           <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden p-6 shadow-sm">
             <div className="relative aspect-video w-full rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100">
-              <span className="text-8xl select-none">{resource.images?.[0]?.image_url || "🛠️"}</span>
+              {resource.images?.[0]?.image_url && (
+                resource.images[0].image_url.startsWith("/") ||
+                resource.images[0].image_url.startsWith("http") ||
+                resource.images[0].image_url.startsWith("data:")
+              ) ? (
+                <img
+                  src={getImageUrl(resource.images[0].image_url)}
+                  alt={resource.title}
+                  className="h-full w-full object-contain rounded-2xl"
+                />
+              ) : (
+                <span className="text-8xl select-none">{resource.images?.[0]?.image_url || "🛠️"}</span>
+              )}
               
               {/* Floating rating overlay */}
               <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-xs rounded-xl border border-slate-200/80 px-3.5 py-1.5 shadow-sm flex items-center gap-1">

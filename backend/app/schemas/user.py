@@ -38,6 +38,31 @@ class UserRegister(UserBase):
         return self
 
 
+class SignupOtpResponse(BaseModel):
+    message: str = "Verification code sent"
+    requires_verification: bool = True
+    challenge_id: str
+    expires_in: int = 600
+
+
+class VerifySignupOtpRequest(BaseModel):
+    challenge_id: str
+    otp: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$")
+
+
+class ResendSignupOtpRequest(BaseModel):
+    challenge_id: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
+class ResendSignupOtpResponse(BaseModel):
+    message: str = "A new verification code has been sent"
+    challenge_id: str
+    expires_in: int = 600
+    resend_available_in: int = 60
+
+
+
 class GoogleAuthRequest(BaseModel):
     credential: str = Field(..., description="The ID token returned by Google Identity Services")
 

@@ -71,6 +71,8 @@ def test_full_borrow_lifecycle(client, test_user, second_user, test_category):
     )
     assert confirm_resp.status_code == 200
     assert confirm_resp.json()["status"] == "returned"
+    assert confirm_resp.status_code == 200
+    assert confirm_resp.json()["status"] == "returned"
 
     resource_resp_2 = client.get(f"/api/v1/resources/{resource['id']}")
     assert resource_resp_2.json()["quantity_available"] == 1
