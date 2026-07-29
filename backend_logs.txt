@@ -1,25 +1,22 @@
-CONTAINER ID   IMAGE                                           COMMAND                  CREATED          STATUS                 PORTS                                                                                             NAMES
-28febc3f5914   crss_frontend_prod                              "caddy run --config …"   10 minutes ago   Up 10 minutes          0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-7ac679b2fa14   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   10 minutes ago   Up 10 minutes          8000/tcp                                                                                          crss_celery_worker
-c6a87ddc5937   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   10 minutes ago   Up 10 minutes          0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-2d3239a09f5a   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   10 minutes ago   Up 10 minutes          8000/tcp                                                                                          crss_celery_beat
-14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago      Up 12 days (healthy)   5432/tcp                                                                                          crss_db
-4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago      Up 12 days (healthy)   6379/tcp                                                                                          crss_redis
+CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
+56e738742868   crss_frontend_prod                              "caddy run --config …"   3 minutes ago   Up 3 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+f868afcc283a   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   3 minutes ago   Up 3 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+d3c4fc4e2eb4   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   3 minutes ago   Up 3 minutes           8000/tcp                                                                                          crss_celery_worker
+f4b5832fed23   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   3 minutes ago   Up 3 minutes           8000/tcp                                                                                          crss_celery_beat
+14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)   5432/tcp                                                                                          crss_db
+4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
 crss_backend  | INFO:     Started server process [8]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:46996 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46996 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:47008 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46998 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46998 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | 2026-07-29 07:24:45 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
+crss_backend  | INFO:     172.18.0.7:48962 - "GET /api/v1/wishlist HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48946 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | 2026-07-29 07:36:12 | ERROR    | crss | Brevo API request failed with status code 403: {"message":"Unable to send email. Your SMTP account is not yet activated. Please contact us at contact@brevo.com to request activation","code":"permission_denied"}
 crss_backend  | 
-crss_backend  | 2026-07-29 07:24:45 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for vikashonly88@gmail.com
-crss_backend  | 2026-07-29 07:24:45 | ERROR    | crss | Failed to send email to vikashonly88@gmail.com
+crss_backend  | 2026-07-29 07:36:12 | INFO     | crss | Attempting fallback OTP email dispatch via configured SMTP for akarshjain0502@gmail.com
+crss_backend  | 2026-07-29 07:36:12 | ERROR    | crss | Failed to send email to akarshjain0502@gmail.com
 crss_backend  | Traceback (most recent call last):
 crss_backend  |   File "/app/app/services/email_service.py", line 35, in send_email
 crss_backend  |     await aiosmtplib.send(
@@ -39,34 +36,19 @@ crss_backend  |     response = await auth_method(username, password, timeout=tim
 crss_backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 crss_backend  |   File "/usr/local/lib/python3.12/site-packages/aiosmtplib/smtp.py", line 1179, in auth_login
 crss_backend  |     raise SMTPAuthenticationError(response.code, response.message)
-crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83faaf24sm74090066b.42 - gsmtp')
-crss_backend  | INFO:     172.18.0.7:45966 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
-crss_backend  | INFO:     172.18.0.7:46552 - "POST /api/v1/auth/verify-signup-otp HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46552 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46568 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46574 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46552 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:46552 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:60954 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:60954 - "POST /api/v1/auth/refresh HTTP/1.1" 401 Unauthorized
-crss_backend  | INFO:     172.18.0.7:39060 - "POST /api/v1/auth/google HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39060 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39060 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39074 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39060 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:39060 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53036 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:53036 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55002 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55012 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55002 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:55002 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=a01c9dd0-fe5c-49d9-95d1-61e0a3654b59 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45802 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45788 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45784 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:45810 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59324 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59324 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59326 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59336 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:59336 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
+crss_backend  | aiosmtplib.errors.SMTPAuthenticationError: (535, '5.7.8 Username and Password not accepted. For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials a640c23a62f3a-c1f83f4de50sm76576966b.37 - gsmtp')
+crss_backend  | INFO:     172.18.0.7:59816 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
+crss_backend  | INFO:     172.18.0.7:39874 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39872 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:39888 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48008 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48008 - "GET /api/v1/categories HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48010 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48022 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48028 - "GET /uploads/resources/45dd7aeb-3f62-49a2-8a0a-4223e0474849.png HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48022 - "GET /api/v1/resources?sort_by=created_at&sort_dir=desc&page=1&page_size=12&exclude_owner_id=bccd80cb-5687-48a8-9700-9e2a009937b8 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48008 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48010 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48044 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:48022 - "GET /api/v1/resources/ffce7f5c-03ea-4eea-b858-b2a9c1389ee9 HTTP/1.1" 200 OK
