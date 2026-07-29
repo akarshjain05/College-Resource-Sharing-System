@@ -38,10 +38,17 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const campusEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(scnit\.ac\.in|svnit\.ac\.in)$/i;
+    if (!campusEmailRegex.test(form.email.trim())) {
+      toast.error("Please use an official campus email address (@scnit.ac.in or @svnit.ac.in)");
+      return;
+    }
+
     if (form.password !== form.confirm_password) {
       toast.error("Passwords don't match.");
       return;
     }
+
 
     setSubmitting(true);
     try {
@@ -151,8 +158,16 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className="label">Campus email</label>
-                  <input required type="email" className="input" value={form.email} onChange={update("email")} />
+                  <input
+                    required
+                    type="email"
+                    className="input"
+                    value={form.email}
+                    onChange={update("email")}
+                    placeholder="student@scnit.ac.in"
+                  />
                 </div>
+
                 <div>
                   <label className="label">Password</label>
                   <PasswordInput
