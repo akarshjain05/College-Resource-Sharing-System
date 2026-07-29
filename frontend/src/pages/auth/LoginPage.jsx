@@ -28,7 +28,7 @@ export default function LoginPage() {
       if (errorCode === "GOOGLE_ACCOUNT_NO_PASSWORD") {
         toast.error("This account uses Google Sign-In. Use the button below instead.");
       } else if (err.response?.status === 429) {
-        toast.error(err.response?.data?.error || "Too many attempts. Please try again later.");
+        toast.error("Too many attempts. Please try again later.");
       } else {
         toast.error(err.response?.data?.detail || "Could not sign in. Check your credentials.");
       }
