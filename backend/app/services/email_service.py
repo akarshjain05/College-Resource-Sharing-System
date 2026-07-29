@@ -204,7 +204,7 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                     to_email,
                     otp,
                 )
-                return False
+                return True
     except Exception as exc:
         logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
         if settings.SMTP_USER and settings.SMTP_PASSWORD:
@@ -218,7 +218,7 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                 to_email,
                 otp,
             )
-            return False
+            return True
 
 
 
