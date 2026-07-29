@@ -1,30 +1,60 @@
 CONTAINER ID   IMAGE                                           COMMAND                  CREATED         STATUS                 PORTS                                                                                             NAMES
-cfdd92b30f4f   crss_frontend_prod                              "caddy run --config …"   6 minutes ago   Up 6 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
-c9506e4a252c   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   6 minutes ago   Up 6 minutes           8000/tcp                                                                                          crss_celery_worker
-4bef29fb081e   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   6 minutes ago   Up 6 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
-3e5a8ae2550a   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   6 minutes ago   Up 6 minutes           8000/tcp                                                                                          crss_celery_beat
+87aed6d6362d   crss_frontend_prod                              "caddy run --config …"   5 minutes ago   Up 5 minutes           0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 443/udp, 2019/tcp   crss_frontend
+6cd803bbc420   college-resource-sharing-system-backend         "sh -c 'alembic upgr…"   5 minutes ago   Up 5 minutes           0.0.0.0:8000->8000/tcp, [::]:8000->8000/tcp                                                       crss_backend
+74386e493bb4   college-resource-sharing-system-celery_worker   "celery -A app.tasks…"   5 minutes ago   Up 5 minutes           8000/tcp                                                                                          crss_celery_worker
+e85b67488b51   college-resource-sharing-system-celery_beat     "celery -A app.tasks…"   5 minutes ago   Up 5 minutes           8000/tcp                                                                                          crss_celery_beat
 14c9f9e1a064   postgres:16-alpine                              "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)   5432/tcp                                                                                          crss_db
 4161b7d19ccd   redis:7-alpine                                  "docker-entrypoint.s…"   2 weeks ago     Up 12 days (healthy)   6379/tcp                                                                                          crss_redis
 crss_backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
 crss_backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
-crss_backend  | INFO:     Started server process [7]
+crss_backend  | INFO:     Started server process [8]
 crss_backend  | INFO:     Waiting for application startup.
 crss_backend  | INFO:     Application startup complete.
 crss_backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-crss_backend  | INFO:     172.18.0.7:42524 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42534 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42538 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42524 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44 HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42548 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42548 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:42524 - "GET /api/v1/users/4dcd3f51-7b41-409c-83be-016509d76154/public HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54638 - "GET /api/v1/categories HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54666 - "GET /api/v1/wanted HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54624 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:54640 - "GET /api/v1/resources?owner_id=09120b82-0323-4da2-bba8-cc7745635abc HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32980 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32968 - "GET /api/v1/users/4dcd3f51-7b41-409c-83be-016509d76154/public HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32980 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/availability HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32992 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/reviews HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32998 - "GET /api/v1/notifications HTTP/1.1" 200 OK
-crss_backend  | INFO:     172.18.0.7:32968 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52172 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52204 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52172 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52188 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:52216 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50940 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50940 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50940 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/availability HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50946 - "GET /api/v1/resources/17db360c-b40a-4723-a43b-528e36c0cf44/reviews HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:50944 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:33076 - "POST /api/v1/auth/login HTTP/1.1" 400 Bad Request
+crss_backend  | INFO:     172.18.0.7:33092 - "POST /api/v1/auth/login HTTP/1.1" 400 Bad Request
+crss_backend  | INFO:     172.18.0.7:40830 - "GET /api/v1/auth/me HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:40830 - "POST /api/v1/auth/refresh HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40830 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40838 - "GET /api/v1/notifications HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:40830 - "GET /api/v1/resources?page_size=20 HTTP/1.1" 200 OK
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:53168 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:49076 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:47046 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:53502 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:54894 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 401 Unauthorized
+crss_backend  | INFO:     172.18.0.7:51570 - "POST /api/v1/auth/login HTTP/1.1" 429 Too Many Requests
