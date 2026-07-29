@@ -651,12 +651,12 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => toast.success(`Viewing profile of ${resource.owner?.full_name}`)}
+            <Link
+              to={`/users/${resource.owner?.id}`}
               className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition-all shadow-sm active:scale-95"
             >
               View Profile
-            </button>
+            </Link>
           </div>
 
           {/* Description */}
