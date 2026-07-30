@@ -134,7 +134,13 @@ export default function PublicProfilePage() {
               <div key={r.id + r.role} className="card p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-ink-900">{r.reviewer_name}</span>
+                    {r.reviewer_id ? (
+                      <Link to={`/users/${r.reviewer_id}`} className="font-semibold text-ink-900 hover:underline hover:text-brand-500 cursor-pointer">
+                        {r.reviewer_name}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-ink-900">{r.reviewer_name}</span>
+                    )}
                     <span className="text-xs px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">
                       To {profile.full_name.split(" ")[0]} as a {r.role}
                     </span>
@@ -147,7 +153,7 @@ export default function PublicProfilePage() {
                 </div>
                 <p className="text-sm text-ink-700 italic">"{r.review}"</p>
                 <p className="text-xs text-ink-400 mt-2">
-                  Regarding {r.resource_title} &bull; {r.date ? new Date(r.date).toLocaleDateString() : "Recently"}
+                  Regarding {r.resource_id ? <Link to={`/resources/${r.resource_id}`} className="hover:underline hover:text-brand-500 cursor-pointer text-ink-500">{r.resource_title}</Link> : r.resource_title} &bull; {r.date ? new Date(r.date).toLocaleDateString() : "Recently"}
                 </p>
               </div>
             ))}
