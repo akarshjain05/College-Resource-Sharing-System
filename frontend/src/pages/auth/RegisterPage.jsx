@@ -38,9 +38,9 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const campusEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(scnit\.ac\.in|svnit\.ac\.in)$/i;
+    const campusEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(svnit\.ac\.in)$/i;
     if (!campusEmailRegex.test(form.email.trim())) {
-      toast.error("Please use an official campus email address (@scnit.ac.in or @svnit.ac.in)");
+      toast.error("Please use an official campus email address (@svnit.ac.in)");
       return;
     }
 
@@ -164,7 +164,7 @@ export default function RegisterPage() {
                     className="input"
                     value={form.email}
                     onChange={update("email")}
-                    placeholder="student@scnit.ac.in"
+                    placeholder="student@svnit.ac.in"
                   />
                 </div>
 

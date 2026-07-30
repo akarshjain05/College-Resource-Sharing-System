@@ -8,7 +8,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator, fi
 from app.models.enums import UserRole, AuthProvider
 
 
-CAMPUS_EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(scnit\.ac\.in|svnit\.ac\.in|crss\.edu)$"
+CAMPUS_EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(svnit\.ac\.in)$"
 
 
 
@@ -41,7 +41,7 @@ class UserRegister(UserBase):
     @classmethod
     def validate_campus_email(cls, v: str) -> str:
         if v and not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
-            raise ValueError("Only official campus email addresses (@scnit.ac.in / @svnit.ac.in) are allowed")
+            raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
         return v
 
     @model_validator(mode="after")
