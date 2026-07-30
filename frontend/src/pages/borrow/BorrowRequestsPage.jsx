@@ -45,7 +45,7 @@ function RequestCard({ request, isIncoming, onAction }) {
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
 
   const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
-  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 24;
+  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 0;
 
   const handleActionClick = (action) => {
     if (action === "return" || action === "confirm_return") {
