@@ -144,6 +144,10 @@ def approve_borrow_request(
 
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
+    
+    resource.quantity_available -= 1
+    if resource.quantity_available <= 0:
+        resource.status = ResourceStatus.BORROWED
 
     decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
     created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
@@ -247,7 +251,16 @@ def cancel_borrow_request(
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request can no longer be cancelled", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
+    was_approved = br.status == BorrowStatus.APPROVED
     br.status = BorrowStatus.CANCELLED
+    
+    if was_approved:
+        resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
+        if resource:
+            resource.quantity_available += 1
+            if resource.status == ResourceStatus.BORROWED:
+                resource.status = ResourceStatus.AVAILABLE
+
     db.commit()
     db.refresh(br)
     return br
@@ -295,8 +308,8 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE):
-        raise AppException("Only approved or active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.LATE):
+        raise AppException("Only approved, active, or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report
@@ -334,6 +347,12 @@ def confirm_return_resource(
 
     resource = br.resource
     resource.total_borrows += 1
+    
+    locked_resource = db.query(Resource).filter(Resource.id == resource.id).with_for_update().first()
+    if locked_resource:
+        locked_resource.quantity_available += 1
+        if locked_resource.status == ResourceStatus.BORROWED:
+            locked_resource.status = ResourceStatus.AVAILABLE
 
     # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
