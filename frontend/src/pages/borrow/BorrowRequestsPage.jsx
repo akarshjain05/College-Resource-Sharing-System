@@ -513,12 +513,20 @@ export default function BorrowRequestsPage() {
               <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
                 {/* Borrower Actions */}
                 {tab === "borrowing" && book.status === "requested" && (
-                  <button
-                    onClick={() => handleStatusChange(book.id, "cancelled")}
-                    className="btn-secondary !py-2 text-xs"
-                  >
-                    <Ban className="h-3.5 w-3.5" /> Cancel Request
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleStatusChange(book.id, "nudge")}
+                      className="btn-secondary !py-2 text-xs"
+                    >
+                      <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(book.id, "cancelled")}
+                      className="btn-secondary !py-2 text-xs"
+                    >
+                      <Ban className="h-3.5 w-3.5" /> Cancel Request
+                    </button>
+                  </>
                 )}
                 {tab === "borrowing" && book.status === "approved" && (
                   <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
