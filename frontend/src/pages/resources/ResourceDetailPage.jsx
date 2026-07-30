@@ -753,6 +753,12 @@ export default function ResourceDetailPage() {
                   {resource.owner.full_name}
                 </p>
                 <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+                {resource.owner.avg_response_seconds != null && (
+                  <p className="text-[10px] text-primary-600 font-semibold flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3" />
+                    {formatAvgResponseTime(resource.owner.avg_response_seconds)}
+                  </p>
+                )}
               </div>
             </Link>
             
