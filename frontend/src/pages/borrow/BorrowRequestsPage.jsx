@@ -221,6 +221,7 @@ export default function BorrowRequestsPage() {
 
   // Review states
   const [reviewingId, setReviewingId] = useState(null);
+  const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
 
@@ -333,22 +334,26 @@ export default function BorrowRequestsPage() {
   };
 
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewingId) return;
 
-    // Update status in localStorage
-    const local = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-    const idx = local.findIndex(b => b.id === reviewingId);
-    if (idx !== -1) {
-      local[idx].status = "returned";
-      localStorage.setItem("share_neighbour_bookings", JSON.stringify(local));
+    try {
+      if (reviewAction === "return") {
+        await borrowApi.returnItem(reviewingId, null, ratingInput, commentInput);
+      } else if (reviewAction === "confirm_return") {
+        await borrowApi.confirmReturn(reviewingId, ratingInput, commentInput);
+      }
+      toast.success("Thank you for your rating!");
+      setReviewingId(null);
+      setReviewAction(null);
+      setCommentInput("");
+      setRatingInput(5);
+      if (typeof loadBookingsList === 'function') loadBookingsList();
+      else load();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Action failed");
     }
-
-    toast.success("Thank you for your rating!");
-    setReviewingId(null);
-    setCommentInput("");
-    loadBookingsList();
   };
 
   // Status mapping for SubTabs
@@ -365,7 +370,7 @@ export default function BorrowRequestsPage() {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing"].includes(status);
+        return ["active", "ongoing", "return_requested"].includes(status);
       }
       if (subTab === "completed") {
         return ["returned", "confirmed_return"].includes(status);
@@ -535,11 +540,16 @@ export default function BorrowRequestsPage() {
                 )}
                 {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
                   <button
-                    onClick={() => setReviewingId(book.id)}
+                    onClick={() => { setReviewingId(book.id); setReviewAction("return"); }}
                     className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> Return Item
                   </button>
+                )}
+                {tab === "borrowing" && book.status === "return_requested" && (
+                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                    <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
+                  </span>
                 )}
 
                 {/* Lender Actions */}
@@ -572,6 +582,14 @@ export default function BorrowRequestsPage() {
                     <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
                   </span>
                 )}
+                {tab === "lending" && book.status === "return_requested" && (
+                  <button
+                    onClick={() => { setReviewingId(book.id); setReviewAction("confirm_return"); }}
+                    className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Confirm Return
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -583,8 +601,12 @@ export default function BorrowRequestsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div>
-              <h3 className="font-display text-base font-extrabold text-slate-900">Return & Rate Item</h3>
-              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Tell us about your experience</p>
+              <h3 className="font-display text-base font-extrabold text-slate-900">
+                {reviewAction === "confirm_return" ? "Confirm Return & Rate" : "Return & Rate Item"}
+              </h3>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                {reviewAction === "confirm_return" ? "Rate the borrower" : "Tell us about your experience"}
+              </p>
             </div>
             
             <form onSubmit={handleReviewSubmit} className="space-y-4">
@@ -625,7 +647,7 @@ export default function BorrowRequestsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setReviewingId(null)}
+                  onClick={() => { setReviewingId(null); setReviewAction(null); }}
                   className="btn-secondary !py-2 text-xs"
                 >
                   Cancel
