@@ -477,8 +477,10 @@ export default function BorrowRequestsPage() {
                     {book.resource.image_placeholder || "🪜"}
                   </div>
                   <div>
-                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight">
-                      {book.resource.title}
+                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                      <Link to={`/resources/${book.resource.id}`}>
+                        {book.resource.title}
+                      </Link>
                     </h3>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
                       {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
