@@ -244,8 +244,8 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: r.lender?.full_name || "Unknown" },
-          borrower: { full_name: "You" },
+          lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
+          borrower: { id: r.borrower?.id, full_name: "You" },
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
@@ -259,8 +259,8 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: "You" },
-          borrower: { full_name: r.borrower?.full_name || "Unknown" },
+          lender: { id: r.lender?.id, full_name: "You" },
+          borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
         }));
 
         setBookings({
@@ -483,7 +483,11 @@ export default function BorrowRequestsPage() {
                       </Link>
                     </h3>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-                      {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
+                      {tab === "borrowing" ? (
+                        <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
+                      ) : (
+                        <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
+                      )}
                     </p>
                   </div>
                 </div>
