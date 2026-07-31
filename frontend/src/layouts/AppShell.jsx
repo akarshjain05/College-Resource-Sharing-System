@@ -5,6 +5,7 @@ import {
   PlusCircle,
   Calendar,
   Bell,
+  BellOff,
   User,
   LogOut,
   ShieldCheck,
@@ -44,6 +45,19 @@ export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    () => localStorage.getItem("notif_master_enabled") !== "false"
+  );
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
+
+  const toggleMasterNotifications = () => {
+    setNotificationsEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("notif_master_enabled", String(next));
+      toast.success(next ? "Notifications turned ON" : "Notifications turned OFF (Muted)");
+      return next;
+    });
+  };
 
   const [selectedLocation, setSelectedLocation] = useState(
     localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
@@ -251,17 +265,93 @@ export default function AppShell() {
               <span>Post a Need</span>
             </button>
 
-            <Link
-              to="/notifications"
-              className="relative rounded-xl border border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 p-2.5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all active:scale-95"
-            >
-              <Bell className="h-4.5 w-4.5" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
+            {/* Enhanced Notification Button with ON/OFF Control */}
+            <div className="relative flex items-center">
+              <button
+                type="button"
+                onClick={() => setShowNotifMenu(!showNotifMenu)}
+                className={`flex items-center gap-2 rounded-2xl border px-3 py-2 text-xs font-bold transition-all shadow-xs ${
+                  notificationsEnabled
+                    ? "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 hover:border-slate-300 dark:hover:border-slate-700"
+                    : "border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400"
+                }`}
+              >
+                <div className="relative flex items-center justify-center">
+                  {notificationsEnabled ? (
+                    <Bell className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  ) : (
+                    <BellOff className="h-4 w-4 text-amber-500" />
+                  )}
+                  {notificationsEnabled && unreadCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-extrabold text-white ring-2 ring-white dark:ring-slate-900 animate-pulse">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </div>
+
+                {/* Quick ON / OFF Badge */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMasterNotifications();
+                  }}
+                  className="flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 px-2 py-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                  title="Click to toggle Notifications ON / OFF"
+                >
+                  <span className={`h-2 w-2 rounded-full ${notificationsEnabled ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                  <span className={`text-[10px] font-extrabold uppercase tracking-wider ${notificationsEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                    {notificationsEnabled ? "ON" : "OFF"}
+                  </span>
+                </div>
+              </button>
+
+              {/* Quick Dropdown Popover */}
+              {showNotifMenu && (
+                <div className="absolute right-0 top-full mt-2.5 w-80 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Bell className="h-4 w-4 text-primary-500" />
+                      <span className="font-display text-sm font-extrabold text-slate-900 dark:text-white">Notifications</span>
+                    </div>
+                    <button
+                      onClick={() => setShowNotifMenu(false)}
+                      className="rounded-full p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Master ON/OFF Switch Card */}
+                  <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">Alert System</h4>
+                      <p className="text-[10px] text-slate-400">{notificationsEnabled ? "Real-time notifications ON" : "Notifications muted (OFF)"}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleMasterNotifications}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                        notificationsEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                          notificationsEnabled ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <Link
+                    to="/notifications"
+                    onClick={() => setShowNotifMenu(false)}
+                    className="block text-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white py-2 text-xs font-bold shadow-xs transition-all"
+                  >
+                    View Notification Center ({unreadCount} unread)
+                  </Link>
+                </div>
               )}
-            </Link>
+            </div>
 
             {/* Dark Mode Toggle */}
             <button
