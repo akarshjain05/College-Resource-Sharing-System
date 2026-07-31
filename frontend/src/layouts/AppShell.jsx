@@ -67,10 +67,13 @@ export default function AppShell() {
   usePushNotification(user);
 
   // Theme dark/light mode state and logic
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") ||
-    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-  );
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved;
+    const legacy = localStorage.getItem("share_neighbour_dark_mode");
+    if (legacy !== null) return legacy === "true" ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
     if (theme === "dark") {
@@ -79,6 +82,8 @@ export default function AppShell() {
       document.documentElement.classList.remove("dark");
     }
     localStorage.setItem("theme", theme);
+    localStorage.setItem("share_neighbour_dark_mode", theme === "dark" ? "true" : "false");
+    window.dispatchEvent(new Event("themeChanged"));
   }, [theme]);
 
   const toggleTheme = () => {
@@ -179,6 +184,25 @@ export default function AppShell() {
               <span>Admin Panel</span>
             </Link>
           )}
+
+          {/* Dark Mode Toggle in Sidebar */}
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? (
+              <>
+                <Sun className="h-4.5 w-4.5 text-amber-500 flex-shrink-0" />
+                <span>Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-4.5 w-4.5 text-slate-500 flex-shrink-0" />
+                <span>Dark Mode</span>
+              </>
+            )}
+          </button>
         </nav>
 
         {/* Bottom Profile Summary */}
@@ -253,7 +277,7 @@ export default function AppShell() {
         </header>
 
         <main className="flex-1 p-6 md:p-8 max-w-[1400px] w-full mx-auto">
-          <Outlet />
+          <Outlet context={{ theme, toggleTheme, isDarkMode: theme === "dark" }} />
         </main>
       </div>
 
