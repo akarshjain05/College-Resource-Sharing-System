@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { chatEventBus } from "../utils/chatEventBus";
 
-const NOTIFICATION_WS_URL = (import.meta.env.VITE_NOTIFICATION_API_URL || "http://localhost:10000")
+const NOTIFICATION_WS_URL = (import.meta.env.VITE_NOTIFICATION_API_URL || "https://notification-olgf.onrender.com")
   .replace(/^http/, "ws");
 
 /**

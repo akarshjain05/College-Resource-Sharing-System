@@ -15,7 +15,7 @@ const firebaseConfig = {
 
 const VAPID_KEY = "BA6CZ5D9U-OB9PAlrc7RjIkdDQHjWrype-_sAZUhBZK32lau5GA8LW_uKsKew3YMFLZlFCb5wBxqtzGcwaIzymY";
 
-const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || "http://localhost:10000";
+const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || "https://notification-olgf.onrender.com";
 
 function getFirebaseMessaging() {
     try {
