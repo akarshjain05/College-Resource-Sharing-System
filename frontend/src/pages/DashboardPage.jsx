@@ -29,376 +29,10 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { resourceApi, getImageUrl } from "../api/endpoints";
+import { resourceApi, getImageUrl, wishlistApi } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
 import DueBadge from "../components/DueBadge";
 
-// Large Mock items dataset with more items per neighborhood
-const LOCAL_MOCK_ITEMS = {
-  "Koramangala, Bengaluru": [
-    {
-      id: "mock-ladder-1",
-      title: "Aluminium Ladder (7 Step)",
-      category: "Tools",
-      daily_price: 90,
-      deposit_amount: 500,
-      average_rating: 4.7,
-      reviews_count: 15,
-      distance: "0.3 km",
-      owner: "Rahul Sharma",
-      image_placeholder: "🪜",
-      description: "Sturdy 7 step aluminium ladder. Perfect for home painting, bulb changing, etc. Well maintained.",
-      coordinates: { x: 35, y: 40 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-drill-1",
-      title: "Bosch Drill Machine",
-      category: "Tools",
-      daily_price: 150,
-      deposit_amount: 500,
-      average_rating: 4.8,
-      reviews_count: 23,
-      distance: "0.5 km",
-      owner: "Amit Patel",
-      image_placeholder: "🔌",
-      description: "Powerful drill machine. Used only a few times. Comes with standard bits.",
-      coordinates: { x: 55, y: 25 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-projector-1",
-      title: "Sony Full HD Projector",
-      category: "Party",
-      daily_price: 350,
-      deposit_amount: 1200,
-      average_rating: 4.9,
-      reviews_count: 16,
-      distance: "0.7 km",
-      owner: "Praveen K.",
-      image_placeholder: "📽️",
-      description: "Super bright 3000 lumens projector. Ideal for movie nights and presentations. HDMI cable included.",
-      coordinates: { x: 60, y: 45 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-speaker-1",
-      title: "Sony Bluetooth Speaker",
-      category: "Party",
-      daily_price: 120,
-      deposit_amount: 400,
-      average_rating: 4.7,
-      reviews_count: 11,
-      distance: "0.4 km",
-      owner: "Rahul Sharma",
-      image_placeholder: "🔊",
-      description: "Portable extra bass speaker with battery life of 12 hours. Waterproof and rugged.",
-      coordinates: { x: 40, y: 20 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-cooler-1",
-      title: "Cooler - Symphony",
-      category: "Party",
-      daily_price: 120,
-      deposit_amount: 600,
-      average_rating: 4.5,
-      reviews_count: 8,
-      distance: "0.8 km",
-      owner: "Neha Iyer",
-      image_placeholder: "❄️",
-      description: "Large desert cooler for parties and events. Blows super cold air. Quiet operation.",
-      coordinates: { x: 75, y: 65 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-mixer-1",
-      title: "Mixer Grinder (Prestige)",
-      category: "Kitchen",
-      daily_price: 80,
-      deposit_amount: 300,
-      average_rating: 4.4,
-      reviews_count: 5,
-      distance: "0.4 km",
-      owner: "Vikram Rao",
-      image_placeholder: "🌪️",
-      description: "Prestige 750W mixer grinder. Perfect for making batters, chutneys, and shakes.",
-      coordinates: { x: 20, y: 70 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-racket-1",
-      title: "Yonex Badminton Racket",
-      category: "Sports",
-      daily_price: 40,
-      deposit_amount: 200,
-      average_rating: 4.9,
-      reviews_count: 12,
-      distance: "0.2 km",
-      owner: "Suresh Kumar",
-      image_placeholder: "🏸",
-      description: "Lightweight Yonex Carbonex racket. Newly strung, comes with dynamic cover.",
-      coordinates: { x: 45, y: 80 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-tent-1",
-      title: "4-Person Camping Tent",
-      category: "Camping",
-      daily_price: 250,
-      deposit_amount: 800,
-      average_rating: 4.6,
-      reviews_count: 18,
-      distance: "1.1 km",
-      owner: "Rohit Singh",
-      image_placeholder: "⛺",
-      description: "Waterproof Quechua double dome tent. Pitch in 5 minutes. Includes sleeping mats.",
-      coordinates: { x: 80, y: 30 },
-      is_primary: true,
-      condition: "Good",
-    },
-  ],
-  "Indiranagar, Bengaluru": [
-    {
-      id: "mock-ladder-2",
-      title: "Step Ladder (6 Step)",
-      category: "Tools",
-      daily_price: 85,
-      deposit_amount: 400,
-      average_rating: 4.6,
-      reviews_count: 10,
-      distance: "0.4 km",
-      owner: "Monica Sen",
-      image_placeholder: "🪜",
-      description: "Compact 6 step ladder, perfect for indoor cleaning and shelf dusting.",
-      coordinates: { x: 40, y: 45 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-drill-2",
-      title: "Black & Decker Power Drill",
-      category: "Tools",
-      daily_price: 130,
-      deposit_amount: 450,
-      average_rating: 4.7,
-      reviews_count: 19,
-      distance: "0.6 km",
-      owner: "Devendra G.",
-      image_placeholder: "🔌",
-      description: "Cordless drill driver. Comes with rechargeable battery and wall plugs.",
-      coordinates: { x: 60, y: 30 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-saw-1",
-      title: "Circular Hand Saw",
-      category: "Tools",
-      daily_price: 200,
-      deposit_amount: 700,
-      average_rating: 4.9,
-      reviews_count: 5,
-      distance: "0.9 km",
-      owner: "Devendra G.",
-      image_placeholder: "🪚",
-      description: "Electric circular saw. Heavy duty speed control for wood planks cutting.",
-      coordinates: { x: 65, y: 20 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-bbq-1",
-      title: "Barbecue Grill Set",
-      category: "Party",
-      daily_price: 300,
-      deposit_amount: 1000,
-      average_rating: 4.9,
-      reviews_count: 30,
-      distance: "1.2 km",
-      owner: "Kavita M.",
-      image_placeholder: "🥩",
-      description: "Portable charcoal BBQ grill. Comes with skewers, tongs, and a small bag of coal.",
-      coordinates: { x: 70, y: 70 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-fryer-1",
-      title: "Air Fryer (Philips)",
-      category: "Kitchen",
-      daily_price: 150,
-      deposit_amount: 500,
-      average_rating: 4.8,
-      reviews_count: 14,
-      distance: "0.7 km",
-      owner: "Preeti K.",
-      image_placeholder: "🍟",
-      description: "Philips Essential Airfryer. Perfect for low-oil fries, nuggets, and baking.",
-      coordinates: { x: 25, y: 55 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-cricket-1",
-      title: "Kashmir Willow Cricket Kit",
-      category: "Sports",
-      daily_price: 100,
-      deposit_amount: 500,
-      average_rating: 4.5,
-      reviews_count: 6,
-      distance: "0.5 km",
-      owner: "Arun B.",
-      image_placeholder: "🏏",
-      description: "Cricket bat, leg guards, batting gloves, and helmet. Good condition.",
-      coordinates: { x: 30, y: 80 },
-      is_primary: true,
-      condition: "Good",
-    },
-  ],
-  "HSR Layout, Bengaluru": [
-    {
-      id: "mock-ladder-3",
-      title: "Heavy Duty Extension Ladder",
-      category: "Tools",
-      daily_price: 110,
-      deposit_amount: 600,
-      average_rating: 4.8,
-      reviews_count: 25,
-      distance: "0.3 km",
-      owner: "Sridhar J.",
-      image_placeholder: "🪜",
-      description: "Extends up to 14 feet. Perfect for outdoor scaling and roof painting.",
-      coordinates: { x: 30, y: 35 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-drill-3",
-      title: "Rotary Hammer Drill",
-      category: "Tools",
-      daily_price: 180,
-      deposit_amount: 700,
-      average_rating: 4.9,
-      reviews_count: 15,
-      distance: "0.5 km",
-      owner: "Mani K.",
-      image_placeholder: "🔌",
-      description: "Heavy duty hammer drill. Breaks concrete and brick walls with ease.",
-      coordinates: { x: 50, y: 50 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-sound-1",
-      title: "JBL Party Sound System",
-      category: "Party",
-      daily_price: 400,
-      deposit_amount: 1500,
-      average_rating: 4.7,
-      reviews_count: 22,
-      distance: "0.9 km",
-      owner: "Rohan D.",
-      image_placeholder: "🔊",
-      description: "100W JBL party speaker with Bluetooth, mic input, and glowing party lights.",
-      coordinates: { x: 75, y: 55 },
-      is_primary: true,
-      condition: "New",
-    },
-    {
-      id: "mock-oven-1",
-      title: "OTG Convection Oven",
-      category: "Kitchen",
-      daily_price: 120,
-      deposit_amount: 400,
-      average_rating: 4.3,
-      reviews_count: 7,
-      distance: "0.6 km",
-      owner: "Meera A.",
-      image_placeholder: "🍰",
-      description: "Borosil 19L oven toaster grill. Great for baking cakes, pizzas, and grilling paneer.",
-      coordinates: { x: 15, y: 65 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-backpack-1",
-      title: "Hiking Backpack (65L)",
-      category: "Camping",
-      daily_price: 70,
-      deposit_amount: 300,
-      average_rating: 4.6,
-      reviews_count: 11,
-      distance: "0.8 km",
-      owner: "Nitin S.",
-      image_placeholder: "🎒",
-      description: "Ergonomic mountain rucksack with rain cover and steel back support.",
-      coordinates: { x: 45, y: 75 },
-      is_primary: true,
-      condition: "Good",
-    },
-  ],
-  "Whitefield, Bengaluru": [
-    {
-      id: "mock-drill-4",
-      title: "Skill Impact Drill",
-      category: "Tools",
-      daily_price: 110,
-      deposit_amount: 400,
-      average_rating: 4.5,
-      reviews_count: 10,
-      distance: "0.4 km",
-      owner: "Harish S.",
-      image_placeholder: "🔌",
-      description: "Skill 550W impact drill machine. Ideal for home drilling on wood, metal or concrete. Easy speed control.",
-      coordinates: { x: 40, y: 40 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-tent-2",
-      title: "Camping Tent (2-person)",
-      category: "Camping",
-      daily_price: 150,
-      deposit_amount: 500,
-      average_rating: 4.7,
-      reviews_count: 14,
-      distance: "0.7 km",
-      owner: "Sneha G.",
-      image_placeholder: "⛺",
-      description: "Double layer waterproof dome tent. Spacious room for 2 adults. Comes with stakes and carrying pouch.",
-      coordinates: { x: 60, y: 60 },
-      is_primary: true,
-      condition: "Good",
-    },
-    {
-      id: "mock-cooker-1",
-      title: "Prestige Pressure Cooker",
-      category: "Kitchen",
-      daily_price: 50,
-      deposit_amount: 200,
-      average_rating: 4.6,
-      reviews_count: 14,
-      distance: "0.5 km",
-      owner: "Kiran B.",
-      image_placeholder: "🍲",
-      description: "5L Aluminium outer lid pressure cooker. Ideal for quick rice boiling and stews cooking.",
-      coordinates: { x: 30, y: 50 },
-      is_primary: true,
-      condition: "Good",
-    },
-  ]
-};
-
-// Store local mocks to localStorage for other pages to retrieve easily
-localStorage.setItem("share_neighbour_mocks", JSON.stringify(LOCAL_MOCK_ITEMS));
 
 const CATEGORIES = [
   { name: "Tools", icon: Wrench, color: "text-orange-500 bg-orange-50 hover:bg-orange-100" },
@@ -411,11 +45,13 @@ const CATEGORIES = [
 export default function DashboardPage() {
   const { user } = useAuth();
   const [dbItems, setDbItems] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [locations, setLocations] = useState(["All Locations"]);
   const [loading, setLoading] = useState(true);
   
   // Custom interactive states
   const [locationName, setLocationName] = useState(
-    localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
+    localStorage.getItem("share_neighbour_location") || "All Locations"
   );
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -428,10 +64,6 @@ export default function DashboardPage() {
   const [showWishlist, setShowWishlist] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(
     localStorage.getItem("share_neighbour_dark_mode") === "true"
-  );
-  
-  const [favorites, setFavorites] = useState(
-    JSON.parse(localStorage.getItem("share_neighbour_favs") || "{}")
   );
 
   // Sync dark mode class
@@ -448,7 +80,7 @@ export default function DashboardPage() {
   // Sync with AppShell location changes
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru";
+      const newLoc = localStorage.getItem("share_neighbour_location") || "All Locations";
       setLocationName(newLoc);
     };
 
@@ -458,33 +90,56 @@ export default function DashboardPage() {
     };
   }, []);
 
-  useEffect(() => {
+  const loadData = async () => {
     setLoading(true);
-    resourceApi.list({ page_size: 20 })
-      .then(({ data }) => {
-        const items = data?.items || [];
-        setDbItems(items);
-      })
-      .catch((err) => {
-        console.log("Database fetch failed, using local mock data.", err);
-      })
-      .finally(() => {
-        setLoading(false);
+    try {
+      const [resData, wishData] = await Promise.all([
+        resourceApi.list({ page_size: 100 }),
+        wishlistApi.list()
+      ]);
+      const items = resData.data?.items || [];
+      setDbItems(items);
+      setWishlistItems(wishData.data || []);
+      
+      const locs = new Set(["All Locations"]);
+      items.forEach(i => {
+        if (i.pickup_location) locs.add(i.pickup_location);
       });
+      setLocations(Array.from(locs));
+    } catch (err) {
+      console.log("Failed to load data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
   }, [locationName]);
 
-  const toggleFavorite = (itemId, e) => {
+  const toggleFavorite = async (itemId, e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    const updated = {
-      ...favorites,
-      [itemId]: !favorites[itemId]
-    };
-    setFavorites(updated);
-    localStorage.setItem("share_neighbour_favs", JSON.stringify(updated));
-    toast.success(updated[itemId] ? "Added to Wishlist! ❤️" : "Removed from Wishlist.");
+    const isFav = wishlistItems.some(i => i.id === itemId);
+    try {
+      if (isFav) {
+        setWishlistItems(wishlistItems.filter(i => i.id !== itemId));
+        await wishlistApi.remove(itemId);
+        toast.success("Removed from Wishlist.");
+      } else {
+        const item = dbItems.find(i => i.id === itemId);
+        if (item) {
+          setWishlistItems([...wishlistItems, item]);
+          await wishlistApi.add(itemId);
+          toast.success("Added to Wishlist! ❤️");
+        }
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Action failed");
+      loadData();
+    }
   };
 
   const closeWelcomeBanner = () => {
@@ -501,49 +156,44 @@ export default function DashboardPage() {
 
   // Compile active resources based on search, category and selected neighborhood
   const getFilteredItems = () => {
-    const baseItems = LOCAL_MOCK_ITEMS[locationName] || LOCAL_MOCK_ITEMS["Koramangala, Bengaluru"];
-    
-    let merged = [...baseItems];
-    if (dbItems.length > 0) {
-      dbItems.forEach(dbItem => {
-        if (!merged.find(m => m.title.toLowerCase() === dbItem.title.toLowerCase())) {
-          merged.push({
-            id: dbItem.id,
-            title: dbItem.title,
-            category: dbItem.category?.name || "Tools",
-            daily_price: dbItem.deposit_amount ? Math.round(dbItem.deposit_amount * 0.1) : 100,
-            deposit_amount: dbItem.deposit_amount || 300,
-            average_rating: dbItem.average_rating || 5.0,
-            reviews_count: dbItem.total_borrows || 0,
-            distance: "0.6 km",
-            owner: dbItem.owner?.full_name || "Neighbor",
-            image_placeholder: dbItem.images?.[0]?.image_url || "🛠️",
-            description: dbItem.description,
-            is_primary: true,
-            condition: dbItem.condition || "Good",
-          });
-        }
-      });
-    }
+    let merged = [...dbItems].map(dbItem => ({
+      id: dbItem.id,
+      title: dbItem.title,
+      category: dbItem.category?.name || "Tools",
+      daily_price: dbItem.deposit_amount ? Math.round(dbItem.deposit_amount * 0.1) : 100,
+      deposit_amount: dbItem.deposit_amount || 300,
+      average_rating: dbItem.average_rating || 5.0,
+      reviews_count: dbItem.total_borrows || 0,
+      distance: "0.6 km",
+      owner: dbItem.owner?.full_name || "Neighbor",
+      image_placeholder: dbItem.images?.[0]?.image_url || "🛠️",
+      description: dbItem.description,
+      is_primary: true,
+      condition: dbItem.condition || "Good",
+      pickup_location: dbItem.pickup_location || "",
+    }));
 
     return merged.filter(item => {
+      const matchLoc = locationName === "All Locations" || item.pickup_location === locationName;
       const matchCat = activeCategory ? item.category.toLowerCase() === activeCategory.toLowerCase() : true;
       const matchSearch = searchQuery
         ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.owner.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
-      return matchCat && matchSearch;
+      return matchLoc && matchCat && matchSearch;
     });
   };
 
   const filteredItems = getFilteredItems();
 
-  // Helper to compile liked elements
   const getFavoriteItems = () => {
-    const allMocks = [];
-    Object.values(LOCAL_MOCK_ITEMS).forEach(arr => allMocks.push(...arr));
-    return allMocks.filter(item => favorites[item.id]);
+    return wishlistItems.map(dbItem => ({
+      id: dbItem.id,
+      title: dbItem.title,
+      daily_price: dbItem.deposit_amount ? Math.round(dbItem.deposit_amount * 0.1) : 100,
+      image_placeholder: dbItem.images?.[0]?.image_url || "🛠️",
+    }));
   };
   const favItems = getFavoriteItems();
 
@@ -731,12 +381,11 @@ export default function DashboardPage() {
                       📍 {item.distance}
                     </span>
 
-                    {/* Bookmark Favorite Button */}
                     <button
                       onClick={(e) => toggleFavorite(item.id, e)}
                       className="absolute top-3 right-3 rounded-xl bg-white/95 dark:bg-slate-800/95 p-2.5 text-slate-400 dark:text-slate-500 shadow-md backdrop-blur-xs transition-all hover:bg-white hover:text-red-500 dark:hover:text-red-400 active:scale-90"
                     >
-                      <Heart className={`h-4.5 w-4.5 ${favorites[item.id] ? "fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400" : ""}`} />
+                      <Heart className={`h-4.5 w-4.5 ${wishlistItems.some(i => i.id === item.id) ? "fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400" : ""}`} />
                     </button>
                     
                     {/* Category Label */}
@@ -854,7 +503,7 @@ export default function DashboardPage() {
             
             {showLocationDropdown && (
               <div className="absolute left-5 right-5 mt-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xl z-30 animate-in fade-in slide-in-from-top-2 duration-150">
-                {["Koramangala, Bengaluru", "Indiranagar, Bengaluru", "HSR Layout, Bengaluru", "Whitefield, Bengaluru"].map((loc) => (
+                {locations.map((loc) => (
                   <button
                     key={loc}
                     onClick={() => changeLocation(loc)}
@@ -940,7 +589,7 @@ export default function DashboardPage() {
                 <span className="text-xl">🤝</span>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Sharing Score</p>
                 <p className="text-base font-extrabold text-primary-600 dark:text-primary-400 mt-0.5">
-                  {sessionStorage.getItem("share_neighbour_user_score") || "15"}
+                  {user?.sharing_score || 0}
                 </p>
               </div>
             </div>

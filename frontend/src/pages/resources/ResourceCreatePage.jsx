@@ -49,13 +49,13 @@ export default function ResourceCreatePage() {
 
   // Form State
   const [form, setForm] = useState({
-    title: "Bosch Drill Machine",
+    title: "",
     category_id: "",
-    description: "Powerful drill machine. Used only a few times. Comes with bits.",
+    description: "",
     condition: "good",
     daily_price: 150,
     deposit_amount: 500,
-    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+    location: localStorage.getItem("share_neighbour_location") || "",
     available_from: "",
     available_to: "",
   });
@@ -157,7 +157,7 @@ export default function ResourceCreatePage() {
     };
     const finalPlaceholder = photos[0]?.previewUrl || emojiMap[categoryName] || "🛠️";
 
-    // 1. Add to localStorage mocks
+
     // 1. Trigger actual endpoint
     try {
       const response = await resourceApi.create({
@@ -313,22 +313,13 @@ export default function ResourceCreatePage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Location Block</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
-                    value={form.location}
-                    onChange={update("location")}
-                  >
-                    <option value="Koramangala, Bengaluru">Koramangala, Bengaluru</option>
-                    <option value="Indiranagar, Bengaluru">Indiranagar, Bengaluru</option>
-                    <option value="HSR Layout, Bengaluru">HSR Layout, Bengaluru</option>
-                    <option value="Whitefield, Bengaluru">Whitefield, Bengaluru</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
-                    <ChevronDown className="h-4 w-4" />
-                  </div>
-                </div>
+                <input
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  value={form.location}
+                  onChange={update("location")}
+                  placeholder="e.g. Koramangala, Bengaluru"
+                />
               </div>
             </div>
 
@@ -621,7 +612,7 @@ export default function ResourceCreatePage() {
                     condition: "good",
                     daily_price: 100,
                     deposit_amount: 300,
-                    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+                    location: localStorage.getItem("share_neighbour_location") || "",
                   });
                 }}
                 className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 py-3.5 text-xs font-bold rounded-2xl transition-all"
