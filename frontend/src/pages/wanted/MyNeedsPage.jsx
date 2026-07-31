@@ -1,9 +1,128 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Check, Trash2, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
+
+function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
+  return (
+    <div
+      className="flex items-center gap-2"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle(e);
+        }}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          isFulfilled ? "bg-emerald-500" : "bg-amber-500"
+        }`}
+        title={isFulfilled ? "Status: Fulfilled" : "Status: Active Need"}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+            isFulfilled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+      {label && (
+        <span className={`text-[10px] font-extrabold uppercase tracking-wider ${isFulfilled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+          {isFulfilled ? "Fulfilled" : "Active"}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onFulfill, onDelete }) {
+  if (!request) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4 pr-8">
+          <div>
+            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              {request.category?.name || "Need Request"}
+            </span>
+            <h2 className="font-display text-lg font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5">{request.title}</h2>
+          </div>
+          <span className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+            request.is_fulfilled ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800" : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+          }`}>
+            {request.is_fulfilled ? "Fulfilled" : "Active Need"}
+          </span>
+        </div>
+
+        <div className="space-y-2">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Description</h4>
+          <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+            {request.description || "No description provided."}
+          </p>
+        </div>
+
+        {/* Received Offers */}
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <Users className="h-4 w-4 text-primary-500" /> Received Offers ({offers?.length || 0})
+          </h4>
+
+          {(!offers || offers.length === 0) ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
+              No offers received from community members yet.
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {offers.map((offer) => (
+                <div key={offer.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-white">{offer.offerer?.full_name}</p>
+                    <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
+                      Item Offered: {offer.resource?.title || "Resource"}
+                    </Link>
+                  </div>
+                  <button
+                    onClick={() => onAcceptOffer(offer.id, offer.resource_id)}
+                    className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs active:scale-95 transition-all"
+                  >
+                    Accept Offer
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
+          <button
+            onClick={() => onDelete(request.id)}
+            className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold hover:underline"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete Request
+          </button>
+
+          <button onClick={onClose} className="btn-secondary !py-2 !px-4 text-xs">
+            Close Details
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function MyNeedsPage() {
   const { user } = useAuth();
@@ -15,8 +134,8 @@ export default function MyNeedsPage() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
   
-  const [expandedOffers, setExpandedOffers] = useState({}); // { [wantedId]: [offers...] }
-  const [loadingOffers, setLoadingOffers] = useState({});
+  const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
+  const [modalOffers, setModalOffers] = useState([]);
 
   const loadData = () => {
     setLoading(true);
@@ -25,8 +144,8 @@ export default function MyNeedsPage() {
       categoryApi.list(),
     ])
       .then(([reqRes, catRes]) => {
-        setRequests(reqRes.data);
-        setCategories(catRes.data);
+        setRequests(reqRes.data || []);
+        setCategories(catRes.data || []);
       })
       .finally(() => setLoading(false));
   };
@@ -57,12 +176,24 @@ export default function MyNeedsPage() {
     }
   };
 
-  const handleFulfill = async (id) => {
+  const handleToggleFulfill = async (id, currentFulfilled, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const newFulfilled = !currentFulfilled;
+    setRequests((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, is_fulfilled: newFulfilled } : r))
+    );
+
     try {
       await wantedApi.fulfill(id);
-      toast.success("Request marked as fulfilled");
-      loadData();
+      toast.success(newFulfilled ? "Marked as fulfilled!" : "Marked as active!");
     } catch (err) {
+      setRequests((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, is_fulfilled: currentFulfilled } : r))
+      );
       toast.error(err.response?.data?.detail || "Action failed");
     }
   };
@@ -71,35 +202,27 @@ export default function MyNeedsPage() {
     try {
       await wantedApi.delete(id);
       toast.success("Request deleted");
+      if (selectedNeedForModal?.id === id) setSelectedNeedForModal(null);
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Action failed");
     }
   };
 
-  const toggleOffers = async (wantedId) => {
-    if (expandedOffers[wantedId]) {
-      const newExpanded = { ...expandedOffers };
-      delete newExpanded[wantedId];
-      setExpandedOffers(newExpanded);
-      return;
-    }
-
-    setLoadingOffers({ ...loadingOffers, [wantedId]: true });
+  const openDetailsModal = async (request) => {
+    setSelectedNeedForModal(request);
     try {
-      const res = await wantedApi.listOffers(wantedId);
-      setExpandedOffers({ ...expandedOffers, [wantedId]: res.data });
+      const res = await wantedApi.listOffers(request.id);
+      setModalOffers(res.data || []);
     } catch (err) {
-      toast.error("Failed to load offers");
-    } finally {
-      setLoadingOffers({ ...loadingOffers, [wantedId]: false });
+      setModalOffers([]);
     }
   };
 
   const acceptOffer = async (offerId, resourceId) => {
     try {
       await wantedApi.acceptOffer(offerId);
-      toast.success("Offer accepted! Redirecting to borrow request...");
+      toast.success("Offer accepted! Redirecting to item...");
       navigate(`/resources/${resourceId}`);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Action failed");
@@ -108,87 +231,63 @@ export default function MyNeedsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between border-b border-ink-100 pb-4">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-ink-900">My Needs</h1>
-          <p className="text-sm text-ink-500">Track the items you've requested and manage offers from others.</p>
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Needs</h1>
+          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Manage your posted campus requests and view incoming offers</p>
         </div>  
+        <button
+          onClick={() => setShowModal(true)}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
+        >
+          <Plus className="h-4 w-4" /> Post New Need
+        </button>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-lg bg-ink-100" />
+            <div key={i} className="h-40 animate-pulse rounded-3xl bg-slate-200/60 dark:bg-slate-800/60" />
           ))}
         </div>
       ) : requests.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-ink-500">You haven't posted any wanted requests yet.</div>
+        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-sm text-slate-400">
+          You haven't posted any campus needs yet.
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests.map((r) => {
-            const offersList = expandedOffers[r.id];
-            
             return (
-              <div key={r.id} className={`card p-5 flex flex-col justify-between h-fit ${r.is_fulfilled ? 'opacity-70' : ''}`}>
+              <div
+                key={r.id}
+                onClick={() => openDetailsModal(r)}
+                className={`group cursor-pointer rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 transition-all hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg flex flex-col justify-between ${
+                  r.is_fulfilled ? "opacity-75" : ""
+                }`}
+              >
                 <div>
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-ink-900 line-clamp-1">{r.title}</h3>
-                    <div className="flex flex-col items-end gap-1">
-                      {r.is_fulfilled ? (
-                        <span className="rounded bg-forest-50 px-2 py-0.5 text-[10px] font-semibold text-forest-700 uppercase">Fulfilled</span>
-                      ) : (
-                        <span className="rounded bg-brass-50 px-2 py-0.5 text-[10px] font-semibold text-brass-700 uppercase">{r.category.name}</span>
-                      )}
-                    </div>
+                  <div className="flex justify-between items-start gap-2">
+                    <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                      {r.title}
+                    </h3>
+                    <FulfilledToggleSwitch
+                      isFulfilled={Boolean(r.is_fulfilled)}
+                      onToggle={(e) => handleToggleFulfill(r.id, r.is_fulfilled, e)}
+                    />
                   </div>
-                  <p className="mt-2 text-sm text-ink-600 line-clamp-3">{r.description || "No description provided."}</p>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                    {r.description || "No description provided."}
+                  </p>
                 </div>
                 
-                <div className="mt-4 border-t border-ink-100 pt-4 space-y-3 relative">
-                  <div className="flex items-end justify-end">
-                      <div className="flex gap-2">
-                        {!r.is_fulfilled && (
-                          <>
-                            <button onClick={() => toggleOffers(r.id)} className="btn-secondary !py-1 !px-3 text-xs flex items-center gap-1">
-                              Offers {offersList ? <ChevronUp className="h-3 w-3"/> : <ChevronDown className="h-3 w-3"/>}
-                            </button>
-                            <button onClick={() => handleFulfill(r.id)} className="rounded p-1.5 text-forest-600 hover:bg-forest-50" title="Mark as Fulfilled">
-                              <Check className="h-4 w-4" />
-                            </button>
-                          </>
-                        )}
-                        <button onClick={() => handleDelete(r.id)} className="rounded p-1.5 text-red-600 hover:bg-red-50" title="Delete">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                  </div>
-
-                  {/* Offers Dropdown */}
-                  {!r.is_fulfilled && offersList && (
-                    <div className="absolute top-full left-0 right-0 mt-2 z-50 rounded-lg bg-white shadow-xl border border-ink-100 p-3 space-y-2">
-                      <h4 className="text-xs font-bold text-ink-900">Received Offers</h4>
-                      {offersList.length === 0 ? (
-                        <p className="text-xs text-ink-500">No offers yet.</p>
-                      ) : (
-                        offersList.map(offer => (
-                          <div key={offer.id} className="flex items-center justify-between bg-ink-50 p-2 rounded border border-ink-100">
-                            <div>
-                              <p className="text-xs font-semibold text-ink-900">{offer.offerer.full_name}</p>
-                              <Link to={`/resources/${offer.resource_id}`} className="text-[10px] text-brand-600 hover:underline">
-                                {offer.resource.title}
-                              </Link>
-                            </div>
-                            <button
-                              onClick={() => acceptOffer(offer.id, offer.resource_id)}
-                              className="rounded bg-brand-600 px-2 py-1 text-[10px] font-bold text-white hover:bg-brand-700"
-                            >
-                              Accept
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between text-xs">
+                  <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {r.category?.name}
+                  </span>
+                  
+                  <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 group-hover:underline flex items-center gap-0.5">
+                    View Offers & Details <ArrowRight className="h-3 w-3" />
+                  </span>
                 </div>
               </div>
             );
@@ -196,33 +295,45 @@ export default function MyNeedsPage() {
         </div>
       )}
 
+      {/* Need Details Modal */}
+      {selectedNeedForModal && (
+        <NeedDetailsModal
+          request={selectedNeedForModal}
+          offers={modalOffers}
+          onClose={() => setSelectedNeedForModal(null)}
+          onAcceptOffer={acceptOffer}
+          onFulfill={handleToggleFulfill}
+          onDelete={handleDelete}
+        />
+      )}
+
       {/* Post Need Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-ink-900">Post a Need</h2>
-              <button onClick={() => setShowModal(false)} className="text-ink-500 hover:text-ink-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Post Campus Need</h2>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-800 dark:hover:text-slate-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="mb-1 block text-sm font-medium text-ink-700">What are you looking for?</label>
+                <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">What are you looking for?</label>
                 <input
                   type="text"
                   required
-                  className="input"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
                   placeholder="e.g., Graphing Calculator"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-ink-700">Category</label>
+                <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
                 <select
                   required
-                  className="input"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                 >
@@ -235,16 +346,16 @@ export default function MyNeedsPage() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-ink-700">Description (Optional)</label>
+                <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Description (Optional)</label>
                 <textarea
-                  className="input min-h-[100px]"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none min-h-[90px]"
                   placeholder="Any specific details, timeline, etc."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="btn-primary flex-1">Post Request</button>
+                <button type="submit" className="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white py-2.5 text-xs font-bold shadow-sm">Post Request</button>
                 <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1">Cancel</button>
               </div>
             </form>
