@@ -36,6 +36,7 @@ export const categoryApi = {
 
 export const resourceApi = {
   list: (params) => api.get("/resources", { params }),
+  getMyListingsWithBorrowers: () => api.get("/resources/my-listings-with-borrowers"),
   get: (id) => api.get(`/resources/${id}`),
   create: (payload) => api.post("/resources", payload),
   update: (id, payload) => api.put(`/resources/${id}`, payload),

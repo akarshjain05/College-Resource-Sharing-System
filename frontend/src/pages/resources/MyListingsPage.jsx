@@ -193,31 +193,65 @@ export default function MyListingsPage() {
     if (!user?.id) return;
     setLoading(true);
 
-    Promise.all([
-      resourceApi.list({
-        search: search || undefined,
-        category_id: categoryId || undefined,
-        condition: condition || undefined,
-        status: status || undefined,
-        min_rating: minRating ? Number(minRating) : undefined,
-        sort_by: sortBy,
-        sort_dir: sortDir,
-        page,
-        page_size: pageSize,
-        owner_id: user.id,
-      }),
-      borrowApi.incoming().catch(() => ({ data: [] })),
-    ])
-      .then(([resResp, incomingResp]) => {
-        setItems(resResp.data?.items || []);
-        setTotal(resResp.data?.total || 0);
-        setIncomingRequests(incomingResp.data || []);
-      })
-      .catch((err) => {
-        console.error("Failed to load listings:", err);
-        toast.error("Failed to load your listings");
-      })
-      .finally(() => setLoading(false));
+    if (!search && !categoryId && !condition && !status && !minRating && page === 1) {
+      // Use dedicated backend endpoint when default view
+      resourceApi
+        .getMyListingsWithBorrowers()
+        .then(({ data }) => {
+          setItems(data || []);
+          setTotal(data?.length || 0);
+
+          // Flatten borrowers into incomingRequests format
+          const flattened = [];
+          (data || []).forEach((item) => {
+            (item.borrowers || []).forEach((b) => {
+              flattened.push({
+                ...b,
+                resource: item,
+              });
+            });
+          });
+          setIncomingRequests(flattened);
+        })
+        .catch(() => {
+          // Fallback to standard list
+          Promise.all([
+            resourceApi.list({ owner_id: user.id, page, page_size: pageSize }),
+            borrowApi.incoming().catch(() => ({ data: [] })),
+          ]).then(([resResp, incomingResp]) => {
+            setItems(resResp.data?.items || []);
+            setTotal(resResp.data?.total || 0);
+            setIncomingRequests(incomingResp.data || []);
+          });
+        })
+        .finally(() => setLoading(false));
+    } else {
+      Promise.all([
+        resourceApi.list({
+          search: search || undefined,
+          category_id: categoryId || undefined,
+          condition: condition || undefined,
+          status: status || undefined,
+          min_rating: minRating ? Number(minRating) : undefined,
+          sort_by: sortBy,
+          sort_dir: sortDir,
+          page,
+          page_size: pageSize,
+          owner_id: user.id,
+        }),
+        borrowApi.incoming().catch(() => ({ data: [] })),
+      ])
+        .then(([resResp, incomingResp]) => {
+          setItems(resResp.data?.items || []);
+          setTotal(resResp.data?.total || 0);
+          setIncomingRequests(incomingResp.data || []);
+        })
+        .catch((err) => {
+          console.error("Failed to load listings:", err);
+          toast.error("Failed to load your listings");
+        })
+        .finally(() => setLoading(false));
+    }
   };
 
   useEffect(() => {
