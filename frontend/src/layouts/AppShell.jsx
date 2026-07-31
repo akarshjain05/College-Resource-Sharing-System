@@ -257,7 +257,7 @@ export default function AppShell() {
             >
               <Bell className="h-4.5 w-4.5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+                <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white whitespace-nowrap">
                   {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
