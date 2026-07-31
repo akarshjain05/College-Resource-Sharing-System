@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import axios from "axios";
 
 const firebaseConfig = {
@@ -40,6 +40,8 @@ export function usePushNotification(user) {
         const messaging = getFirebaseMessaging();
         if (!messaging) return;
 
+        let unsubscribeOnMessage = null;
+
         const registerPush = async () => {
             try {
                 // 1. Request notification permission
@@ -77,11 +79,30 @@ export function usePushNotification(user) {
                 } else {
                     console.warn("No FCM registration token received.");
                 }
+
+                // 4. Listen for foreground push messages
+                unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                    console.log("Foreground push notification received:", payload);
+                    const title = payload.notification?.title || payload.data?.title || "New Notification";
+                    const body = payload.notification?.body || payload.data?.body || "";
+
+                    if (Notification.permission === "granted") {
+                        new Notification(title, {
+                            body,
+                            icon: "/icons.svg",
+                            data: payload.data,
+                        });
+                    }
+                });
             } catch (error) {
                 console.warn("Error setting up Web Push Notifications:", error?.message || error);
             }
         };
 
         registerPush();
+
+        return () => {
+            if (unsubscribeOnMessage) unsubscribeOnMessage();
+        };
     }, [user]);
 }
