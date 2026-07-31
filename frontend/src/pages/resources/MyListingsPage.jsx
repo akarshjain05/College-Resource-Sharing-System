@@ -41,11 +41,21 @@ const STATUS_BADGES = {
 
 function PublishToggleSwitch({ isAvailable, onToggle, disabled, label = true }) {
   return (
-    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="flex items-center gap-2"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
       <button
         type="button"
         disabled={disabled}
-        onClick={onToggle}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle(e);
+        }}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
         } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -250,7 +260,7 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
           <PublishToggleSwitch
             isAvailable={isAvailable}
             disabled={item.status === "borrowed"}
-            onToggle={() => onTogglePublish(item.id, isAvailable ? "unavailable" : "available")}
+            onToggle={(e) => onTogglePublish(item.id, item.status, e)}
           />
         </div>
 
@@ -403,19 +413,34 @@ export default function MyListingsPage() {
     fetchData();
   }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page, user?.id]);
 
-  const handleTogglePublish = async (itemId, newStatus) => {
+  const handleTogglePublish = async (itemId, currentStatus, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const newStatus = currentStatus === "available" ? "unavailable" : "available";
+
+    // Optimistic UI update so toggle flips immediately
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
+    );
+    if (selectedItemForModal?.id === itemId) {
+      setSelectedItemForModal((prev) => ({ ...prev, status: newStatus }));
+    }
+
     try {
       await resourceApi.update(itemId, { status: newStatus });
-      toast.success(newStatus === "available" ? "Item published!" : "Item unpublished!");
-      // Update local state instantly
+      toast.success(newStatus === "available" ? "Item published to campus!" : "Item unpublished!");
+    } catch (err) {
+      // Rollback on failure
       setItems((prev) =>
-        prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
+        prev.map((item) => (item.id === itemId ? { ...item, status: currentStatus } : item))
       );
       if (selectedItemForModal?.id === itemId) {
-        setSelectedItemForModal((prev) => ({ ...prev, status: newStatus }));
+        setSelectedItemForModal((prev) => ({ ...prev, status: currentStatus }));
       }
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to update item status");
+      toast.error(err.response?.data?.detail || "Failed to update publish status");
     }
   };
 
@@ -626,7 +651,7 @@ export default function MyListingsPage() {
                     <PublishToggleSwitch
                       isAvailable={isAvailable}
                       disabled={r.status === "borrowed"}
-                      onToggle={() => handleTogglePublish(r.id, isAvailable ? "unavailable" : "available")}
+                      onToggle={(e) => handleTogglePublish(r.id, r.status, e)}
                     />
                   </div>
 
