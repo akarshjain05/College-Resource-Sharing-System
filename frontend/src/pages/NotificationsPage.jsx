@@ -174,9 +174,15 @@ export default function NotificationsPage() {
     }
   };
 
-  const handleDeleteAll = () => {
-    // If you don't have a backend "delete all" route yet, you can leave this empty or remove the button in the UI
-    toast.error("Clear all is not supported yet.");
+  const handleDeleteAll = async () => {
+    localStorage.removeItem("share_neighbour_notifs");
+    try {
+      await notificationApi.clearAll();
+    } catch (e) {
+      console.log("Failed to clear notifications", e);
+    }
+    toast.success("All notifications cleared");
+    setNotifications([]);
   };
 
   // Helper to render notification category icons matching designs (from feature branch)

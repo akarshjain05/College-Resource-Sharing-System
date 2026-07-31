@@ -78,6 +78,7 @@ export const notificationApi = {
   list: () => api.get("/notifications"),
   markRead: (id) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
+  clearAll: () => api.delete("/notifications/clear-all"),
 };
 
 export const wantedApi = {
