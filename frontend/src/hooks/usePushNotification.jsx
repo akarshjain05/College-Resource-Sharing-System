@@ -63,16 +63,22 @@ export function usePushNotification(user) {
                     console.log("FCM Token retrieved successfully:", token);
 
                     // 3. Register the token with the notification microservice
-                    await axios.post(`${NOTIFICATION_API_URL}/users/${user.id}/token`, {
-                        fcm_token: token,
-                        email: user.email,
-                    });
-                    console.log("FCM Token registered with Notification Microservice successfully.");
+                    try {
+                        await axios.post(`${NOTIFICATION_API_URL}/users/${user.id}/token`, {
+                            fcm_token: token,
+                            email: user.email,
+                        });
+                        console.log("FCM Token registered with Notification Microservice successfully.");
+                    } catch (netErr) {
+                        console.warn(
+                            `Could not register FCM token: Notification Microservice at ${NOTIFICATION_API_URL} is offline or unreachable.`
+                        );
+                    }
                 } else {
                     console.warn("No FCM registration token received.");
                 }
             } catch (error) {
-                console.error("Error setting up Web Push Notifications:", error);
+                console.warn("Error setting up Web Push Notifications:", error?.message || error);
             }
         };
 
