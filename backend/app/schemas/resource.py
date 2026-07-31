@@ -39,6 +39,7 @@ class ResourceUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     condition: Optional[ResourceCondition] = None
+    status: Optional[ResourceStatus] = None
     quantity: Optional[int] = None
     pickup_location: Optional[str] = None
     tags: Optional[str] = None
