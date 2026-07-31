@@ -16,49 +16,7 @@ import {
 import { notificationApi } from "../api/endpoints";
 import toast from "react-hot-toast";
 
-// Design mockup initial notifications
-const DEFAULT_MOCK_NOTIFICATIONS = [
-  {
-    id: "notif-mock-1",
-    title: "Request Approved",
-    message: "Rahul Sharma accepted your request for Aluminium Ladder",
-    type: "check",
-    created_at: new Date(Date.now() - 2 * 60 * 1000).toISOString(), // 2 mins ago
-    is_read: false,
-  },
-  {
-    id: "notif-mock-2",
-    title: "Borrow Request Received",
-    message: "Arjun Patel requested to borrow your Bosch Drill Machine",
-    type: "request",
-    created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(), // 1 hour ago
-    is_read: false,
-  },
-  {
-    id: "notif-mock-3",
-    title: "Booking Commencing",
-    message: "Your booking for Cooler - Symphony is starting tomorrow",
-    type: "calendar",
-    created_at: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-    is_read: false,
-  },
-  {
-    id: "notif-mock-4",
-    title: "Return Reminder",
-    message: "Return reminder: Bosch Drill Machine is due tomorrow",
-    type: "alarm",
-    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 1 day ago
-    is_read: true,
-  },
-  {
-    id: "notif-mock-5",
-    title: "New Item Review",
-    message: "Your item Aluminium Ladder received a new review",
-    type: "star",
-    created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-    is_read: true,
-  },
-];
+
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
@@ -87,14 +45,6 @@ export default function NotificationsPage() {
     notificationApi
       .list()
       .then(({ data }) => {
-        // Load custom requests from localStorage
-        const stored = JSON.parse(localStorage.getItem("share_neighbour_notifs"));
-        if (!stored) {
-          localStorage.setItem("share_neighbour_notifs", JSON.stringify(DEFAULT_MOCK_NOTIFICATIONS));
-        }
-
-        const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-        
         // Map database requests to match structure
         const dbNotifs = (data || []).map(n => ({
           id: n.id,
@@ -106,25 +56,10 @@ export default function NotificationsPage() {
           type: n.title.toLowerCase().includes("request") ? "request" : "calendar"
         }));
 
-        // Combine
-        const combined = [...local, ...dbNotifs];
-        // Sort chronologically by created_at
-        combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        // Remove duplicates
-        const unique = combined.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-        
-        setNotifications(unique);
+        setNotifications(dbNotifs);
       })
-      .catch(() => {
-        // Local Fallback offline
-        const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-        if (local.length === 0) {
-          localStorage.setItem("share_neighbour_notifs", JSON.stringify(DEFAULT_MOCK_NOTIFICATIONS));
-          setNotifications(DEFAULT_MOCK_NOTIFICATIONS);
-        } else {
-          local.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-          setNotifications(local);
-        }
+      .catch((err) => {
+        console.log("Failed to load notifications", err);
       })
       .finally(() => setLoading(false));
   };
@@ -134,16 +69,10 @@ export default function NotificationsPage() {
   }, []);
 
   const handleMarkAll = async () => {
-    // 1. Mark localStorage as read
-    const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-    const updated = local.map(n => ({ ...n, is_read: true }));
-    localStorage.setItem("share_neighbour_notifs", JSON.stringify(updated));
-
-    // 2. Trigger API
     try {
       await notificationApi.markAllRead();
     } catch (e) {
-      console.log("Offline notice, marked read locally.");
+      console.log("Failed to mark all read", e);
     }
     
     toast.success("All notifications marked as read");
@@ -151,16 +80,10 @@ export default function NotificationsPage() {
   };
 
   const handleMarkOne = async (n) => {
-    // Clean API logic from main
     try {
       if (!n.is_read) {
-        if (n.id && !n.id.toString().startsWith("notif-mock-")) {
+        if (n.id) {
           await notificationApi.markRead(n.id);
-        } else {
-          // Local mock update
-          const local = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
-          const updated = local.map(notif => notif.id === n.id ? { ...notif, is_read: true } : notif);
-          localStorage.setItem("share_neighbour_notifs", JSON.stringify(updated));
         }
       }
     } catch (e) {
@@ -175,7 +98,6 @@ export default function NotificationsPage() {
   };
 
   const handleDeleteAll = async () => {
-    localStorage.removeItem("share_neighbour_notifs");
     try {
       await notificationApi.clearAll();
     } catch (e) {
