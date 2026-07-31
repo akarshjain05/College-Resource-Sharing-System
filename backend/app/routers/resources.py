@@ -88,6 +88,65 @@ def list_resources(
     )
 
 
+@router.get("/my-listings-with-borrowers")
+def get_my_listings_with_borrowers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Fetch all resources listed by the current user along with complete borrower history,
+    contact info, requested dates, actual return dates, and current borrow status.
+    """
+    resources = (
+        db.query(Resource)
+        .filter(Resource.owner_id == current_user.id)
+        .order_by(Resource.created_at.desc())
+        .all()
+    )
+
+    resource_ids = [r.id for r in resources]
+    borrow_requests = (
+        db.query(BorrowRequest)
+        .filter(BorrowRequest.resource_id.in_(resource_ids))
+        .order_by(BorrowRequest.created_at.desc())
+        .all()
+    ) if resource_ids else []
+
+    requests_by_resource = {}
+    for br in borrow_requests:
+        r_id = str(br.resource_id)
+        if r_id not in requests_by_resource:
+            requests_by_resource[r_id] = []
+        
+        borrower = br.borrower
+        requests_by_resource[r_id].append({
+            "id": str(br.id),
+            "status": br.status.value if hasattr(br.status, "value") else str(br.status),
+            "requested_start_date": br.requested_start_date.isoformat() if br.requested_start_date else None,
+            "requested_end_date": br.requested_end_date.isoformat() if br.requested_end_date else None,
+            "actual_return_date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "purpose": br.purpose,
+            "deposit_paid": br.deposit_paid,
+            "rejection_reason": br.rejection_reason,
+            "borrower": {
+                "id": str(borrower.id),
+                "full_name": borrower.full_name,
+                "email": borrower.email,
+                "trust_score": borrower.trust_score,
+                "college_domain": borrower.college_domain,
+            } if borrower else None,
+            "created_at": br.created_at.isoformat() if br.created_at else None,
+        })
+
+    result = []
+    for r in resources:
+        res_data = ResourceResponse.model_validate(r).model_dump(mode="json")
+        res_data["borrowers"] = requests_by_resource.get(str(r.id), [])
+        result.append(res_data)
+
+    return result
+
+
 @router.get("/{resource_id}", response_model=ResourceResponse)
 def get_resource(
     resource_id: uuid.UUID,
