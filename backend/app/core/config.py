@@ -84,10 +84,18 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_secrets_in_prod(self) -> 'Settings':
         if self.ENVIRONMENT == "production":
+            import secrets
+            import logging
+            logger = logging.getLogger("crss")
+            
             if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
-                raise ValueError("SECRET_KEY must be overridden in production (.env). Do not use the default placeholder!")
+                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
+                self.SECRET_KEY = secrets.token_urlsafe(32)
+                
             if self.OTP_SECRET == "change-this-otp-secret-in-production":
-                raise ValueError("OTP_SECRET must be overridden in production (.env). Do not use the default placeholder!")
+                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
+                self.OTP_SECRET = secrets.token_urlsafe(32)
+                
         return self
 
 settings = Settings()
