@@ -104,7 +104,10 @@ function ItemBorrowersSection({ requests, onAction }) {
           today.setHours(0, 0, 0, 0);
           const sDate = new Date(req.requested_start_date);
           sDate.setHours(0, 0, 0, 0);
+          const eDate = new Date(req.requested_end_date);
+          eDate.setHours(0, 0, 0, 0);
           const isStarted = today >= sDate;
+          const isExpired = today > eDate;
 
           return (
             <div
@@ -172,23 +175,35 @@ function ItemBorrowersSection({ requests, onAction }) {
               {/* Action Buttons for Lender */}
               {req.status === "requested" && (
                 <div className="flex gap-2 justify-end pt-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => onAction("approve", req.id)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Approve Request
-                  </button>
-                  <button
-                    onClick={() => onAction("reject", req.id)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-bold transition-all active:scale-95"
-                  >
-                    <X className="h-3.5 w-3.5" /> Decline
-                  </button>
+                  {isExpired ? (
+                    <span className="text-[10px] font-bold text-red-500">
+                      Lending window expired
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => onAction("approve", req.id)}
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve Request
+                      </button>
+                      <button
+                        onClick={() => onAction("reject", req.id)}
+                        className="inline-flex items-center gap-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-bold transition-all active:scale-95"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
               {req.status === "approved" && (
                 <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
-                  {isStarted ? (
+                  {isExpired ? (
+                    <span className="text-[10px] font-bold text-red-500">
+                      Lending window expired
+                    </span>
+                  ) : isStarted ? (
                     <button
                       onClick={() => onAction("handover", req.id)}
                       className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"

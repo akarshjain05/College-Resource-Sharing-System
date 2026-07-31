@@ -46,6 +46,7 @@ function RequestCard({ request, isIncoming, onAction }) {
   startDate.setHours(0, 0, 0, 0);
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
   const isStarted = today >= startDate;
+  const isExpired = today > end;
 
   const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
   const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 0;
@@ -135,14 +136,18 @@ function RequestCard({ request, isIncoming, onAction }) {
       ) : (
         <div className="mt-3 flex flex-wrap gap-2">
           {isIncoming && request.status === "requested" && (
-            <>
-              <button onClick={() => handleActionClick("approve")} className="btn-primary !py-1.5 !px-3 text-xs">
+            isExpired ? (
+              <span className="text-xs font-semibold text-red-500">Lending window expired</span>
+            ) : (
+            <div className="flex gap-2">
+              <button onClick={() => handleActionClick("approve")} className="btn-primary !py-1.5 !px-3 text-xs flex-1">
                 <Check className="h-3.5 w-3.5" /> Approve
               </button>
-              <button onClick={() => handleActionClick("reject")} className="btn-secondary !py-1.5 !px-3 text-xs">
-                <X className="h-3.5 w-3.5" /> Reject
+              <button onClick={() => handleActionClick("reject")} className="btn-secondary !py-1.5 !px-3 text-xs flex-1 text-red-600 hover:bg-red-50 hover:border-red-200">
+                <X className="h-3.5 w-3.5" /> Decline
               </button>
-            </>
+            </div>
+            )
           )}
           {!isIncoming && request.status === "requested" && (
             <>
@@ -160,7 +165,9 @@ function RequestCard({ request, isIncoming, onAction }) {
             <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
           )}
           {isIncoming && request.status === "approved" && (
-            isStarted ? (
+            isExpired ? (
+              <span className="text-xs font-semibold text-red-500">Lending window expired</span>
+            ) : isStarted ? (
               <button onClick={() => handleActionClick("handover")} className="btn-primary !py-1.5 !px-3 text-xs">
                 <Check className="h-3.5 w-3.5" /> Mark as Handed Over
               </button>
@@ -486,7 +493,10 @@ export default function BorrowRequestsPage() {
             today.setHours(0, 0, 0, 0);
             const startDate = new Date(book.requested_start_date);
             startDate.setHours(0, 0, 0, 0);
+            const end = new Date(book.requested_end_date);
+            end.setHours(0, 0, 0, 0);
             const isStarted = today >= startDate;
+            const isExpired = today > end;
 
             return (
             <div
@@ -594,7 +604,11 @@ export default function BorrowRequestsPage() {
                   </>
                 )}
                 {tab === "lending" && book.status === "approved" && (
-                  isStarted ? (
+                  isExpired ? (
+                    <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                    </span>
+                  ) : isStarted ? (
                     <button
                       onClick={() => handleStatusChange(book.id, "active")}
                       className="btn-primary !py-2 text-xs"
