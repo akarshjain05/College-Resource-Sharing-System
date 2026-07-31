@@ -45,6 +45,13 @@ def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise NotFoundException("User not found")
+        
+    from app.models.enums import UserRole
+    from fastapi import HTTPException
+    
+    if current_user.id != user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to view this full profile")
+        
     return user
 
 
