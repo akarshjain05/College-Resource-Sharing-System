@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken } from "firebase/messaging";
 import axios from "axios";
 
@@ -17,24 +17,28 @@ const VAPID_KEY = "BA6CZ5D9U-OB9PAlrc7RjIkdDQHjWrype-_sAZUhBZK32lau5GA8LW_uKsKew
 
 const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || "http://localhost:10000";
 
-let messaging = null;
-try {
-    if (
-        typeof window !== "undefined" &&
-        "serviceWorker" in navigator &&
-        "PushManager" in window &&
-        "Notification" in window
-    ) {
-        const app = initializeApp(firebaseConfig);
-        messaging = getMessaging(app);
+function getFirebaseMessaging() {
+    try {
+        if (
+            typeof window !== "undefined" &&
+            "serviceWorker" in navigator &&
+            "PushManager" in window &&
+            "Notification" in window
+        ) {
+            const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+            return getMessaging(app);
+        }
+    } catch (error) {
+        console.error("Failed to initialize Firebase Messaging:", error);
     }
-} catch (error) {
-    console.error("Failed to initialize Firebase Messaging:", error);
+    return null;
 }
 
 export function usePushNotification(user) {
     useEffect(() => {
-        if (!user?.id || !messaging) return;
+        if (!user?.id) return;
+        const messaging = getFirebaseMessaging();
+        if (!messaging) return;
 
         const registerPush = async () => {
             try {
