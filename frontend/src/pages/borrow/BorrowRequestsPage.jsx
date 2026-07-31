@@ -42,7 +42,10 @@ function RequestCard({ request, isIncoming, onAction }) {
   today.setHours(0, 0, 0, 0);
   const end = new Date(request.requested_end_date);
   end.setHours(0, 0, 0, 0);
+  const startDate = new Date(request.requested_start_date);
+  startDate.setHours(0, 0, 0, 0);
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  const isStarted = today >= startDate;
 
   const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
   const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 0;
@@ -157,14 +160,22 @@ function RequestCard({ request, isIncoming, onAction }) {
             <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
           )}
           {isIncoming && request.status === "approved" && (
-            <button onClick={() => handleActionClick("handover")} className="btn-primary !py-1.5 !px-3 text-xs">
-              <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-            </button>
+            isStarted ? (
+              <button onClick={() => handleActionClick("handover")} className="btn-primary !py-1.5 !px-3 text-xs">
+                <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+              </button>
+            ) : (
+              <span className="text-xs font-semibold text-slate-400">Handover unlocks on {new Date(request.requested_start_date).toLocaleDateString()}</span>
+            )
           )}
           {!isIncoming && request.status === "active" && (
-            <button onClick={() => handleActionClick("return")} className="btn-brass !py-1.5 !px-3 text-xs">
-              <RotateCcw className="h-3.5 w-3.5" /> Return Resource
-            </button>
+            isStarted ? (
+              <button onClick={() => handleActionClick("return")} className="btn-brass !py-1.5 !px-3 text-xs">
+                <RotateCcw className="h-3.5 w-3.5" /> Return Resource
+              </button>
+            ) : (
+              <span className="text-xs font-semibold text-slate-400">Return unlocks on {new Date(request.requested_start_date).toLocaleDateString()}</span>
+            )
           )}
           {!isIncoming && ["active", "returned", "damaged", "late"].includes(request.status) && (
             <a href={`/complaints?borrow_request_id=${request.id}`} className="btn-secondary !py-1.5 !px-3 text-xs text-red-600">
@@ -470,7 +481,14 @@ export default function BorrowRequestsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeList.map((book) => (
+          {activeList.map((book) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = new Date(book.requested_start_date);
+            startDate.setHours(0, 0, 0, 0);
+            const isStarted = today >= startDate;
+
+            return (
             <div
               key={book.id}
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 hover:border-slate-300 transition-colors"
@@ -539,12 +557,18 @@ export default function BorrowRequestsPage() {
                   </span>
                 )}
                 {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
-                  <button
-                    onClick={() => { setReviewingId(book.id); setReviewAction("return"); }}
-                    className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Return Item
-                  </button>
+                  isStarted ? (
+                    <button
+                      onClick={() => { setReviewingId(book.id); setReviewAction("return"); }}
+                      className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Return Item
+                    </button>
+                  ) : (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                    </span>
+                  )
                 )}
                 {tab === "borrowing" && book.status === "return_requested" && (
                   <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -570,12 +594,18 @@ export default function BorrowRequestsPage() {
                   </>
                 )}
                 {tab === "lending" && book.status === "approved" && (
-                  <button
-                    onClick={() => handleStatusChange(book.id, "active")}
-                    className="btn-primary !py-2 text-xs"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                  </button>
+                  isStarted ? (
+                    <button
+                      onClick={() => handleStatusChange(book.id, "active")}
+                      className="btn-primary !py-2 text-xs"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                    </button>
+                  ) : (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                    </span>
+                  )
                 )}
                 {tab === "lending" && (book.status === "active" || book.status === "ongoing") && (
                   <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -592,7 +622,8 @@ export default function BorrowRequestsPage() {
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
