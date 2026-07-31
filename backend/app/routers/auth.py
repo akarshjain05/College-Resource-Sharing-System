@@ -224,11 +224,11 @@ def google_login(request: Request, payload: GoogleAuthRequest, db: Session = Dep
 
     try:
         idinfo = google_id_token.verify_oauth2_token(
-            payload.credential, google_requests.Request(), settings.GOOGLE_CLIENT_ID
+            payload.credential, google_requests.Request(), settings.GOOGLE_CLIENT_ID, clock_skew_in_seconds=10
         )
-    except ValueError:
+    except ValueError as e:
         raise AppException(
-            "Invalid or expired Google credential.",
+            f"Invalid or expired Google credential: {str(e)}",
             status_code=status.HTTP_401_UNAUTHORIZED,
             error_code="BAD_GOOGLE_TOKEN",
         )
