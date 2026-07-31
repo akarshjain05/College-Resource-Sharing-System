@@ -134,6 +134,9 @@ def approve_borrow_request(
     br = _get_owned_request(db, request_id, current_user, for_update=True)
     if br.status != BorrowStatus.REQUESTED:
         raise AppException("Only pending requests can be approved", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    
+    if date.today() > br.requested_end_date:
+        raise AppException("Cannot approve a request whose lending window has already expired", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     # Lock resource explicitly to prevent concurrent approvals on the last unit
     resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
@@ -226,6 +229,8 @@ def handover_resource(
     
     if date.today() < br.requested_start_date:
         raise AppException("Cannot hand over resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
+    if date.today() > br.requested_end_date:
+        raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     br.status = BorrowStatus.ACTIVE
     db.commit()
