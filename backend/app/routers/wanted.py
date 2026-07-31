@@ -122,14 +122,13 @@ def offer_wanted_request(
     if resource.owner_id != current_user.id:
         raise ForbiddenException("You can only offer your own resources")
 
-    # Check if already offered
+    # Strict rule: A user can only send 1 offer per wanted request
     existing_offer = db.query(WantedOffer).filter(
         WantedOffer.wanted_request_id == wanted.id,
-        WantedOffer.offerer_id == current_user.id,
-        WantedOffer.resource_id == resource.id
+        WantedOffer.offerer_id == current_user.id
     ).first()
     if existing_offer:
-        raise ForbiddenException("You have already offered this resource for this request")
+        raise ForbiddenException("You have already sent an offer for this request. One user can only offer once.")
 
     offer = WantedOffer(
         wanted_request_id=wanted.id,

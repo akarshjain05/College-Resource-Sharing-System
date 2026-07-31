@@ -150,12 +150,20 @@ export default function WantedPage() {
     });
   };
 
+  const [submittingOffer, setSubmittingOffer] = useState(false);
+  const [offeredWantedIds, setOfferedWantedIds] = useState(new Set());
+
   const submitOffer = async () => {
+    if (submittingOffer) return;
+    setSubmittingOffer(true);
     try {
       let resourceIdToOffer = selectedResourceId;
 
       if (offerMode === "new") {
-        if (!newOfferForm.title) return toast.error("Please provide an item name");
+        if (!newOfferForm.title) {
+          setSubmittingOffer(false);
+          return toast.error("Please provide an item name");
+        }
         const payload = {
           ...newOfferForm,
           category_id: offerModalData.category_id,
@@ -166,15 +174,21 @@ export default function WantedPage() {
         const res = await resourceApi.create(payload);
         resourceIdToOffer = res.data.id;
       } else {
-        if (!resourceIdToOffer) return toast.error("Please select an item to offer");
+        if (!resourceIdToOffer) {
+          setSubmittingOffer(false);
+          return toast.error("Please select an item to offer");
+        }
       }
 
       await wantedApi.offer(offerModalData.id, resourceIdToOffer);
       toast.success("Offer sent! The requester has been notified.");
+      setOfferedWantedIds((prev) => new Set(prev).add(offerModalData.id));
       setOfferModalData(null);
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Action failed");
+    } finally {
+      setSubmittingOffer(false);
     }
   };
 
@@ -429,10 +443,10 @@ export default function WantedPage() {
               <div className="flex gap-3 pt-3">
                 <button 
                   onClick={submitOffer} 
-                  disabled={offerMode === "existing" && !selectedResourceId}
+                  disabled={submittingOffer || (offerMode === "existing" && !selectedResourceId)}
                   className="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white py-2.5 text-xs font-bold shadow-sm disabled:opacity-50"
                 >
-                  Send Offer
+                  {submittingOffer ? "Sending Offer..." : "Send Offer"}
                 </button>
                 <button onClick={() => setOfferModalData(null)} className="btn-secondary flex-1">Cancel</button>
               </div>
