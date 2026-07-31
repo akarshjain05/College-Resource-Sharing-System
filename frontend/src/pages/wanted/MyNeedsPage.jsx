@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight } from "lucide-react";
+import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
@@ -41,8 +41,20 @@ function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
   );
 }
 
-function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onFulfill, onDelete }) {
+function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onDelete, acceptingId }) {
   if (!request) return null;
+
+  // Deduplicate offers by offerer ID + resource title/id
+  const uniqueOffersMap = new Map();
+  (offers || []).forEach((offer) => {
+    const offererKey = offer.offerer?.id || offer.offerer_id || offer.offerer?.full_name;
+    const resourceKey = offer.resource?.id || offer.resource_id || offer.resource?.title;
+    const key = `${offererKey}_${resourceKey}`;
+    if (!uniqueOffersMap.has(key) || offer.status === "ACCEPTED") {
+      uniqueOffersMap.set(key, offer);
+    }
+  });
+  const displayOffers = Array.from(uniqueOffersMap.values());
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -78,31 +90,48 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onFulfill, 
         {/* Received Offers */}
         <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Users className="h-4 w-4 text-primary-500" /> Received Offers ({offers?.length || 0})
+            <Users className="h-4 w-4 text-primary-500" /> Received Offers ({displayOffers.length})
           </h4>
 
-          {(!offers || offers.length === 0) ? (
+          {displayOffers.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 p-4 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-950/50">
               No offers received from community members yet.
             </div>
           ) : (
             <div className="space-y-2.5">
-              {offers.map((offer) => (
-                <div key={offer.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
-                  <div>
-                    <p className="font-bold text-slate-900 dark:text-white">{offer.offerer?.full_name}</p>
-                    <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
-                      Item Offered: {offer.resource?.title || "Resource"}
-                    </Link>
+              {displayOffers.map((offer) => {
+                const isOfferAccepted = offer.status === "ACCEPTED";
+                const isAcceptingThis = acceptingId === offer.id;
+
+                return (
+                  <div key={offer.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800 text-xs">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white">{offer.offerer?.full_name || "Community Member"}</p>
+                      <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
+                        Item Offered: {offer.resource?.title || "Resource"}
+                      </Link>
+                    </div>
+
+                    {isOfferAccepted ? (
+                      <span className="flex items-center gap-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Accepted
+                      </span>
+                    ) : request.is_fulfilled ? (
+                      <span className="rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 px-3 py-1.5 text-xs font-bold">
+                        Fulfilled
+                      </span>
+                    ) : (
+                      <button
+                        disabled={Boolean(acceptingId)}
+                        onClick={() => onAcceptOffer(offer.id, offer.resource_id, request)}
+                        className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                      >
+                        {isAcceptingThis ? "Accepting..." : "Accept Offer"}
+                      </button>
+                    )}
                   </div>
-                  <button
-                    onClick={() => onAcceptOffer(offer.id, offer.resource_id)}
-                    className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs active:scale-95 transition-all"
-                  >
-                    Accept Offer
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -130,6 +159,7 @@ export default function MyNeedsPage() {
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState(null);
   
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
@@ -186,6 +216,9 @@ export default function MyNeedsPage() {
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, is_fulfilled: newFulfilled } : r))
     );
+    if (selectedNeedForModal?.id === id) {
+      setSelectedNeedForModal((prev) => ({ ...prev, is_fulfilled: newFulfilled }));
+    }
 
     try {
       await wantedApi.fulfill(id);
@@ -194,6 +227,9 @@ export default function MyNeedsPage() {
       setRequests((prev) =>
         prev.map((r) => (r.id === id ? { ...r, is_fulfilled: currentFulfilled } : r))
       );
+      if (selectedNeedForModal?.id === id) {
+        setSelectedNeedForModal((prev) => ({ ...prev, is_fulfilled: currentFulfilled }));
+      }
       toast.error(err.response?.data?.detail || "Action failed");
     }
   };
@@ -219,13 +255,25 @@ export default function MyNeedsPage() {
     }
   };
 
-  const acceptOffer = async (offerId, resourceId) => {
+  const acceptOffer = async (offerId, resourceId, request) => {
+    if (request?.is_fulfilled) {
+      toast.error("This request has already been fulfilled");
+      return;
+    }
+
+    setAcceptingId(offerId);
     try {
       await wantedApi.acceptOffer(offerId);
       toast.success("Offer accepted! Redirecting to item...");
+      setRequests((prev) =>
+        prev.map((r) => (r.id === request.id ? { ...r, is_fulfilled: true } : r))
+      );
+      setSelectedNeedForModal(null);
       navigate(`/resources/${resourceId}`);
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Action failed");
+      toast.error(err.response?.data?.detail || "This request has already been fulfilled");
+    } finally {
+      setAcceptingId(null);
     }
   };
 
@@ -300,9 +348,9 @@ export default function MyNeedsPage() {
         <NeedDetailsModal
           request={selectedNeedForModal}
           offers={modalOffers}
+          acceptingId={acceptingId}
           onClose={() => setSelectedNeedForModal(null)}
           onAcceptOffer={acceptOffer}
-          onFulfill={handleToggleFulfill}
           onDelete={handleDelete}
         />
       )}
