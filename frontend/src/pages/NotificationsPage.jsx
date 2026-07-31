@@ -236,50 +236,14 @@ export default function NotificationsPage() {
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
-  const [masterEnabled, setMasterEnabled] = useState(
-    () => localStorage.getItem("notif_master_enabled") !== "false"
-  );
-
-  const toggleMaster = () => {
-    setMasterEnabled((prev) => {
-      const next = !prev;
-      localStorage.setItem("notif_master_enabled", String(next));
-      toast.success(next ? "Notifications turned ON!" : "Notifications turned OFF (Muted)!");
-      return next;
-    });
-  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Notifications
-            <div
-              onClick={toggleMaster}
-              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 border text-xs font-bold cursor-pointer select-none transition-all ${
-                masterEnabled
-                  ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400"
-                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500"
-              }`}
-              title="Click to toggle Notifications ON / OFF"
-            >
-              <button
-                type="button"
-                tabIndex={-1}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-                  masterEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                    masterEnabled ? "translate-x-4" : "translate-x-0"
-                  }`}
-                />
-              </button>
-              <span>{masterEnabled ? "ON" : "OFF (Muted)"}</span>
-            </div>
           </h1>
           <p className="text-xs text-slate-400 dark:text-slate-550 font-semibold uppercase tracking-wider mt-0.5">Inbox notifications alert log</p>
         </div>
