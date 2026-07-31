@@ -223,6 +223,9 @@ def handover_resource(
     br = _get_owned_request(db, request_id, current_user)
     if br.status != BorrowStatus.APPROVED:
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    
+    if date.today() < br.requested_start_date:
+        raise AppException("Cannot hand over resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     br.status = BorrowStatus.ACTIVE
     db.commit()
@@ -308,8 +311,11 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.LATE):
-        raise AppException("Only approved, active, or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
+        raise AppException("Only active or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    if date.today() < br.requested_start_date:
+        raise AppException("Cannot return resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report

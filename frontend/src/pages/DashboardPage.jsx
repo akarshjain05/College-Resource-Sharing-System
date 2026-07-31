@@ -29,22 +29,27 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { resourceApi, getImageUrl, wishlistApi } from "../api/endpoints";
+import { resourceApi, getImageUrl, wishlistApi, categoryApi, borrowApi, notificationApi } from "../api/endpoints";
 import { useAuth } from "../context/AuthContext";
 import DueBadge from "../components/DueBadge";
 
 
-const CATEGORIES = [
-  { name: "Tools", icon: Wrench, color: "text-orange-500 bg-orange-50 hover:bg-orange-100" },
-  { name: "Sports", icon: Trophy, color: "text-amber-500 bg-amber-50 hover:bg-amber-100" },
-  { name: "Party", icon: Sparkles, color: "text-pink-500 bg-pink-50 hover:bg-pink-100" },
-  { name: "Kitchen", icon: ChefHat, color: "text-emerald-500 bg-emerald-50 hover:bg-emerald-100" },
-  { name: "Camping", icon: Tent, color: "text-indigo-500 bg-indigo-50 hover:bg-indigo-100" },
-];
+const getCategoryIcon = (name) => {
+  const nm = (name || "").toLowerCase();
+  if (nm.includes("tool")) return { icon: Wrench, color: "text-orange-500 bg-orange-50 hover:bg-orange-100" };
+  if (nm.includes("sport")) return { icon: Trophy, color: "text-amber-500 bg-amber-50 hover:bg-amber-100" };
+  if (nm.includes("party")) return { icon: Sparkles, color: "text-pink-500 bg-pink-50 hover:bg-pink-100" };
+  if (nm.includes("kitchen")) return { icon: ChefHat, color: "text-emerald-500 bg-emerald-50 hover:bg-emerald-100" };
+  if (nm.includes("camp") || nm.includes("tent")) return { icon: Tent, color: "text-indigo-500 bg-indigo-50 hover:bg-indigo-100" };
+  return { icon: CircleDot, color: "text-blue-500 bg-blue-50 hover:bg-blue-100" };
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [dbItems, setDbItems] = useState([]);
+  const [dbCategories, setDbCategories] = useState([]);
+  const [recentNotifications, setRecentNotifications] = useState([]);
+  const [activeBorrows, setActiveBorrows] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
   const [locations, setLocations] = useState(["All Locations"]);
   const [loading, setLoading] = useState(true);
@@ -103,13 +108,19 @@ export default function DashboardPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [resData, wishData] = await Promise.all([
+      const [resData, wishData, catData, notifData, borrowData] = await Promise.all([
         resourceApi.list({ page_size: 100 }),
-        wishlistApi.list()
+        wishlistApi.list(),
+        categoryApi.list().catch(() => ({ data: [] })),
+        notificationApi.list().catch(() => ({ data: [] })),
+        borrowApi.myRequests("active").catch(() => ({ data: [] }))
       ]);
       const items = resData.data?.items || [];
       setDbItems(items);
       setWishlistItems(wishData.data || []);
+      setDbCategories(catData.data || []);
+      setRecentNotifications(notifData.data || []);
+      setActiveBorrows(borrowData.data || []);
       
       const locs = new Set(["All Locations"]);
       items.forEach(i => {
@@ -169,12 +180,12 @@ export default function DashboardPage() {
     let merged = [...dbItems].map(dbItem => ({
       id: dbItem.id,
       title: dbItem.title,
-      category: dbItem.category?.name || "Tools",
-      daily_price: dbItem.deposit_amount ? Math.round(dbItem.deposit_amount * 0.1) : 100,
-      deposit_amount: dbItem.deposit_amount || 300,
-      average_rating: dbItem.average_rating || 5.0,
+      category: dbItem.category?.name || "Other",
+      daily_price: dbItem.daily_price || (dbItem.deposit_amount ? Math.round(dbItem.deposit_amount * 0.1) : 100),
+      deposit_amount: dbItem.deposit_amount || 0,
+      average_rating: dbItem.average_rating,
       reviews_count: dbItem.total_borrows || 0,
-      distance: "0.6 km",
+      distance: dbItem.distance ? `${dbItem.distance} km` : null,
       owner: dbItem.owner?.full_name || "Neighbor",
       image_placeholder: dbItem.images?.[0]?.image_url || "🛠️",
       description: dbItem.description,
@@ -286,12 +297,12 @@ export default function DashboardPage() {
           >
             All Items
           </button>
-          {CATEGORIES.map((cat) => {
+          {dbCategories.map((cat) => {
             const isSelected = activeCategory === cat.name;
-            const Icon = cat.icon;
+            const { icon: Icon } = getCategoryIcon(cat.name);
             return (
               <button
-                key={cat.name}
+                key={cat.id || cat.name}
                 onClick={() => setActiveCategory(isSelected ? null : cat.name)}
                 className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap active:scale-95 border border-transparent ${
                   isSelected
@@ -299,7 +310,7 @@ export default function DashboardPage() {
                     : `bg-white dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800`
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-slate-500"}`} />
+                {Icon && <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-slate-500"}`} />}
                 <span>{cat.name}</span>
               </button>
             );
@@ -387,9 +398,11 @@ export default function DashboardPage() {
                     )}
                     
                     {/* Floating Distance Badge */}
-                    <span className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[9px] font-bold text-white backdrop-blur-xs select-none">
-                      📍 {item.distance}
-                    </span>
+                    {item.distance && (
+                      <span className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[9px] font-bold text-white backdrop-blur-xs select-none">
+                        📍 {item.distance}
+                      </span>
+                    )}
 
                     <button
                       onClick={(e) => toggleFavorite(item.id, e)}
@@ -448,7 +461,7 @@ export default function DashboardPage() {
 
                       <span className="flex items-center gap-1 font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-850 px-2 py-0.5 rounded-lg">
                         <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        {item.average_rating}
+                        {item.average_rating !== null && item.average_rating !== undefined ? item.average_rating : "New"}
                         <span className="font-medium text-slate-400">({item.reviews_count})</span>
                       </span>
                     </div>
@@ -605,35 +618,39 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Active Borrows / Return Reminder Card (Screen 8 Clock icon) */}
-          <div className="rounded-3xl border border-rose-100 dark:border-rose-950/20 bg-rose-50/40 dark:bg-rose-950/5 p-5 shadow-sm space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500 text-white shadow-sm flex-shrink-0">
-                <Clock className="h-4.5 w-4.5" />
+          {/* Active Borrows / Return Reminder Card */}
+          {activeBorrows.length > 0 && (
+            <div className="rounded-3xl border border-rose-100 dark:border-rose-950/20 bg-rose-50/40 dark:bg-rose-950/5 p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500 text-white shadow-sm flex-shrink-0">
+                  <Clock className="h-4.5 w-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-rose-700 dark:text-rose-450 leading-none flex items-center gap-2">
+                    Active Borrows
+                    {activeBorrows[0].expected_return_date && (
+                      <DueBadge 
+                        endDate={activeBorrows[0].expected_return_date} 
+                        status={activeBorrows[0].status} 
+                      />
+                    )}
+                  </h4>
+                  <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mt-1">{activeBorrows.length} active {activeBorrows.length === 1 ? 'item' : 'items'}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xs font-extrabold text-rose-700 dark:text-rose-450 leading-none flex items-center gap-2">
-                  Active Borrows
-                  <DueBadge 
-                    endDate={new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().split("T")[0]} 
-                    status="active" 
-                  />
-                </h4>
-                <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mt-1">1 urgent item</p>
-              </div>
+              
+              <p className="text-xs font-semibold text-rose-800 dark:text-rose-300 leading-normal">
+                {activeBorrows[0].resource?.title} is currently borrowed by you.
+              </p>
+              
+              <Link
+                to="/borrow-requests"
+                className="inline-flex items-center justify-center w-full rounded-xl bg-rose-600 hover:bg-rose-700 text-white py-2 text-[10px] font-bold transition-colors shadow-sm shadow-rose-600/10 active:scale-95"
+              >
+                Manage Borrows
+              </Link>
             </div>
-            
-            <p className="text-xs font-semibold text-rose-800 dark:text-rose-300 leading-normal">
-              Return reminder: Bosch Drill Machine is due tomorrow by 6:00 PM.
-            </p>
-            
-            <Link
-              to="/borrow-requests"
-              className="inline-flex items-center justify-center w-full rounded-xl bg-rose-600 hover:bg-rose-700 text-white py-2 text-[10px] font-bold transition-colors shadow-sm shadow-rose-600/10 active:scale-95"
-            >
-              Mark as Returned
-            </Link>
-          </div>
+          )}
 
           {/* Recent booking alerts list (Screen 8 checkmark/mail icons) */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
@@ -645,12 +662,9 @@ export default function DashboardPage() {
             </div>
             
             <div className="space-y-3.5">
-              {[
-                { title: "Rahul Sharma accepted", msg: "Accepted request for Aluminium Ladder", time: "2m ago", type: "check" },
-                { title: "Arjun Patel requested", msg: "Requested to borrow Bosch Drill Machine", time: "1h ago", type: "request" }
-              ].map((act, i) => (
-                <div key={i} className="flex gap-3 items-start border-b border-slate-50 dark:border-slate-850 last:border-0 pb-3 last:pb-0">
-                  {act.type === "check" ? (
+              {recentNotifications.length > 0 ? recentNotifications.slice(0, 5).map((act) => (
+                <div key={act.id} className="flex gap-3 items-start border-b border-slate-50 dark:border-slate-850 last:border-0 pb-3 last:pb-0">
+                  {act.type.includes("approve") || act.type.includes("confirm") ? (
                     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-455 flex-shrink-0">
                       <CheckCircle className="h-4.5 w-4.5" />
                     </div>
@@ -662,12 +676,14 @@ export default function DashboardPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex justify-between items-baseline">
                       <h4 className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">{act.title}</h4>
-                      <span className="text-[9px] text-slate-400 font-semibold">{act.time}</span>
+                      <span className="text-[9px] text-slate-400 font-semibold">{new Date(act.created_at).toLocaleDateString()}</span>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 mt-0.5">{act.msg}</p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium line-clamp-1 mt-0.5">{act.message}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-xs text-slate-400 text-center py-4">No recent activity</div>
+              )}
             </div>
           </div>
         </div>
