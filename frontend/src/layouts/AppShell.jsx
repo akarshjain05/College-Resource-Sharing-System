@@ -55,7 +55,9 @@ export default function AppShell() {
     notificationApi
       .list()
       .then(({ data }) => {
-        if (mounted) setUnreadCount(data.filter((n) => !n.is_read).length);
+        if (mounted && Array.isArray(data)) {
+          setUnreadCount(data.filter((n) => !n.is_read).length);
+        }
       })
       .catch(() => { });
     return () => {

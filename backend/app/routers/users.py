@@ -30,6 +30,16 @@ def update_my_profile(
     return current_user
 
 
+@router.get("/directory/public", response_model=list[PublicUserResponse])
+def list_users_public(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(1000, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -150,16 +160,6 @@ def list_users(
     _admin: User = Depends(require_admin),
 ):
     return db.query(User).offset(skip).limit(limit).all()
-
-
-@router.get("/directory/public", response_model=list[PublicUserResponse])
-def list_users_public(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(1000, ge=1, le=1000),
-    db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
-):
-    return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
 
 
 @router.post("/{user_id}/suspend", response_model=UserResponse)
