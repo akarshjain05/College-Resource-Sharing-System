@@ -19,6 +19,11 @@ import {
   ChevronUp,
   Tag,
   Info,
+  Eye,
+  Edit,
+  Power,
+  Layers,
+  ArrowRight,
 } from "lucide-react";
 import { resourceApi, categoryApi, borrowApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
@@ -33,6 +38,43 @@ const STATUS_BADGES = {
   rejected: { label: "Rejected", style: "bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800" },
   cancelled: { label: "Cancelled", style: "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700" },
 };
+
+function PublishToggleSwitch({ isAvailable, onToggle, disabled, label = true }) {
+  return (
+    <div
+      className="flex items-center gap-2"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onToggle(e);
+        }}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+          isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Hidden from search)"}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+            isAvailable ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+      {label && (
+        <span className={`text-[11px] font-extrabold uppercase tracking-wider ${isAvailable ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+          {isAvailable ? "Published" : "Unpublished"}
+        </span>
+      )}
+    </div>
+  );
+}
 
 function ItemBorrowersSection({ requests, onAction }) {
   if (!requests || requests.length === 0) {
@@ -72,6 +114,7 @@ function ItemBorrowersSection({ requests, onAction }) {
                   <div>
                     <Link
                       to={`/users/${req.borrower?.id}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600 dark:hover:text-primary-400"
                     >
                       {req.borrower?.full_name || "Borrower"}
@@ -122,7 +165,7 @@ function ItemBorrowersSection({ requests, onAction }) {
 
               {/* Action Buttons for Lender */}
               {req.status === "requested" && (
-                <div className="flex gap-2 justify-end pt-1">
+                <div className="flex gap-2 justify-end pt-1" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onAction("approve", req.id)}
                     className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
@@ -138,7 +181,7 @@ function ItemBorrowersSection({ requests, onAction }) {
                 </div>
               )}
               {req.status === "approved" && (
-                <div className="flex justify-end pt-1">
+                <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onAction("handover", req.id)}
                     className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
@@ -148,7 +191,7 @@ function ItemBorrowersSection({ requests, onAction }) {
                 </div>
               )}
               {req.status === "return_requested" && (
-                <div className="flex justify-end pt-1">
+                <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
                   <button
                     onClick={() => onAction("confirm_return", req.id)}
                     className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
@@ -160,6 +203,121 @@ function ItemBorrowersSection({ requests, onAction }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onAction }) {
+  if (!item) return null;
+  const primaryImg = item.images?.find((img) => img.is_primary) || item.images?.[0];
+  const isAvailable = item.status === "available";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-6">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {/* Modal Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+          <div className="h-20 w-20 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-4xl flex-shrink-0 overflow-hidden">
+            {primaryImg && (primaryImg.image_url.startsWith("/") || primaryImg.image_url.startsWith("http") || primaryImg.image_url.startsWith("data:")) ? (
+              <img src={getImageUrl(primaryImg.image_url)} alt={item.title} className="h-full w-full object-cover" />
+            ) : (
+              <span>{primaryImg ? primaryImg.image_url : item.title.charAt(0)}</span>
+            )}
+          </div>
+          <div className="space-y-1 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {item.category?.name || "Resource"}
+              </span>
+              <span className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold uppercase">
+                {item.condition}
+              </span>
+            </div>
+            <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white leading-tight">{item.title}</h2>
+            {item.pickup_location && (
+              <p className="text-xs text-slate-400 flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 text-primary-500" /> {item.pickup_location}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Publish Control Card */}
+        <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+          <div>
+            <h4 className="text-xs font-extrabold text-slate-900 dark:text-white">Publish Visibility</h4>
+            <p className="text-[11px] text-slate-400">Toggle whether this item is published on the campus explore page.</p>
+          </div>
+          <PublishToggleSwitch
+            isAvailable={isAvailable}
+            disabled={item.status === "borrowed"}
+            onToggle={(e) => onTogglePublish(item.id, item.status, e)}
+          />
+        </div>
+
+        {/* Resource Details Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="text-[9px] font-bold uppercase text-slate-400 block">Security Deposit</span>
+            <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{item.deposit_amount || 0}</span>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Borrows</span>
+            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.total_borrows || 0}</span>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="text-[9px] font-bold uppercase text-slate-400 block">View Count</span>
+            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.view_count || 0}</span>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="text-[9px] font-bold uppercase text-slate-400 block">Max Borrow Days</span>
+            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.max_borrow_days || 7} days</span>
+          </div>
+        </div>
+
+        {/* Description & Tags */}
+        {item.description && (
+          <div className="space-y-1.5 text-xs">
+            <h4 className="font-bold text-slate-700 dark:text-slate-300">Description</h4>
+            <p className="text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-100 dark:border-slate-800 leading-relaxed">
+              {item.description}
+            </p>
+          </div>
+        )}
+
+        {/* Complete Borrower History & Dates */}
+        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+          <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <Users className="h-4 w-4 text-primary-500" />
+            Complete Borrow History & Active Status
+          </h3>
+          <ItemBorrowersSection requests={requests} onAction={onAction} />
+        </div>
+
+        {/* Modal Actions Footer */}
+        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
+          <Link
+            to={`/resources/${item.id}`}
+            className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 font-bold hover:underline"
+          >
+            <Eye className="h-3.5 w-3.5" /> View Public Page
+          </Link>
+          <button
+            onClick={onClose}
+            className="btn-secondary !py-2 !px-4 text-xs"
+          >
+            Close Details
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -181,7 +339,7 @@ export default function MyListingsPage() {
   const [sortBy, setSortBy] = useState("created_at");
   const [sortDir, setSortDir] = useState("desc");
   const [showFilters, setShowFilters] = useState(false);
-  const [expandedItems, setExpandedItems] = useState({});
+  const [selectedItemForModal, setSelectedItemForModal] = useState(null);
 
   const pageSize = 12;
 
@@ -194,14 +352,12 @@ export default function MyListingsPage() {
     setLoading(true);
 
     if (!search && !categoryId && !condition && !status && !minRating && page === 1) {
-      // Use dedicated backend endpoint when default view
       resourceApi
         .getMyListingsWithBorrowers()
         .then(({ data }) => {
           setItems(data || []);
           setTotal(data?.length || 0);
 
-          // Flatten borrowers into incomingRequests format
           const flattened = [];
           (data || []).forEach((item) => {
             (item.borrowers || []).forEach((b) => {
@@ -214,7 +370,6 @@ export default function MyListingsPage() {
           setIncomingRequests(flattened);
         })
         .catch(() => {
-          // Fallback to standard list
           Promise.all([
             resourceApi.list({ owner_id: user.id, page, page_size: pageSize }),
             borrowApi.incoming().catch(() => ({ data: [] })),
@@ -258,11 +413,35 @@ export default function MyListingsPage() {
     fetchData();
   }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page, user?.id]);
 
-  const toggleExpand = (itemId) => {
-    setExpandedItems((prev) => ({
-      ...prev,
-      [itemId]: !prev[itemId],
-    }));
+  const handleTogglePublish = async (itemId, currentStatus, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    const newStatus = currentStatus === "available" ? "unavailable" : "available";
+
+    // Optimistic UI update so toggle flips immediately
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
+    );
+    if (selectedItemForModal?.id === itemId) {
+      setSelectedItemForModal((prev) => ({ ...prev, status: newStatus }));
+    }
+
+    try {
+      await resourceApi.update(itemId, { status: newStatus });
+      toast.success(newStatus === "available" ? "Item published to campus!" : "Item unpublished!");
+    } catch (err) {
+      // Rollback on failure
+      setItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, status: currentStatus } : item))
+      );
+      if (selectedItemForModal?.id === itemId) {
+        setSelectedItemForModal((prev) => ({ ...prev, status: currentStatus }));
+      }
+      toast.error(err.response?.data?.detail || "Failed to update publish status");
+    }
   };
 
   const handleAction = async (action, requestId) => {
@@ -296,9 +475,9 @@ export default function MyListingsPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Listings & Borrowers</h1>
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Listings</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
-            Manage your {total} listed item{total !== 1 ? "s" : ""} and track borrower dates
+            Manage publish status and view full details & borrower history for your {total} item{total !== 1 ? "s" : ""}
           </p>
         </div>
         <Link to="/resources/new" className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 w-fit">
@@ -368,7 +547,7 @@ export default function MyListingsPage() {
         {showFilters && (
           <div className="grid grid-cols-1 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">Listing Status</label>
+              <label className="mb-1 block text-xs font-semibold text-slate-600 dark:text-slate-400">Publish Status</label>
               <select
                 className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
                 value={status}
@@ -378,9 +557,9 @@ export default function MyListingsPage() {
                 }}
               >
                 <option value="">Any Status</option>
-                <option value="available">Available</option>
+                <option value="available">Published (Available)</option>
+                <option value="unavailable">Unpublished (Draft)</option>
                 <option value="borrowed">Borrowed</option>
-                <option value="unavailable">Unavailable</option>
               </select>
             </div>
 
@@ -425,8 +604,8 @@ export default function MyListingsPage() {
 
       {/* Listing Items Container */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="h-64 animate-pulse rounded-3xl bg-slate-200/60 dark:bg-slate-800/60" />
           ))}
         </div>
@@ -435,23 +614,23 @@ export default function MyListingsPage() {
           No resources match your search. Try adjusting your filters or list a new item.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((r) => {
             const primaryImg = r.images?.find((img) => img.is_primary) || r.images?.[0];
             const itemRequests = requestsByResource[r.id] || [];
-            const isExpanded = expandedItems[r.id] ?? true; // Default expanded so details are immediately clear
+            const isAvailable = r.status === "available";
 
             return (
               <div
                 key={r.id}
-                className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 flex flex-col justify-between"
+                onClick={() => setSelectedItemForModal(r)}
+                className="group relative cursor-pointer rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 transition-all hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg flex flex-col justify-between"
               >
-                {/* Item Details Header */}
                 <div className="space-y-3">
+                  {/* Top Bar: Thumbnail, Category & Publish Switch */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex gap-3">
-                      {/* Image Thumbnail */}
-                      <div className="h-16 w-16 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-3xl flex-shrink-0 overflow-hidden">
+                      <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
                         {primaryImg && (primaryImg.image_url.startsWith("/") || primaryImg.image_url.startsWith("http") || primaryImg.image_url.startsWith("data:")) ? (
                           <img src={getImageUrl(primaryImg.image_url)} alt={r.title} className="h-full w-full object-cover" />
                         ) : (
@@ -460,72 +639,59 @@ export default function MyListingsPage() {
                       </div>
                       <div>
                         <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {r.category?.name || "Tools"}
+                          {r.category?.name || "Resource"}
                         </span>
-                        <h3 className="font-display text-base font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5">
-                          <Link to={`/resources/${r.id}`} className="hover:text-primary-600 dark:hover:text-primary-400">
-                            {r.title}
-                          </Link>
+                        <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                          {r.title}
                         </h3>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">{r.description}</p>
                       </div>
                     </div>
 
-                    <span
-                      className={`rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${
-                        r.status === "available"
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                          : r.status === "borrowed"
-                          ? "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
-                      }`}
-                    >
-                      {r.status}
-                    </span>
+                    {/* Publish Switch (ON/OFF) */}
+                    <PublishToggleSwitch
+                      isAvailable={isAvailable}
+                      disabled={r.status === "borrowed"}
+                      onToggle={(e) => handleTogglePublish(r.id, r.status, e)}
+                    />
                   </div>
 
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{r.description}</p>
+
                   {/* Metadata Row */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-2 text-xs bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-3 text-slate-600 dark:text-slate-300">
                       <span>Deposit: <strong className="text-primary-600 dark:text-primary-400">₹{r.deposit_amount || 0}</strong></span>
                       <span>Borrows: <strong>{r.total_borrows || 0}</strong></span>
                     </div>
-                    {r.pickup_location && (
-                      <span className="flex items-center gap-1 text-[11px] text-slate-400 truncate max-w-[180px]">
-                        <MapPin className="h-3 w-3 flex-shrink-0" /> {r.pickup_location}
-                      </span>
-                    )}
+                    <span className="text-[10px] font-extrabold text-primary-600 dark:text-primary-400 flex items-center gap-1 group-hover:underline">
+                      Full Details & History <ArrowRight className="h-3 w-3" />
+                    </span>
                   </div>
                 </div>
 
-                {/* Collapsible Borrower Details Section */}
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => toggleExpand(r.id)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                    >
-                      <Users className="h-4 w-4 text-primary-500" />
-                      <span>Borrower History & Active Dates ({itemRequests.length})</span>
-                      {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                    </button>
-
-                    <Link
-                      to={`/resources/${r.id}`}
-                      className="text-[11px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      View Public Page →
-                    </Link>
-                  </div>
-
-                  {isExpanded && (
-                    <ItemBorrowersSection requests={itemRequests} onAction={handleAction} />
-                  )}
+                {/* Footer Count Badge */}
+                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5 text-primary-500" />
+                    <strong>{itemRequests.length}</strong> borrower record{itemRequests.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-400">Click card for details</span>
                 </div>
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Item Full Details & Borrower History Modal */}
+      {selectedItemForModal && (
+        <ItemFullDetailsModal
+          item={selectedItemForModal}
+          requests={requestsByResource[selectedItemForModal.id] || []}
+          onClose={() => setSelectedItemForModal(null)}
+          onTogglePublish={handleTogglePublish}
+          onAction={handleAction}
+        />
       )}
 
       {/* Pagination */}
