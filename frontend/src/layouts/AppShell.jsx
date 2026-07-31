@@ -23,6 +23,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { notificationApi, categoryApi, wantedApi } from "../api/endpoints";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
+import { usePushNotification } from "../hooks/usePushNotification";
 import toast from "react-hot-toast";
 
 const NAV_ITEMS = [
@@ -43,7 +44,7 @@ export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   const [selectedLocation, setSelectedLocation] = useState(
     localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
   );
@@ -54,21 +55,27 @@ export default function AppShell() {
     notificationApi
       .list()
       .then(({ data }) => {
-        if (mounted) setUnreadCount(data.filter((n) => !n.is_read).length);
+        if (mounted && Array.isArray(data)) {
+          setUnreadCount(data.filter((n) => !n.is_read).length);
+        }
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       mounted = false;
     };
   }, [location.pathname]);
 
   useNotificationSocket(() => setUnreadCount((prev) => prev + 1), user);
+  usePushNotification(user);
 
   // Theme dark/light mode state and logic
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || 
-    (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-  );
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved;
+    const legacy = localStorage.getItem("share_neighbour_dark_mode");
+    if (legacy !== null) return legacy === "true" ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
 
   useEffect(() => {
     if (theme === "dark") {
@@ -77,6 +84,8 @@ export default function AppShell() {
       document.documentElement.classList.remove("dark");
     }
     localStorage.setItem("theme", theme);
+    localStorage.setItem("share_neighbour_dark_mode", theme === "dark" ? "true" : "false");
+    window.dispatchEvent(new Event("themeChanged"));
   }, [theme]);
 
   const toggleTheme = () => {
@@ -91,7 +100,7 @@ export default function AppShell() {
     if (showPostNeedModal && categories.length === 0) {
       categoryApi.list()
         .then(({ data }) => setCategories(data))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [showPostNeedModal, categories.length]);
 
@@ -107,10 +116,10 @@ export default function AppShell() {
       toast.success("Wanted request posted!");
       setShowPostNeedModal(false);
       setNeedFormData({ title: "", description: "", category_id: "" });
-      
+
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
-      
+
       if (location.pathname !== "/wanted") {
         navigate("/wanted");
       }
@@ -149,11 +158,10 @@ export default function AppShell() {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 ${
-                  isActive
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 ${isActive
                     ? "bg-primary-600 text-white shadow-md shadow-primary-600/10 hover:bg-primary-700"
                     : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-                }`}
+                  }`}
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
@@ -165,20 +173,38 @@ export default function AppShell() {
               </Link>
             );
           })}
-          
+
           {user?.role === "admin" && (
             <Link
               to="/admin"
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-                location.pathname.startsWith("/admin")
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${location.pathname.startsWith("/admin")
                   ? "bg-amber-500 text-white shadow-md shadow-amber-500/10"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
-              }`}
+                }`}
             >
               <ShieldCheck className="h-4.5 w-4.5" />
               <span>Admin Panel</span>
             </Link>
           )}
+
+          {/* Dark Mode Toggle in Sidebar */}
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
+            aria-label="Toggle dark mode"
+          >
+            {theme === "dark" ? (
+              <>
+                <Sun className="h-4.5 w-4.5 text-amber-500 flex-shrink-0" />
+                <span>Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-4.5 w-4.5 text-slate-500 flex-shrink-0" />
+                <span>Dark Mode</span>
+              </>
+            )}
+          </button>
         </nav>
 
         {/* Bottom Profile Summary */}
@@ -253,7 +279,7 @@ export default function AppShell() {
         </header>
 
         <main className="flex-1 p-6 md:p-8 max-w-[1400px] w-full mx-auto">
-          <Outlet />
+          <Outlet context={{ theme, toggleTheme, isDarkMode: theme === "dark" }} />
         </main>
       </div>
 
@@ -263,14 +289,14 @@ export default function AppShell() {
           <div className="w-full max-w-[460px] rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl border border-slate-100/80 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-[22px] font-bold text-slate-900 dark:text-white tracking-tight font-display">Post a Need</h2>
-              <button 
-                onClick={() => setShowPostNeedModal(false)} 
+              <button
+                onClick={() => setShowPostNeedModal(false)}
                 className="rounded-full p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <form onSubmit={handlePostNeedSubmit} className="space-y-5">
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">What are you looking for?</label>
@@ -283,7 +309,7 @@ export default function AppShell() {
                   onChange={(e) => setNeedFormData({ ...needFormData, title: e.target.value })}
                 />
               </div>
-              
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
                 <div className="relative">
@@ -305,7 +331,7 @@ export default function AppShell() {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Description (Optional)</label>
                 <textarea
@@ -315,17 +341,17 @@ export default function AppShell() {
                   onChange={(e) => setNeedFormData({ ...needFormData, description: e.target.value })}
                 />
               </div>
-              
+
               <div className="flex gap-4 pt-2">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="flex-1 py-3.5 px-4 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm transition-all shadow-sm active:scale-98 text-center"
                 >
                   Post Request
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowPostNeedModal(false)} 
+                <button
+                  type="button"
+                  onClick={() => setShowPostNeedModal(false)}
                   className="flex-1 py-3.5 px-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm transition-all shadow-sm active:scale-98 text-center"
                 >
                   Cancel
