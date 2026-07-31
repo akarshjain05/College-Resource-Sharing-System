@@ -3,7 +3,7 @@ Application configuration loaded from environment variables (.env).
 Uses pydantic-settings so every value is validated at startup.
 """
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -80,6 +80,15 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 5
     OTP_RESEND_COOLDOWN_SECONDS: int = 60
 
+
+    @model_validator(mode="after")
+    def validate_secrets_in_prod(self) -> 'Settings':
+        if self.ENVIRONMENT == "production":
+            if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
+                raise ValueError("SECRET_KEY must be overridden in production (.env). Do not use the default placeholder!")
+            if self.OTP_SECRET == "change-this-otp-secret-in-production":
+                raise ValueError("OTP_SECRET must be overridden in production (.env). Do not use the default placeholder!")
+        return self
 
 settings = Settings()
 
