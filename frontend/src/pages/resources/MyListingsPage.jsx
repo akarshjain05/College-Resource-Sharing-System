@@ -651,11 +651,7 @@ export default function MyListingsPage() {
                       </div>
                       <div>
                         <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-<<<<<<< HEAD
                           {r.category?.name || "Other"}
-=======
-                          {r.category?.name || "Resource"}
->>>>>>> origin/main
                         </span>
                         <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {r.title}
