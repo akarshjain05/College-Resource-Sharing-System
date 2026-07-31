@@ -92,20 +92,20 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
         {/* Owner Publish Toggle Switch OR Wishlist Button */}
         {isOwner ? (
           <div
-            className="absolute right-2.5 top-2.5 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 px-2 py-1 shadow-sm backdrop-blur-sm border border-slate-200/60 dark:border-slate-800"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
+            className={`absolute right-2.5 top-2.5 flex items-center gap-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 px-2 py-1 shadow-sm backdrop-blur-sm border border-slate-200/60 dark:border-slate-800 cursor-pointer select-none transition-all ${
+              status === "borrowed" ? "opacity-50 cursor-not-allowed" : "hover:opacity-90 active:scale-95"
+            }`}
+            onClick={handleStatusToggle}
+            onMouseDown={(e) => e.stopPropagation()}
+            title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Draft)"}
           >
             <button
               type="button"
               disabled={status === "borrowed"}
-              onClick={handleStatusToggle}
+              tabIndex={-1}
               className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                 isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-              } ${status === "borrowed" ? "opacity-50 cursor-not-allowed" : ""}`}
-              title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Draft)"}
+              }`}
             >
               <span
                 className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${

@@ -40,26 +40,30 @@ const STATUS_BADGES = {
 };
 
 function PublishToggleSwitch({ isAvailable, onToggle, disabled, label = true }) {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled && onToggle) {
+      onToggle(e);
+    }
+  };
+
   return (
     <div
-      className="flex items-center gap-2"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
+      onClick={handleClick}
+      onMouseDown={(e) => e.stopPropagation()}
+      className={`inline-flex items-center gap-2 cursor-pointer select-none rounded-full transition-opacity ${
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:opacity-90 active:scale-95"
+      }`}
+      title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Hidden from search)"}
     >
       <button
         type="button"
         disabled={disabled}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggle(e);
-        }}
+        tabIndex={-1}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-        title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Hidden from search)"}
+        }`}
       >
         <span
           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
