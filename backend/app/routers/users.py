@@ -41,7 +41,7 @@ def list_users_public(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise NotFoundException("User not found")
@@ -111,10 +111,12 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
         recent_reviews.append({
             "id": str(br.id),
             "role": "borrower",
+            "reviewer_id": str(br.lender.id),
             "reviewer_name": br.lender.full_name,
             "rating": br.borrower_rating,
             "review": br.borrower_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_id": str(br.resource.id),
             "resource_title": br.resource.title
         })
 
@@ -128,10 +130,12 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
         recent_reviews.append({
             "id": str(br.id),
             "role": "lender",
+            "reviewer_id": str(br.borrower.id),
             "reviewer_name": br.borrower.full_name,
             "rating": br.lender_rating,
             "review": br.lender_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_id": str(br.resource.id),
             "resource_title": br.resource.title
         })
         

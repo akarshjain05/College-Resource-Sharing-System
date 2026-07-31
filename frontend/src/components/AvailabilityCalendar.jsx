@@ -14,7 +14,16 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function AvailabilityCalendar({ bookings = [], selectedRange, onSelectRange, maxDays }) {
+// Helper to correctly parse YYYY-MM-DD strings as local dates instead of UTC
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return new Date();
+  if (dateStr.includes("T")) return new Date(dateStr);
+  const [y, m, d] = dateStr.split('-');
+  return new Date(y, m - 1, d);
+};
+
+
+export default function AvailabilityCalendar({ bookings = [], selectedRange, onSelectRange, maxDays, availableFrom, availableTo }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const today = startOfDay(new Date());
 
@@ -25,21 +34,27 @@ export default function AvailabilityCalendar({ bookings = [], selectedRange, onS
     });
   }, [currentMonth]);
 
-  // Determine if a day is booked
+  // Determine if a day is booked or out of availability bounds
   const isBooked = (day) => {
     return bookings.some(b => 
-      isWithinInterval(day, { start: startOfDay(new Date(b.start)), end: startOfDay(new Date(b.end)) })
+      isWithinInterval(day, { start: startOfDay(parseLocalDate(b.start)), end: startOfDay(parseLocalDate(b.end)) })
     );
   };
 
-  // Check if a range has any booked days inside it
+  const isUnavailable = (day) => {
+    if (availableFrom && isBefore(day, startOfDay(parseLocalDate(availableFrom)))) return true;
+    if (availableTo && isBefore(startOfDay(parseLocalDate(availableTo)), day)) return true;
+    return false;
+  };
+
+  // Check if a range has any booked or unavailable days inside it
   const hasBookingInRange = (start, end) => {
     const rangeDays = eachDayOfInterval({ start, end });
-    return rangeDays.some(d => isBooked(d));
+    return rangeDays.some(d => isBooked(d) || isUnavailable(d));
   };
 
   const handleDayClick = (day) => {
-    if (isBefore(day, today) || isBooked(day)) return;
+    if (isBefore(day, today) || isBooked(day) || isUnavailable(day)) return;
 
     if (!selectedRange.start || (selectedRange.start && selectedRange.end)) {
       // Start a new selection
@@ -103,7 +118,7 @@ export default function AvailabilityCalendar({ bookings = [], selectedRange, onS
         ))}
         
         {days.map(day => {
-          const booked = isBooked(day);
+          const booked = isBooked(day) || isUnavailable(day);
           const past = isBefore(day, today);
           const isSelectedStart = selectedRange.start && isSameDay(day, selectedRange.start);
           const isSelectedEnd = selectedRange.end && isSameDay(day, selectedRange.end);

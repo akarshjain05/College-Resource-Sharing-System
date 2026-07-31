@@ -1,6 +1,7 @@
 from typing import List, Optional
+from datetime import date
 
-from sqlalchemy import String, Text, Integer, ForeignKey, Enum as SAEnum, Numeric
+from sqlalchemy import String, Text, Integer, ForeignKey, Enum as SAEnum, Numeric, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,6 +23,9 @@ class Resource(Base, UUIDMixin, TimestampMixin):
     )
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     quantity_available: Mapped[int] = mapped_column(Integer, default=1)
+
+    available_from: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    available_to: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     pickup_location: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     tags: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)  # comma-separated

@@ -226,7 +226,7 @@ def test_websocket_realtime_notifications(client, test_user, db_session):
     from app.core.security import create_access_token
     token = create_access_token(str(test_user.id))
 
-    with client.websocket_connect(f"/ws/notifications?token={token}") as websocket:
+    with client.websocket_connect(f"/api/v1/ws/notifications?token={token}") as websocket:
         # Create notification in service
         create_notification(
             db=db_session,

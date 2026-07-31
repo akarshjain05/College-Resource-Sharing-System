@@ -46,6 +46,13 @@ def create_borrow_request(
         raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
     if requested_days <= 0:
         raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+    if payload.requested_start_date < date.today():
+        raise AppException("Cannot request to borrow in the past", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
+
+    if resource.available_from and payload.requested_start_date < resource.available_from:
+        raise AppException(f"Resource is not available before {resource.available_from}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
+    if resource.available_to and payload.requested_end_date > resource.available_to:
+        raise AppException(f"Resource is not available after {resource.available_to}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
 
     # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
     if resource.quantity_available <= 1:
@@ -137,9 +144,15 @@ def approve_borrow_request(
 
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
+    
+    resource.quantity_available -= 1
+    if resource.quantity_available <= 0:
+        resource.status = ResourceStatus.BORROWED
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)
@@ -149,9 +162,6 @@ def approve_borrow_request(
         )
     lender.response_count += 1
 
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
     db.commit()
     db.refresh(br)
 
@@ -179,8 +189,10 @@ def reject_borrow_request(
     br.rejection_reason = payload.rejection_reason
     br.decided_at = datetime.now(timezone.utc)
 
-    # Update lender's running average response time
-    elapsed = (br.decided_at - br.created_at).total_seconds()
+    decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
+    created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
+    elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
+
     lender = current_user
     if lender.response_count == 0:
         lender.avg_response_seconds = int(elapsed)
@@ -239,11 +251,16 @@ def cancel_borrow_request(
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request can no longer be cancelled", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    if br.status == BorrowStatus.APPROVED:
-        br.resource.quantity_available += 1
-        br.resource.status = ResourceStatus.AVAILABLE
-
+    was_approved = br.status == BorrowStatus.APPROVED
     br.status = BorrowStatus.CANCELLED
+    
+    if was_approved:
+        resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
+        if resource:
+            resource.quantity_available += 1
+            if resource.status == ResourceStatus.BORROWED:
+                resource.status = ResourceStatus.AVAILABLE
+
     db.commit()
     db.refresh(br)
     return br
@@ -291,8 +308,8 @@ def return_resource(
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the borrower can mark this as returned")
-    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE):
-        raise AppException("Only approved or active borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.LATE):
+        raise AppException("Only approved, active, or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.actual_return_date = date.today()
     br.damage_report = payload.damage_report
@@ -329,9 +346,13 @@ def confirm_return_resource(
     br.borrower_review = payload.borrower_review
 
     resource = br.resource
-    resource.quantity_available += 1
     resource.total_borrows += 1
-    resource.status = ResourceStatus.AVAILABLE
+    
+    locked_resource = db.query(Resource).filter(Resource.id == resource.id).with_for_update().first()
+    if locked_resource:
+        locked_resource.quantity_available += 1
+        if locked_resource.status == ResourceStatus.BORROWED:
+            locked_resource.status = ResourceStatus.AVAILABLE
 
     # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()

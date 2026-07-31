@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban } from "lucide-react";
+import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban, Calendar, User, Star } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
@@ -45,7 +45,7 @@ function RequestCard({ request, isIncoming, onAction }) {
   const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
 
   const hoursSinceRequested = request.created_at ? Math.floor((new Date() - new Date(request.created_at)) / (1000 * 60 * 60)) : 0;
-  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 24;
+  const canNudge = !isIncoming && request.status === "requested" && hoursSinceRequested >= 0;
 
   const handleActionClick = (action) => {
     if (action === "return" || action === "confirm_return") {
@@ -221,6 +221,7 @@ export default function BorrowRequestsPage() {
 
   // Review states
   const [reviewingId, setReviewingId] = useState(null);
+  const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
 
@@ -244,8 +245,8 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: r.lender?.full_name || "Unknown" },
-          borrower: { full_name: "You" },
+          lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
+          borrower: { id: r.borrower?.id, full_name: "You" },
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
@@ -259,8 +260,8 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: "You" },
-          borrower: { full_name: r.borrower?.full_name || "Unknown" },
+          lender: { id: r.lender?.id, full_name: "You" },
+          borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
         }));
 
         setBookings({
@@ -333,22 +334,26 @@ export default function BorrowRequestsPage() {
   };
 
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewingId) return;
 
-    // Update status in localStorage
-    const local = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-    const idx = local.findIndex(b => b.id === reviewingId);
-    if (idx !== -1) {
-      local[idx].status = "returned";
-      localStorage.setItem("share_neighbour_bookings", JSON.stringify(local));
+    try {
+      if (reviewAction === "return") {
+        await borrowApi.returnItem(reviewingId, null, ratingInput, commentInput);
+      } else if (reviewAction === "confirm_return") {
+        await borrowApi.confirmReturn(reviewingId, ratingInput, commentInput);
+      }
+      toast.success("Thank you for your rating!");
+      setReviewingId(null);
+      setReviewAction(null);
+      setCommentInput("");
+      setRatingInput(5);
+      if (typeof loadBookingsList === 'function') loadBookingsList();
+      else load();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Action failed");
     }
-
-    toast.success("Thank you for your rating!");
-    setReviewingId(null);
-    setCommentInput("");
-    loadBookingsList();
   };
 
   // Status mapping for SubTabs
@@ -365,7 +370,7 @@ export default function BorrowRequestsPage() {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing"].includes(status);
+        return ["active", "ongoing", "return_requested"].includes(status);
       }
       if (subTab === "completed") {
         return ["returned", "confirmed_return"].includes(status);
@@ -477,11 +482,17 @@ export default function BorrowRequestsPage() {
                     {book.resource.image_placeholder || "🪜"}
                   </div>
                   <div>
-                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight">
-                      {book.resource.title}
+                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                      <Link to={`/resources/${book.resource.id}`}>
+                        {book.resource.title}
+                      </Link>
                     </h3>
                     <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-                      {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
+                      {tab === "borrowing" ? (
+                        <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
+                      ) : (
+                        <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -507,12 +518,20 @@ export default function BorrowRequestsPage() {
               <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
                 {/* Borrower Actions */}
                 {tab === "borrowing" && book.status === "requested" && (
-                  <button
-                    onClick={() => handleStatusChange(book.id, "cancelled")}
-                    className="btn-secondary !py-2 text-xs"
-                  >
-                    <Ban className="h-3.5 w-3.5" /> Cancel Request
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleStatusChange(book.id, "nudge")}
+                      className="btn-secondary !py-2 text-xs"
+                    >
+                      <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(book.id, "cancelled")}
+                      className="btn-secondary !py-2 text-xs"
+                    >
+                      <Ban className="h-3.5 w-3.5" /> Cancel Request
+                    </button>
+                  </>
                 )}
                 {tab === "borrowing" && book.status === "approved" && (
                   <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -521,11 +540,16 @@ export default function BorrowRequestsPage() {
                 )}
                 {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
                   <button
-                    onClick={() => setReviewingId(book.id)}
+                    onClick={() => { setReviewingId(book.id); setReviewAction("return"); }}
                     className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
                   >
                     <RotateCcw className="h-3.5 w-3.5" /> Return Item
                   </button>
+                )}
+                {tab === "borrowing" && book.status === "return_requested" && (
+                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                    <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
+                  </span>
                 )}
 
                 {/* Lender Actions */}
@@ -558,6 +582,14 @@ export default function BorrowRequestsPage() {
                     <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
                   </span>
                 )}
+                {tab === "lending" && book.status === "return_requested" && (
+                  <button
+                    onClick={() => { setReviewingId(book.id); setReviewAction("confirm_return"); }}
+                    className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Confirm Return
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -569,8 +601,12 @@ export default function BorrowRequestsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div>
-              <h3 className="font-display text-base font-extrabold text-slate-900">Return & Rate Item</h3>
-              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Tell us about your experience</p>
+              <h3 className="font-display text-base font-extrabold text-slate-900">
+                {reviewAction === "confirm_return" ? "Confirm Return & Rate" : "Return & Rate Item"}
+              </h3>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                {reviewAction === "confirm_return" ? "Rate the borrower" : "Tell us about your experience"}
+              </p>
             </div>
             
             <form onSubmit={handleReviewSubmit} className="space-y-4">
@@ -611,7 +647,7 @@ export default function BorrowRequestsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setReviewingId(null)}
+                  onClick={() => { setReviewingId(null); setReviewAction(null); }}
                   className="btn-secondary !py-2 text-xs"
                 >
                   Cancel

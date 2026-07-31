@@ -356,8 +356,7 @@ export default function ResourceDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isWishlisted, setIsWishlisted] = useState(false);
   
-  // Availability strip selected day (for mock calendar strip visual toggles)
-  const [selectedCalendarDay, setSelectedCalendarDay] = useState(15);
+
 
   const load = () => {
     setLoading(true);
@@ -501,9 +500,16 @@ export default function ResourceDetailPage() {
 
     setSubmittingBorrow(true);
     
-    // Format dates for backend
-    const formattedStart = selectedDateRange.start.toISOString().split("T")[0];
-    const formattedEnd = selectedDateRange.end.toISOString().split("T")[0];
+    // Format dates for backend in local timezone (YYYY-MM-DD)
+    const formatLocalDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formattedStart = formatLocalDate(selectedDateRange.start);
+    const formattedEnd = formatLocalDate(selectedDateRange.end);
 
     try {
       await borrowApi.create({
@@ -549,15 +555,7 @@ export default function ResourceDetailPage() {
     return `Usually responds in ${Math.round(seconds / 86400)} days`;
   };
 
-  // Visual Mock Calendar Strip selector
-  const handleCalendarStripClick = (dayNumber) => {
-    setSelectedCalendarDay(dayNumber);
-    // Auto-update dates inputs to match Sept 13-16 flow in mockup
-    setStartDate(`2026-09-${dayNumber}`);
-    const nextDay = dayNumber + 2;
-    setEndDate(`2026-09-${nextDay}`);
-    toast.success(`Selected Dates: Sept ${dayNumber} to Sept ${nextDay}`);
-  };
+
 
   return (
     <div className="space-y-6">
@@ -653,12 +651,12 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => toast.success(`Viewing profile of ${resource.owner?.full_name}`)}
+            <Link
+              to={`/users/${resource.owner?.id}`}
               className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition-all shadow-sm active:scale-95"
             >
               View Profile
-            </button>
+            </Link>
           </div>
 
           {/* Description */}
@@ -669,43 +667,7 @@ export default function ResourceDetailPage() {
             </p>
           </div>
 
-          {/* Availability Strips component (Screen 3) */}
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Availability Calendar</h3>
-              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Select a start date from the calendar ribbon</p>
-            </div>
-            
-            <div className="grid grid-cols-5 gap-2.5">
-              {[
-                { dayNum: 13, dayName: "SAT", isAvail: true },
-                { dayNum: 14, dayName: "SUN", isAvail: true },
-                { dayNum: 15, dayName: "MON", isAvail: true },
-                { dayNum: 16, dayName: "TUE", isAvail: true },
-              ].map((day) => (
-                <button
-                  key={day.dayNum}
-                  onClick={() => handleCalendarStripClick(day.dayNum)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                    selectedCalendarDay === day.dayNum
-                      ? "bg-primary-600 border-primary-600 text-white shadow-md shadow-primary-600/10 scale-102"
-                      : "bg-slate-50 border-slate-200/60 text-slate-600 hover:bg-slate-100/50 hover:text-slate-800"
-                  }`}
-                >
-                  <span className="text-[9px] font-bold tracking-wider opacity-80">{day.dayName}</span>
-                  <span className="text-base font-extrabold mt-1">{day.dayNum}</span>
-                </button>
-              ))}
-              
-              <button
-                onClick={() => toast.success("Opening full calendar view...")}
-                className="flex flex-col items-center justify-center p-3 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 font-semibold text-center transition-all"
-              >
-                <span className="text-[9px] font-bold tracking-wider">MORE</span>
-                <Calendar className="h-4 w-4 mt-1.5 text-slate-400" />
-              </button>
-            </div>
-          </div>
+
 
           {/* Reviews & Overall score card (Screen 6) */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
@@ -791,6 +753,12 @@ export default function ResourceDetailPage() {
                   {resource.owner.full_name}
                 </p>
                 <p className="text-sm text-ink-500">{resource.owner.department || "Campus member"}</p>
+                {resource.owner.avg_response_seconds != null && (
+                  <p className="text-[10px] text-primary-600 font-semibold flex items-center gap-1 mt-1">
+                    <Clock className="h-3 w-3" />
+                    {formatAvgResponseTime(resource.owner.avg_response_seconds)}
+                  </p>
+                )}
               </div>
             </Link>
             
@@ -819,6 +787,8 @@ export default function ResourceDetailPage() {
                     selectedRange={selectedDateRange}
                     onSelectRange={setSelectedDateRange}
                     maxDays={resource.max_borrow_days}
+                    availableFrom={resource.available_from}
+                    availableTo={resource.available_to}
                   />
                 </div>
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700 bg-slate-50 p-2.5 rounded-xl border border-slate-100">

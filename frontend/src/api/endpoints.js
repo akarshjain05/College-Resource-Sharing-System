@@ -2,6 +2,8 @@ import api, { getImageUrl } from "./client";
 
 export const authApi = {
   register: (payload) => api.post("/auth/register", payload),
+  verifySignupOtp: (payload) => api.post("/auth/verify-signup-otp", payload),
+  resendSignupOtp: (payload) => api.post("/auth/resend-signup-otp", payload),
   login: (email, password) => {
     const form = new URLSearchParams();
     form.append("username", email);
@@ -11,12 +13,13 @@ export const authApi = {
     });
   },
   googleLogin: (credential) => api.post("/auth/google", { credential }),
-   completeGoogleProfile: (payload) => api.post("/auth/google/complete-profile", payload),
+  completeGoogleProfile: (payload) => api.post("/auth/google/complete-profile", payload),
   me: () => api.get("/auth/me"),
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   resetPassword: (payload) => api.post("/auth/reset-password", payload),
 };
+
 
 export const userApi = {
   getMyProfile: () => api.get("/users/me"),
@@ -76,6 +79,7 @@ export const notificationApi = {
   list: () => api.get("/notifications"),
   markRead: (id) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
+  clearAll: () => api.delete("/notifications/clear-all"),
 };
 
 export const wantedApi = {

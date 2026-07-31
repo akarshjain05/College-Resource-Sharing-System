@@ -72,7 +72,7 @@ def test_category(db_session):
 def test_user(db_session):
     user = User(
         full_name="Test Student",
-        email="student@crss.edu",
+        email="student@svnit.ac.in",
         hashed_password=hash_password("Password123!"),
         role=UserRole.STUDENT,
         is_verified=True,
@@ -87,7 +87,7 @@ def test_user(db_session):
 def second_user(db_session):
     user = User(
         full_name="Second Student",
-        email="second@crss.edu",
+        email="second@svnit.ac.in",
         hashed_password=hash_password("Password123!"),
         role=UserRole.STUDENT,
         is_verified=True,
@@ -102,7 +102,7 @@ def second_user(db_session):
 def admin_user(db_session):
     user = User(
         full_name="Admin",
-        email="admin@crss.edu",
+        email="admin@svnit.ac.in",
         hashed_password=hash_password("AdminPass123!"),
         role=UserRole.ADMIN,
         is_verified=True,

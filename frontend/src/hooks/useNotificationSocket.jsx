@@ -3,11 +3,14 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { chatEventBus } from "../utils/chatEventBus";
 
-const NOTIFICATION_WS_URL = (import.meta.env.VITE_NOTIFICATION_API_URL || "https://notification-olgf.onrender.com")
-  .replace(/^http/, "ws");
+// The realtime notification WebSocket is served by the main backend itself
+// (see backend/app/routers/websocket.py), not a separate microservice --
+// reuse the same base URL/origin the rest of the app already talks to.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const NOTIFICATION_WS_BASE = API_BASE_URL.replace(/^http/, "ws");
 
 /**
- * Opens a WebSocket to receive real-time notifications from the microservice
+ * Opens a WebSocket to receive real-time notifications from the backend
  * and shows a toast for each one as it arrives. Reconnects automatically if connection drops.
  */
 export function useNotificationSocket(onNotification, user) {
@@ -22,7 +25,9 @@ export function useNotificationSocket(onNotification, user) {
 
     const connect = () => {
       if (cancelled) return;
-      const socket = new WebSocket(`${NOTIFICATION_WS_URL}/ws/${user.id}`);
+      const token = localStorage.getItem("crss_access_token");
+      if (!token) return;
+      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications?token=${token}`);
       socketRef.current = socket;
 
       socket.onmessage = (event) => {
