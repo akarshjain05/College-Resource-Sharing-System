@@ -403,7 +403,7 @@ def forgot_password(request: Request, payload: PasswordResetRequest, background_
     user = db.query(User).filter(User.email == payload.email).first()
     if user:
         reset_token = create_access_token(str(user.id), {"purpose": "password_reset"})
-        reset_link = f"http://localhost:5173/reset-password?token={reset_token}"
+        reset_link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={reset_token}"
         background_tasks.add_task(send_password_reset_email, user.email, user.full_name, reset_link)
     # Always return 202 regardless of whether the email exists, to avoid user enumeration.
     return {"detail": "If that email exists, a reset link has been sent."}

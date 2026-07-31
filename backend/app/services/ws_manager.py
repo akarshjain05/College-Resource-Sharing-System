@@ -56,9 +56,11 @@ class ConnectionManager:
         """
         if self.main_loop is None:
             return
+        coro = self._send_to_user(user_id, payload)
         try:
-            asyncio.run_coroutine_threadsafe(self._send_to_user(user_id, payload), self.main_loop)
+            asyncio.run_coroutine_threadsafe(coro, self.main_loop)
         except RuntimeError:
+            coro.close()  # avoid leaking/never-awaiting the coroutine we just created
             logger.warning("Could not schedule WebSocket notification; event loop unavailable")
 
 
