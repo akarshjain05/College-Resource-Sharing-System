@@ -31,7 +31,7 @@ def update_my_profile(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise NotFoundException("User not found")

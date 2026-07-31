@@ -25,7 +25,7 @@ def test_signup_otp_request_success(client, db_session):
             "/api/v1/auth/register",
             json={
                 "full_name": "OTP Test User",
-                "email": "otptest@crss.edu",
+                "email": "otptest@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
                 "role": "student",
@@ -43,13 +43,13 @@ def test_signup_otp_request_success(client, db_session):
         # 2. Brevo email service receives payload
         assert mock_brevo.called
         call_args = mock_brevo.call_args[0]
-        assert call_args[0] == "otptest@crss.edu"
+        assert call_args[0] == "otptest@svnit.ac.in"
         assert call_args[1] == "OTP Test User"
         otp_sent = call_args[2]
         assert len(otp_sent) == 6 and otp_sent.isdigit()
 
         # 4. Raw OTP is not stored
-        user = db_session.query(User).filter(User.email == "otptest@crss.edu").first()
+        user = db_session.query(User).filter(User.email == "otptest@svnit.ac.in").first()
         assert user is not None
         assert user.is_verified is False
 
@@ -61,7 +61,7 @@ def test_correct_otp_verifies_account(client, db_session):
             "/api/v1/auth/register",
             json={
                 "full_name": "Verify User",
-                "email": "verify@crss.edu",
+                "email": "verify@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -78,7 +78,7 @@ def test_correct_otp_verifies_account(client, db_session):
         body = v_resp.json()
         assert "access_token" in body
 
-        user = db_session.query(User).filter(User.email == "verify@crss.edu").first()
+        user = db_session.query(User).filter(User.email == "verify@svnit.ac.in").first()
         assert user.is_verified is True
         assert user.email_verified_at is not None
 
@@ -97,7 +97,7 @@ def test_incorrect_otp_fails(client):
             "/api/v1/auth/register",
             json={
                 "full_name": "Incorrect OTP User",
-                "email": "incorrect@crss.edu",
+                "email": "incorrect@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -120,7 +120,7 @@ def test_five_failed_attempts_invalidates_challenge(client):
             "/api/v1/auth/register",
             json={
                 "full_name": "Max Attempts User",
-                "email": "maxattempts@crss.edu",
+                "email": "maxattempts@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -151,7 +151,7 @@ def test_previous_otp_invalid_after_resend(client):
             "/api/v1/auth/register",
             json={
                 "full_name": "Resend User",
-                "email": "resend@crss.edu",
+                "email": "resend@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -196,7 +196,7 @@ def test_unverified_account_cannot_login(client):
             "/api/v1/auth/register",
             json={
                 "full_name": "Unverified User",
-                "email": "unverified@crss.edu",
+                "email": "unverified@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -205,7 +205,7 @@ def test_unverified_account_cannot_login(client):
         # 13. Unverified account cannot complete normal login
         login_resp = client.post(
             "/api/v1/auth/login",
-            data={"username": "unverified@crss.edu", "password": "Password123!"},
+            data={"username": "unverified@svnit.ac.in", "password": "Password123!"},
         )
         assert login_resp.status_code == 403
         assert login_resp.json()["error_code"] == "EMAIL_VERIFICATION_REQUIRED"
@@ -219,7 +219,7 @@ def test_brevo_failure_does_not_verify_account(client, db_session):
             "/api/v1/auth/register",
             json={
                 "full_name": "Brevo Fail User",
-                "email": "brevofail@crss.edu",
+                "email": "brevofail@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -228,7 +228,7 @@ def test_brevo_failure_does_not_verify_account(client, db_session):
         assert reg_resp.status_code == 500
         assert reg_resp.json()["error_code"] == "BREVO_SEND_FAILED"
 
-        user = db_session.query(User).filter(User.email == "brevofail@crss.edu").first()
+        user = db_session.query(User).filter(User.email == "brevofail@svnit.ac.in").first()
         assert user.is_verified is False
 
 
@@ -239,7 +239,7 @@ def test_email_normalization(client):
             "/api/v1/auth/register",
             json={
                 "full_name": "Normalize User",
-                "email": "  CaseTest@CRSS.edu  ",
+                "email": "  CaseTest@SVNIT.ac.in  ",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },

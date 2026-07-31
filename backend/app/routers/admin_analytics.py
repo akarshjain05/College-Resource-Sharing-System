@@ -22,7 +22,11 @@ def overview(db: Session = Depends(get_db), _admin: User = Depends(require_admin
         db.query(func.count(BorrowRequest.id)).filter(BorrowRequest.status == BorrowStatus.REQUESTED).scalar()
     )
     active_borrows = (
-        db.query(func.count(BorrowRequest.id)).filter(BorrowRequest.status == BorrowStatus.APPROVED).scalar()
+        db.query(func.count(BorrowRequest.id))
+        .filter(BorrowRequest.status.in_([
+            BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.LATE, BorrowStatus.RETURN_REQUESTED
+        ]))
+        .scalar()
     )
     return {
         "total_users": total_users,

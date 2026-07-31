@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
 
+    # ---- Frontend ----
+    # Used to build absolute links (e.g. password reset) that get emailed out.
+    # MUST be set to your real deployed domain in production .env, e.g.
+    # FRONTEND_URL=https://13.48.123.128.sslip.io -- otherwise reset emails
+    # will link to localhost and be useless to the recipient.
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # ---- Database ----
     DATABASE_URL: str = "postgresql://crss_user:crss_password@db:5432/crss_db"
 
