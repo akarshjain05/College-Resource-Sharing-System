@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useOutletContext } from "react-router-dom";
 import {
   Wrench,
   Trophy,
@@ -426,24 +426,35 @@ export default function DashboardPage() {
   // UI states
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("share_neighbour_dark_mode") === "true"
+  
+  const outletContext = useOutletContext() || {};
+  const [themeState, setThemeState] = useState(
+    outletContext.theme || localStorage.getItem("theme") || "light"
   );
   
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const currentTheme = localStorage.getItem("theme") || (document.documentElement.classList.contains("dark") ? "dark" : "light");
+      setThemeState(currentTheme);
+    };
+    window.addEventListener("themeChanged", handleThemeChange);
+    return () => window.removeEventListener("themeChanged", handleThemeChange);
+  }, []);
+
+  const theme = outletContext.theme || themeState;
+  const toggleTheme = outletContext.toggleTheme || (() => {
+    const newTheme = document.documentElement.classList.contains("dark") ? "light" : "dark";
+    if (newTheme === "dark") document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", newTheme);
+    localStorage.setItem("share_neighbour_dark_mode", newTheme === "dark" ? "true" : "false");
+    window.dispatchEvent(new Event("themeChanged"));
+  });
+  const isDarkMode = theme === "dark";
+
   const [favorites, setFavorites] = useState(
     JSON.parse(localStorage.getItem("share_neighbour_favs") || "{}")
   );
-
-  // Sync dark mode class
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("share_neighbour_dark_mode", "true");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("share_neighbour_dark_mode", "false");
-    }
-  }, [isDarkMode]);
 
   // Sync with AppShell location changes
   useEffect(() => {
@@ -833,7 +844,7 @@ export default function DashboardPage() {
 
                 {/* 2. THEME TOGGLE BUTTON */}
                 <button
-                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  onClick={toggleTheme}
                   className="rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-800 p-2.5 text-slate-650 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all active:scale-90"
                   title="Toggle Theme"
                 >
