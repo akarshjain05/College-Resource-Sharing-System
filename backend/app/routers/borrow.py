@@ -27,6 +27,15 @@ from app.services.availability import is_resource_available_for_dates
 router = APIRouter(prefix="/borrow-requests", tags=["Borrow Requests"])
 
 
+def _to_date(val) -> Optional[date]:
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.date()
+    return val
+
+
+
 @router.post("", response_model=BorrowRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_borrow_request(
     payload: BorrowRequestCreate,
@@ -117,7 +126,7 @@ def approve_borrow_request(
     if br.status != BorrowStatus.REQUESTED:
         raise AppException("Only pending requests can be approved", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    if date.today() > br.requested_end_date:
+    if br.requested_end_date and date.today() > _to_date(br.requested_end_date):
         raise AppException("Cannot approve a request whose lending window has already expired", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     # Lock resource explicitly to prevent concurrent approvals
@@ -239,9 +248,12 @@ def handover_resource(
     if br.status != BorrowStatus.APPROVED:
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    if date.today() < br.requested_start_date:
+    req_start = _to_date(br.requested_start_date)
+    req_end = _to_date(br.requested_end_date)
+    today = date.today()
+    if req_start and today < req_start:
         raise AppException("Cannot hand over resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
-    if date.today() > br.requested_end_date:
+    if req_end and today > req_end:
         raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     br.status = BorrowStatus.HANDOVER_REQUESTED
@@ -369,10 +381,12 @@ def return_resource(
     if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
         raise AppException("Only active or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    if date.today() < br.requested_start_date:
+    req_start = _to_date(br.requested_start_date)
+    today = date.today()
+    if req_start and today < req_start:
         raise AppException("Cannot return resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
-    br.actual_return_date = date.today()
+    br.actual_return_date = datetime.now(timezone.utc)
     br.damage_report = payload.damage_report
     br.lender_rating = payload.lender_rating
     br.lender_review = payload.lender_review
@@ -414,7 +428,9 @@ def confirm_return_resource(
     if borrower:
         if not is_damaged:
             # Only apply normal trust adjustments for non-damaged returns
-            if br.actual_return_date and br.actual_return_date > br.requested_end_date:
+            actual_ret = _to_date(br.actual_return_date)
+            req_end = _to_date(br.requested_end_date)
+            if actual_ret and req_end and actual_ret > req_end:
                 borrower.trust_score -= 5
             else:
                 borrower.trust_score += 2
