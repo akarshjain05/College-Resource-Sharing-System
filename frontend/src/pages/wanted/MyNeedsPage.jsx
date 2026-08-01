@@ -109,6 +109,16 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
                       <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
                         Item Offered: {offer.resource?.title || "Resource"}
                       </Link>
+                      {offer.resource && (
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+                            Deposit: ₹{offer.resource.deposit_amount}
+                          </span>
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md capitalize">
+                            Cond: {offer.resource.condition}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {isOfferAccepted ? (
