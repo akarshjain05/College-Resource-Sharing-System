@@ -13,13 +13,16 @@ import {
   Inbox,
   Settings,
   X,
+  AlertTriangle,
 } from "lucide-react";
 import { notificationApi } from "../api/endpoints";
 import toast from "react-hot-toast";
-
-
+import { useAuth } from "../context/AuthContext";
+import { usePushNotification } from "../hooks/usePushNotification";
 
 export default function NotificationsPage() {
+  const { user } = useAuth();
+  const { permission, requestAndRegister } = usePushNotification(user);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -41,7 +44,7 @@ export default function NotificationsPage() {
 
   const loadNotifications = () => {
     setLoading(true);
-    
+
     // Fetch actual database notifications if backend runs
     notificationApi
       .list()
