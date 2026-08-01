@@ -25,6 +25,8 @@ import MyNeedsPage from "./pages/wanted/MyNeedsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
+import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 
 export default function App() {
@@ -70,6 +72,8 @@ export default function App() {
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="resources" element={<AdminResourcesPage />} />
+              <Route path="borrows" element={<AdminBorrowsPage />} />
               <Route path="complaints" element={<AdminComplaintsPage />} />
             </Route>
           </Route>
