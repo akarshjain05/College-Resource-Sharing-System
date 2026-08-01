@@ -520,7 +520,7 @@ export default function ResourceCreatePage() {
                     {createdItem.title}
                   </h4>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
-                    {createdItem.category} · {createdItem.location}
+                    {(typeof createdItem.category === 'object' ? createdItem.category?.name : createdItem.category) || "Resource"} · {createdItem.pickup_location || createdItem.location}
                   </p>
                 </div>
               </div>
