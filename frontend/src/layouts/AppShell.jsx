@@ -14,6 +14,7 @@ import {
   ChevronDown,
   MessageSquare,
   BookMarked,
+  Heart,
   AlertTriangle,
   Package,
   X,
@@ -31,7 +32,6 @@ import toast from "react-hot-toast";
 const NAV_ITEMS = [
   // { to: "/dashboard", label: "Explore Items", icon: Home },
   { to: "/resources", label: "Explore Items", icon: HelpCircle },
-  { to: "/wishlist", label: "Wishlist", icon: BookMarked },
   { to: "/wanted", label: "Campus Needs", icon: Globe },
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
@@ -109,7 +109,7 @@ export default function AppShell() {
   useEffect(() => {
     if (showPostNeedModal && categories.length === 0) {
       categoryApi.list()
-        .then(({ data }) => setCategories(data))
+        .then(({ data }) => setCategories(Array.isArray(data) ? data : (data?.items || [])))
         .catch(() => { });
     }
   }, [showPostNeedModal, categories.length]);
@@ -196,25 +196,6 @@ export default function AppShell() {
               <span>Admin Panel</span>
             </Link>
           )}
-
-          {/* Dark Mode Toggle in Sidebar */}
-          <button
-            onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer"
-            aria-label="Toggle dark mode"
-          >
-            {theme === "dark" ? (
-              <>
-                <Sun className="h-4.5 w-4.5 text-amber-500 flex-shrink-0" />
-                <span>Light Mode</span>
-              </>
-            ) : (
-              <>
-                <Moon className="h-4.5 w-4.5 text-slate-500 flex-shrink-0" />
-                <span>Dark Mode</span>
-              </>
-            )}
-          </button>
         </nav>
 
         {/* Bottom Profile Summary */}
@@ -260,6 +241,20 @@ export default function AppShell() {
               <PlusCircle className="h-4 w-4" />
               <span>Post a Need</span>
             </button>
+
+            {/* Wishlist Link in Navbar */}
+            <Link
+              to="/wishlist"
+              className={`relative rounded-2xl border p-2.5 transition-all active:scale-95 shadow-xs ${
+                location.pathname === "/wishlist"
+                  ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
+                  : "border-slate-200 hover:border-slate-350 dark:border-slate-800 dark:hover:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400"
+              }`}
+              title="Wishlist"
+              aria-label="Wishlist"
+            >
+              <Heart className={`h-4.5 w-4.5 ${location.pathname === "/wishlist" ? "fill-current" : ""}`} />
+            </Link>
 
             <div className="relative flex items-center">
               <button

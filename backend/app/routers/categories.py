@@ -21,7 +21,22 @@ def slugify(value: str) -> str:
 
 @router.get("", response_model=list[CategoryResponse])
 def list_categories(db: Session = Depends(get_db)):
-    return db.query(Category).all()
+    categories = db.query(Category).all()
+    if not categories:
+        default_cats = [
+            ("Electronics", "electronics", "Cameras, laptops, monitors, and gadgets", "cpu"),
+            ("Lab Equipment", "lab-equipment", "Soldering stations, multimeters, sensors", "flask-conical"),
+            ("Sports Equipment", "sports-equipment", "Balls, rackets, gym gear", "dumbbell"),
+            ("Books & References", "books-references", "Textbooks and reference material", "book-open"),
+            ("Stationery & Tools", "stationery-tools", "Calculators, drafting tools, extension boards", "ruler"),
+            ("Other", "other", "Miscellaneous campus items", "package"),
+        ]
+        for name, slug, description, icon in default_cats:
+            cat = Category(name=name, slug=slug, description=description, icon=icon)
+            db.add(cat)
+        db.commit()
+        categories = db.query(Category).all()
+    return categories
 
 
 @router.get("/{category_id}", response_model=CategoryResponse)
