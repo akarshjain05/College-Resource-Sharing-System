@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
@@ -143,6 +143,7 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
 export default function MyNeedsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -162,9 +163,27 @@ export default function MyNeedsPage() {
       wantedApi.myNeeds(), 
       categoryApi.list(),
     ])
-      .then(([reqRes, catRes]) => {
-        setRequests(reqRes.data || []);
+      .then(async ([reqRes, catRes]) => {
+        const reqs = reqRes.data || [];
+        setRequests(reqs);
         setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.items || []));
+
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          const foundReq = reqs.find(r => String(r.id) === targetId);
+          if (foundReq) {
+            setSelectedNeedForModal(foundReq);
+            try {
+              const res = await wantedApi.listOffers(foundReq.id);
+              setModalOffers(res.data || []);
+            } catch (err) {
+              setModalOffers([]);
+            }
+          }
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("id");
+          setSearchParams(newParams, { replace: true });
+        }
       })
       .finally(() => setLoading(false));
   };

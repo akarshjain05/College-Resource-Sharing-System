@@ -22,8 +22,7 @@ const STATUS_STYLE = {
 // Removed dead RequestCard component
 
 export default function BorrowRequestsPage() {
-  const [searchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [tab, setTab] = useState("borrowing"); // "borrowing" (my requests) or "lending" (incoming)
   const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
@@ -81,6 +80,33 @@ export default function BorrowRequestsPage() {
           borrowing: dbMyReqs,
           lending: dbIncomingReqs
         });
+
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          let foundBooking = dbMyReqs.find(b => b.id === targetId);
+          let newTab = "borrowing";
+          if (!foundBooking) {
+            foundBooking = dbIncomingReqs.find(b => b.id === targetId);
+            if (foundBooking) newTab = "lending";
+          }
+          
+          if (foundBooking) {
+            setTab(newTab);
+            const status = foundBooking.status.toLowerCase();
+            if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+            else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+            else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+            else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+            
+            setSelectedBookingForModal(foundBooking);
+          }
+          
+          // Remove id from URL so it doesn't reopen if user navigates back
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("id");
+          setSearchParams(newParams, { replace: true });
+        }
+
       })
       .catch((err) => {
         console.error("Failed to load bookings:", err);

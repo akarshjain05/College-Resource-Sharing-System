@@ -182,7 +182,7 @@ def offer_wanted_request(
         notif_type=NotificationType.SYSTEM,
         title="Someone has the item you requested!",
         message=f"{current_user.full_name} has offered their item '{resource.title}' for your request '{wanted.title}'!",
-        link=f"/my-needs"  # Link them back to their needs page to see offers
+        link=f"/my-needs?id={wanted.id}"  # Link them back to their needs page to see offers
     )
 
     return offer
