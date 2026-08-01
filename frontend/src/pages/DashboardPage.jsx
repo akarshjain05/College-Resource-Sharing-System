@@ -53,7 +53,7 @@ export default function DashboardPage() {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [locations, setLocations] = useState(["All Locations"]);
   const [loading, setLoading] = useState(true);
-  
+
   // Custom interactive states
   const [locationName, setLocationName] = useState(
     localStorage.getItem("share_neighbour_location") || "All Locations"
@@ -63,11 +63,11 @@ export default function DashboardPage() {
   const [showWelcome, setShowWelcome] = useState(
     localStorage.getItem("share_neighbour_hide_welcome") !== "true"
   );
-  
+
   // UI states
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
-  
+
   const outletContext = useOutletContext() || {};
   const [themeState, setThemeState] = useState(
     outletContext.theme || localStorage.getItem("theme") || "light"
@@ -121,7 +121,7 @@ export default function DashboardPage() {
       setDbCategories(catData.data || []);
       setRecentNotifications(notifData.data || []);
       setActiveBorrows(borrowData.data || []);
-      
+
       const locs = new Set(["All Locations"]);
       items.forEach(i => {
         if (i.pickup_location) locs.add(i.pickup_location);
@@ -199,8 +199,8 @@ export default function DashboardPage() {
       const matchCat = activeCategory ? item.category.toLowerCase() === activeCategory.toLowerCase() : true;
       const matchSearch = searchQuery
         ? item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.owner.toLowerCase().includes(searchQuery.toLowerCase())
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.owner.toLowerCase().includes(searchQuery.toLowerCase())
         : true;
       return matchLoc && matchCat && matchSearch;
     });
@@ -220,7 +220,7 @@ export default function DashboardPage() {
 
   return (
     <div className={`space-y-6 transition-colors duration-200 ${isDarkMode ? "dark" : ""}`}>
-      
+
       {/* 1. WELCOME SPLASH COMPONENT (Collapsible Banner) */}
       {showWelcome && (
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-750 p-6 md:p-8 text-white shadow-xl animate-in fade-in duration-300">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
           >
             <X className="h-4.5 w-4.5" />
           </button>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div className="lg:col-span-7 space-y-4">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold tracking-wide backdrop-blur-sm">
@@ -245,7 +245,7 @@ export default function DashboardPage() {
                 Everything you need already exists two doors down. List what you rarely use, and borrow what you don't own. Save money and support your neighbors.
               </p>
             </div>
-            
+
             <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {[
                 { title: "Borrow items nearby", desc: "Access tools, equipment, sports gear in minutes.", icon: "📍" },
@@ -289,11 +289,10 @@ export default function DashboardPage() {
         <div className="flex gap-2.5 overflow-x-auto pb-1.5 md:pb-0 scrollbar-none">
           <button
             onClick={() => setActiveCategory(null)}
-            className={`flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${
-              activeCategory === null
+            className={`flex items-center justify-center rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap active:scale-95 ${activeCategory === null
                 ? "bg-primary-600 text-white shadow-md shadow-primary-600/10"
                 : "bg-white dark:bg-slate-850 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
+              }`}
           >
             All Items
           </button>
@@ -304,11 +303,10 @@ export default function DashboardPage() {
               <button
                 key={cat.id || cat.name}
                 onClick={() => setActiveCategory(isSelected ? null : cat.name)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap active:scale-95 border border-transparent ${
-                  isSelected
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all whitespace-nowrap active:scale-95 border border-transparent ${isSelected
                     ? "bg-primary-600 text-white shadow-md shadow-primary-600/10"
                     : `bg-white dark:bg-slate-850 text-slate-600 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800`
-                }`}
+                  }`}
               >
                 {Icon && <Icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-slate-500"}`} />}
                 <span>{cat.name}</span>
@@ -359,7 +357,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-905 p-12 text-center">
+            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
               <Info className="mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600" />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No items match your criteria</p>
               <p className="mt-1 text-xs text-slate-400">Try changing your location, category filter, or search query.</p>
@@ -396,7 +394,7 @@ export default function DashboardPage() {
                     ) : (
                       <span className="text-6xl transition-transform duration-500 group-hover:scale-115 select-none">{item.image_placeholder}</span>
                     )}
-                    
+
                     {/* Floating Distance Badge */}
                     {item.distance && (
                       <span className="absolute bottom-3 left-3 rounded-lg bg-black/60 px-2 py-1 text-[9px] font-bold text-white backdrop-blur-xs select-none">
@@ -410,7 +408,7 @@ export default function DashboardPage() {
                     >
                       <Heart className={`h-4.5 w-4.5 ${wishlistItems.some(i => i.id === item.id) ? "fill-red-500 text-red-500 dark:fill-red-400 dark:text-red-400" : ""}`} />
                     </button>
-                    
+
                     {/* Category Label */}
                     <span className="absolute top-3 left-3 rounded-lg bg-primary-600 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-white shadow-md select-none">
                       {item.category}
@@ -429,7 +427,7 @@ export default function DashboardPage() {
                           Deposit: <span className="font-bold text-slate-700 dark:text-slate-200">₹{item.deposit_amount}</span>
                         </p>
                       </div>
-                      
+
                       <div className="flex justify-between items-baseline">
                         <p className="text-xs font-medium text-slate-400 flex items-baseline gap-1">
                           <span className="text-xl font-extrabold text-primary-600 dark:text-primary-400">₹{item.daily_price}</span>/day
@@ -443,7 +441,7 @@ export default function DashboardPage() {
                       <h3 className="font-display text-sm font-bold text-slate-800 dark:text-slate-100 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-1">
                         {item.title}
                       </h3>
-                      
+
                       {/* Description summary */}
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                         {item.description}
@@ -474,7 +472,7 @@ export default function DashboardPage() {
 
         {/* Right Side: Rightbar (4 Columns) */}
         <div className="lg:col-span-4 space-y-5 lg:sticky lg:top-24">
-          
+
           {/* TOP BUTTONS CONTAINER: Wishlist, Theme Toggle, and Location Selector */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-3.5 relative">
             <div className="flex justify-between items-center pb-1">
@@ -488,11 +486,10 @@ export default function DashboardPage() {
                 {/* 1. WISHLIST TOGGLE BUTTON */}
                 <button
                   onClick={() => setShowWishlist(!showWishlist)}
-                  className={`relative rounded-xl border p-2.5 transition-all active:scale-90 ${
-                    showWishlist
+                  className={`relative rounded-xl border p-2.5 transition-all active:scale-90 ${showWishlist
                       ? "border-red-200 bg-red-50 text-red-500"
                       : "border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50"
-                  }`}
+                    }`}
                   title="Toggle Wishlist"
                 >
                   <Heart className={`h-4.5 w-4.5 ${favItems.length > 0 && showWishlist ? "fill-red-500" : ""}`} />
@@ -513,7 +510,7 @@ export default function DashboardPage() {
                 </button>
               </div>
             </div>
-            
+
             {/* Location dropdown selector */}
             <button
               onClick={() => setShowLocationDropdown(!showLocationDropdown)}
@@ -523,18 +520,17 @@ export default function DashboardPage() {
               <span className="truncate flex-1 text-xs font-bold">{locationName}</span>
               <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0" />
             </button>
-            
+
             {showLocationDropdown && (
               <div className="absolute left-5 right-5 mt-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-xl z-30 animate-in fade-in slide-in-from-top-2 duration-150">
                 {locations.map((loc) => (
                   <button
                     key={loc}
                     onClick={() => changeLocation(loc)}
-                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition-colors ${
-                      locationName === loc
+                    className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition-colors ${locationName === loc
                         ? "bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-400 font-extrabold"
                         : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850"
-                    }`}
+                      }`}
                   >
                     <MapPin className={`h-4 w-4 ${locationName === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
                     <span>{loc}</span>
@@ -583,7 +579,7 @@ export default function DashboardPage() {
                           </p>
                         </div>
                       </Link>
-                      
+
                       <button
                         onClick={() => toggleFavorite(item.id)}
                         className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
@@ -601,7 +597,7 @@ export default function DashboardPage() {
           {/* Quick trust metrics & stats */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
             <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">Lending Overview</h3>
-            
+
             <div className="grid grid-cols-2 gap-3.5">
               <div className="rounded-2xl bg-slate-50/80 dark:bg-slate-850 p-3.5 border border-slate-100/50 dark:border-slate-800/50 text-center">
                 <span className="text-xl">🛡️</span>
@@ -629,20 +625,20 @@ export default function DashboardPage() {
                   <h4 className="text-xs font-extrabold text-rose-700 dark:text-rose-450 leading-none flex items-center gap-2">
                     Active Borrows
                     {activeBorrows[0].expected_return_date && (
-                      <DueBadge 
-                        endDate={activeBorrows[0].expected_return_date} 
-                        status={activeBorrows[0].status} 
+                      <DueBadge
+                        endDate={activeBorrows[0].expected_return_date}
+                        status={activeBorrows[0].status}
                       />
                     )}
                   </h4>
                   <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider mt-1">{activeBorrows.length} active {activeBorrows.length === 1 ? 'item' : 'items'}</p>
                 </div>
               </div>
-              
+
               <p className="text-xs font-semibold text-rose-800 dark:text-rose-300 leading-normal">
                 {activeBorrows[0].resource?.title} is currently borrowed by you.
               </p>
-              
+
               <Link
                 to="/borrow-requests"
                 className="inline-flex items-center justify-center w-full rounded-xl bg-rose-600 hover:bg-rose-700 text-white py-2 text-[10px] font-bold transition-colors shadow-sm shadow-rose-600/10 active:scale-95"
@@ -660,7 +656,7 @@ export default function DashboardPage() {
                 View All
               </Link>
             </div>
-            
+
             <div className="space-y-3.5">
               {recentNotifications.length > 0 ? recentNotifications.slice(0, 5).map((act) => (
                 <div key={act.id} className="flex gap-3 items-start border-b border-slate-50 dark:border-slate-850 last:border-0 pb-3 last:pb-0">

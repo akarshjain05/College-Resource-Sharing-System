@@ -176,7 +176,7 @@ export default function NotificationsPage() {
         <div className="flex gap-2">
           <button
             onClick={handleMarkAll}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-305 hover:text-slate-900 dark:hover:text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
             disabled={notifications.length === 0}
           >
             <CheckCheck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
@@ -222,8 +222,8 @@ export default function NotificationsPage() {
               key={n.id}
               onClick={() => handleMarkOne(n)}
               className={`w-full rounded-2xl border p-5 text-left transition-all flex gap-4 items-start ${n.is_read
-                  ? "border-slate-250/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-850/50 text-slate-800 dark:text-slate-200"
-                  : "border-primary-200 dark:border-primary-800/60 bg-primary-50/10 dark:bg-primary-955/15 hover:bg-primary-50/20 dark:hover:bg-primary-955/25 text-slate-900 dark:text-white"
+                ? "border-slate-250/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-850/50 text-slate-800 dark:text-slate-200"
+                : "border-primary-200 dark:border-primary-800/60 bg-primary-50/10 dark:bg-primary-900/15 hover:bg-primary-50/20 dark:hover:bg-primary-900/25 text-slate-900 dark:text-white"
                 }`}
             >
               {/* Colored type icon */}
@@ -268,7 +268,7 @@ export default function NotificationsPage() {
             <div className="space-y-6">
               {/* Permission Bar / Status Bar */}
               {permission === "default" && (
-                <div className="p-4 rounded-2xl border border-amber-250 bg-amber-50/50 dark:bg-amber-955/10 dark:border-amber-900/60 flex flex-col gap-3">
+                <div className="p-4 rounded-2xl border border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-900/60 flex flex-col gap-3">
                   <div className="flex gap-3 items-start">
                     <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
@@ -296,10 +296,10 @@ export default function NotificationsPage() {
               )}
 
               {permission === "denied" && (
-                <div className="p-4 rounded-2xl border border-red-200 bg-red-50/50 dark:bg-red-955/10 dark:border-red-900/60 flex gap-3 items-start">
+                <div className="p-4 rounded-2xl border border-red-200 bg-red-50/50 dark:bg-red-900/10 dark:border-red-900/60 flex gap-3 items-start">
                   <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
-                    <h4 className="text-xs font-extrabold text-red-905 dark:text-red-200">Notifications Blocked</h4>
+                    <h4 className="text-xs font-extrabold text-red-900 dark:text-red-200">Notifications Blocked</h4>
                     <p className="text-[10px] text-red-650 dark:text-red-400 font-semibold leading-normal">
                       Notification permission is blocked. Check your browser settings to unblock.
                     </p>
@@ -308,7 +308,7 @@ export default function NotificationsPage() {
               )}
 
               {permission === "granted" && (
-                <div className="p-3 rounded-2xl border border-emerald-205 bg-emerald-50/50 dark:bg-emerald-955/10 dark:border-emerald-900/60 flex gap-2.5 items-center">
+                <div className="p-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10 dark:border-emerald-900/60 flex gap-2.5 items-center">
                   <CheckCircle className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
                   <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold leading-none">
                     Browser push alerts are active
@@ -336,7 +336,7 @@ export default function NotificationsPage() {
               </div>
 
               {/* Email Toggle */}
-              <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-955/20">
+              <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-900/20">
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-bold text-slate-855 dark:text-slate-200">Email Notifications</h4>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-relaxed">Receive daily borrow reminders and updates.</p>

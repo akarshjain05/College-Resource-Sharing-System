@@ -59,9 +59,9 @@ export default function ResourceListPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-slate-900 tracking-tight">All Listings</h1>
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">All Listings</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{total} items shared in community</p>
         </div>
       </div>
@@ -112,11 +112,10 @@ export default function ResourceListPage() {
           <button
             type="button"
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn gap-2 sm:w-auto ${
-              showFilters || status || minRating
-                ? "bg-primary-50 text-primary-700 border border-primary-300"
-                : "bg-white text-ink-500 border border-ink-100 hover:bg-ink-50"
-            }`}
+            className={`btn gap-2 sm:w-auto ${showFilters || status || minRating
+                ? "bg-primary-50 dark:bg-primary-950/20 text-primary-700 dark:text-primary-400 border border-primary-300 dark:border-primary-800"
+                : "bg-white dark:bg-slate-900 text-ink-500 dark:text-slate-300 border border-ink-100 dark:border-slate-800 hover:bg-ink-50 dark:hover:bg-slate-800 dark:hover:text-white"
+              }`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Filters
@@ -215,9 +214,8 @@ export default function ResourceListPage() {
             <button
               key={p}
               onClick={() => setPage(p)}
-              className={`h-8 w-8 rounded-md text-sm font-semibold ${
-                p === page ? "bg-primary-600 text-white" : "bg-white text-ink-500 hover:bg-ink-50"
-              }`}
+              className={`h-8 w-8 rounded-md text-sm font-semibold ${p === page ? "bg-primary-600 text-white" : "bg-white text-ink-500 hover:bg-ink-50"
+                }`}
             >
               {p}
             </button>

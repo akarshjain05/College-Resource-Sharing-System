@@ -184,7 +184,7 @@ export default function BorrowRequestsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-slate-900 tracking-tight">My Bookings</h1>
+        <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Bookings</h1>
         <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Manage borrowing & lending orders</p>
       </div>
 
@@ -193,8 +193,8 @@ export default function BorrowRequestsPage() {
         <button
           onClick={() => { setTab("borrowing"); setSubTab("upcoming"); }}
           className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "borrowing"
-              ? "bg-white text-primary-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
+            ? "bg-white text-primary-600 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
             }`}
         >
           Items I'm Borrowing
@@ -202,8 +202,8 @@ export default function BorrowRequestsPage() {
         <button
           onClick={() => { setTab("lending"); setSubTab("upcoming"); }}
           className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "lending"
-              ? "bg-white text-primary-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
+            ? "bg-white text-primary-600 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
             }`}
         >
           Items I'm Lending
@@ -222,8 +222,8 @@ export default function BorrowRequestsPage() {
             key={st.key}
             onClick={() => setSubTab(st.key)}
             className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${subTab === st.key
-                ? "border-primary-600 text-primary-600 font-extrabold"
-                : "border-transparent text-slate-500 hover:text-slate-900"
+              ? "border-primary-600 text-primary-600 font-extrabold"
+              : "border-transparent text-slate-500 hover:text-slate-900"
               }`}
           >
             {st.label}
@@ -275,7 +275,7 @@ export default function BorrowRequestsPage() {
                       {book.resource.image_placeholder || "🪜"}
                     </div>
                     <div>
-                      <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                      <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight hover:text-brand-500 hover:underline cursor-pointer">
                         <Link to={`/resources/${book.resource.id}`}>
                           {book.resource.title}
                         </Link>
@@ -293,16 +293,16 @@ export default function BorrowRequestsPage() {
                 </div>
 
                 {/* Booking specifications */}
-                <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
+                <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
                   <div className="space-y-1">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
-                    <p className="text-slate-800 font-bold flex items-center gap-2">
+                    <p className="text-slate-800 dark:text-slate-100 font-bold flex items-center gap-2">
                       {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
                       {new Date(book.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       <DueBadge endDate={book.requested_end_date} status={book.status} />
                     </p>
                   </div>
-                  <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
+                  <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3.5">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
                     <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
                   </div>
