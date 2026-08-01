@@ -78,7 +78,7 @@ export default function NotificationsPage() {
     } catch (e) {
       console.log("Failed to mark all read", e);
     }
-    
+
     toast.success("All notifications marked as read");
     loadNotifications();
   };
@@ -182,7 +182,7 @@ export default function NotificationsPage() {
             <CheckCheck className="h-4 w-4 text-slate-400 dark:text-slate-500" />
             <span>Mark all read</span>
           </button>
-          
+
           <button
             onClick={handleDeleteAll}
             className="flex items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-950 bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 disabled:opacity-50"
@@ -221,11 +221,10 @@ export default function NotificationsPage() {
             <button
               key={n.id}
               onClick={() => handleMarkOne(n)}
-              className={`w-full rounded-2xl border p-5 text-left transition-all flex gap-4 items-start ${
-                n.is_read
+              className={`w-full rounded-2xl border p-5 text-left transition-all flex gap-4 items-start ${n.is_read
                   ? "border-slate-250/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 hover:bg-slate-50/50 dark:hover:bg-slate-850/50 text-slate-800 dark:text-slate-200"
                   : "border-primary-200 dark:border-primary-800/60 bg-primary-50/10 dark:bg-primary-955/15 hover:bg-primary-50/20 dark:hover:bg-primary-955/25 text-slate-900 dark:text-white"
-              }`}
+                }`}
             >
               {/* Colored type icon */}
               {getNotificationIcon(n.type)}
@@ -258,15 +257,64 @@ export default function NotificationsPage() {
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight font-display">Notification Settings</h2>
                 <p className="text-[11px] text-slate-400 dark:text-slate-550 font-semibold mt-0.5">Manage how you receive alerts and alerts triggers.</p>
               </div>
-              <button 
-                onClick={() => setShowSettingsModal(false)} 
+              <button
+                onClick={() => setShowSettingsModal(false)}
                 className="rounded-full p-1.5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
-            
+
             <div className="space-y-6">
+              {/* Permission Bar / Status Bar */}
+              {permission === "default" && (
+                <div className="p-4 rounded-2xl border border-amber-250 bg-amber-50/50 dark:bg-amber-955/10 dark:border-amber-900/60 flex flex-col gap-3">
+                  <div className="flex gap-3 items-start">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs font-extrabold text-amber-900 dark:text-amber-200">Push Permission Required</h4>
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold leading-normal">
+                        Enable browser alerts to receive real-time updates.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await requestAndRegister();
+                      if (res === "granted") {
+                        toast.success("Push notifications enabled successfully!");
+                      } else if (res === "denied") {
+                        toast.error("Permission denied. Set in browser site settings.");
+                      }
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs transition-all shadow-sm active:scale-98 text-center cursor-pointer"
+                  >
+                    Grant Permission
+                  </button>
+                </div>
+              )}
+
+              {permission === "denied" && (
+                <div className="p-4 rounded-2xl border border-red-200 bg-red-50/50 dark:bg-red-955/10 dark:border-red-900/60 flex gap-3 items-start">
+                  <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <h4 className="text-xs font-extrabold text-red-905 dark:text-red-200">Notifications Blocked</h4>
+                    <p className="text-[10px] text-red-650 dark:text-red-400 font-semibold leading-normal">
+                      Notification permission is blocked. Check your browser settings to unblock.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {permission === "granted" && (
+                <div className="p-3 rounded-2xl border border-emerald-205 bg-emerald-50/50 dark:bg-emerald-955/10 dark:border-emerald-900/60 flex gap-2.5 items-center">
+                  <CheckCircle className="h-4.5 w-4.5 text-emerald-500 shrink-0" />
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold leading-none">
+                    Browser push alerts are active
+                  </span>
+                </div>
+              )}
               {/* Push Toggle */}
               <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/20">
                 <div className="space-y-0.5">
@@ -276,15 +324,13 @@ export default function NotificationsPage() {
                 <button
                   type="button"
                   onClick={() => handleToggleSetting("pushEnabled")}
-                  className={`relative inline-flex h-6.5 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                    settings.pushEnabled ? "bg-primary-600" : "bg-slate-200 dark:bg-slate-800"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.pushEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                    }`}
                   aria-label="Toggle push notifications"
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
-                      settings.pushEnabled ? "translate-x-5.5" : "translate-x-0"
-                    }`}
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.pushEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
                   />
                 </button>
               </div>
@@ -298,20 +344,18 @@ export default function NotificationsPage() {
                 <button
                   type="button"
                   onClick={() => handleToggleSetting("emailEnabled")}
-                  className={`relative inline-flex h-6.5 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${
-                    settings.emailEnabled ? "bg-primary-600" : "bg-slate-200 dark:bg-slate-800"
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.emailEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                    }`}
                   aria-label="Toggle email notifications"
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5.5 w-5.5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
-                      settings.emailEnabled ? "translate-x-5.5" : "translate-x-0"
-                    }`}
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.emailEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
                   />
                 </button>
               </div>
             </div>
-            
+
             <div className="mt-8">
               <button
                 type="button"
