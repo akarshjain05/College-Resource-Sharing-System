@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, ForeignKey, Boolean
+from sqlalchemy import String, ForeignKey, Boolean, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,7 +16,8 @@ class WantedRequest(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(1000), nullable=True)
     category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
-    requested_days: Mapped[int] = mapped_column(default=1, nullable=False)
+    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
+    end_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
     is_fulfilled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user = relationship("User")

@@ -149,7 +149,9 @@ export default function MyNeedsPage() {
   const [acceptingId, setAcceptingId] = useState(null);
   
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "", category_id: "", requested_days: 1 });
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const [formData, setFormData] = useState({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
@@ -186,7 +188,7 @@ export default function MyNeedsPage() {
       await wantedApi.create(formData);
       toast.success("Wanted request posted!");
       setShowModal(false);
-      setFormData({ title: "", description: "", category_id: "", requested_days: 1 });
+      setFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
@@ -318,9 +320,10 @@ export default function MyNeedsPage() {
                       {r.title}
                     </h3>
                     <div className="flex gap-2">
-                      <span className="shrink-0 rounded-md bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 px-2 py-0.5 text-[10px] font-bold border border-primary-200 dark:border-primary-800">
-                        {r.requested_days} {r.requested_days === 1 ? 'Day' : 'Days'}
-                      </span>
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <Clock className="h-3.5 w-3.5" />
+                        {new Date(r.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(r.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </div>
                       {r.is_fulfilled && (
                         <span className="shrink-0 rounded-md bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
                           Fulfilled
@@ -383,8 +386,8 @@ export default function MyNeedsPage() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-1 md:col-span-2">
                   <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
                   <select
                     required
@@ -401,15 +404,25 @@ export default function MyNeedsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">For how many days?</label>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed From</label>
                   <input
-                    type="number"
+                    type="date"
                     required
-                    min="1"
-                    max="30"
+                    min={today}
                     className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                    value={formData.requested_days}
-                    onChange={(e) => setFormData({ ...formData, requested_days: parseInt(e.target.value) || 1 })}
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed Until</label>
+                  <input
+                    type="date"
+                    required
+                    min={formData.start_date || today}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                   />
                 </div>
               </div>

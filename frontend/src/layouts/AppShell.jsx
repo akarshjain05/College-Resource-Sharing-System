@@ -103,7 +103,9 @@ export default function AppShell() {
   };
 
   const [showPostNeedModal, setShowPostNeedModal] = useState(false);
-  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "", requested_days: 1 });
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -125,7 +127,7 @@ export default function AppShell() {
       await wantedApi.create(needFormData);
       toast.success("Wanted request posted!");
       setShowPostNeedModal(false);
-      setNeedFormData({ title: "", description: "", category_id: "", requested_days: 1 });
+      setNeedFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
 
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
@@ -343,15 +345,25 @@ export default function AppShell() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">For how many days?</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Needed From</label>
                   <input
-                    type="number"
+                    type="date"
                     required
-                    min="1"
-                    max="30"
+                    min={today}
                     className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
-                    value={needFormData.requested_days}
-                    onChange={(e) => setNeedFormData({ ...needFormData, requested_days: parseInt(e.target.value) || 1 })}
+                    value={needFormData.start_date}
+                    onChange={(e) => setNeedFormData({ ...needFormData, start_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Needed Until</label>
+                  <input
+                    type="date"
+                    required
+                    min={needFormData.start_date || today}
+                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
+                    value={needFormData.end_date}
+                    onChange={(e) => setNeedFormData({ ...needFormData, end_date: e.target.value })}
                   />
                 </div>
               </div>

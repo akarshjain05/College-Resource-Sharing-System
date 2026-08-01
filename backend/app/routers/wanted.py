@@ -23,12 +23,16 @@ def create_wanted_request(
     if not category:
         raise NotFoundException("Category not found")
 
+    if payload.end_date < payload.start_date:
+        raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+
     wanted = WantedRequest(
         user_id=current_user.id,
         title=payload.title,
         description=payload.description,
         category_id=payload.category_id,
-        requested_days=payload.requested_days,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
     )
     db.add(wanted)
     db.commit()

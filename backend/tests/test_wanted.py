@@ -20,7 +20,9 @@ def test_wanted_offer_lifecycle(client, test_user, second_user, test_category):
     req_resp = client.post("/api/v1/wanted", headers=requester_headers, json={
         "title": "Need a camera",
         "description": "For a weekend trip",
-        "category_id": str(test_category.id)
+        "category_id": str(test_category.id),
+        "start_date": "2026-08-05",
+        "end_date": "2026-08-10"
     })
     assert req_resp.status_code == 201
     wanted_id = req_resp.json()["id"]
@@ -84,7 +86,9 @@ def test_accept_after_fulfilled(client, test_user, second_user, test_category, d
     req_resp = client.post("/api/v1/wanted", headers=requester_headers, json={
         "title": "Need a camera",
         "description": "For a weekend trip",
-        "category_id": str(test_category.id)
+        "category_id": str(test_category.id),
+        "start_date": "2026-08-05",
+        "end_date": "2026-08-10"
     })
     wanted_id = req_resp.json()["id"]
 
@@ -119,7 +123,9 @@ def test_delete_fulfilled_wanted_request(client, test_user, second_user, test_ca
     req_resp = client.post("/api/v1/wanted", headers=requester_headers, json={
         "title": "Need a laptop",
         "description": "dedo laptop",
-        "category_id": str(test_category.id)
+        "category_id": str(test_category.id),
+        "start_date": "2026-08-05",
+        "end_date": "2026-08-10"
     })
     assert req_resp.status_code == 201
     wanted_id = req_resp.json()["id"]
