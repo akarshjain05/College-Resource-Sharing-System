@@ -264,21 +264,18 @@ def handover_resource(
     db: Session = Depends(get_db),
 ):
     br = _get_owned_request(db, request_id, current_user)
-    if br.status != BorrowStatus.APPROVED:
+    if br.status not in (BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED):
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    req_end = _to_date(br.requested_end_date)
-    today = date.today()
-    if req_end and today > req_end:
-        raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
+    resource_title = br.resource.title if br.resource else "item"
 
-    br.status = BorrowStatus.HANDOVER_REQUESTED
+    br.status = BorrowStatus.ACTIVE
     db.commit()
 
     create_notification(
         db, br.borrower_id, NotificationType.SYSTEM,
-        "Handover Pending Confirmation",
-        f"'{br.resource.title}' has been handed over by the lender. Please confirm receipt.",
+        "Resource Handed Over",
+        f"'{resource_title}' has been handed over to you.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
