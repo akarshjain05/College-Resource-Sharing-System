@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban, Calendar, User, Star } from "lucide-react";
@@ -25,9 +25,16 @@ export default function BorrowRequestsPage() {
   const [searchParams] = useSearchParams();
   const initialStatus = searchParams.get("status");
 
-  const [tab, setTab] = useState("borrowing"); // "borrowing" (my requests) or "lending" (incoming)
+  // Determine initial tab based on search params URL query
+  const getInitialTab = () => {
+    const pTab = searchParams.get("tab");
+    if (pTab === "incoming" || pTab === "lending") return "lending";
+    return "borrowing";
+  };
+
+  const [tab, setTab] = useState(getInitialTab); // "borrowing" (my requests) or "lending" (incoming)
   const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState({ borrowing: [], lending: [] });
   const [loading, setLoading] = useState(true);
 
   // Review & Modal states
@@ -37,6 +44,37 @@ export default function BorrowRequestsPage() {
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
   const [openChatId, setOpenChatId] = useState(null);
+
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    const urlId = searchParams.get("id");
+    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+      const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
+      if (foundBorrowing) {
+        autoOpenedRef.current = true;
+        setTab("borrowing");
+        setSelectedBookingForModal(foundBorrowing);
+        const status = foundBorrowing.status.toLowerCase();
+        if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+      } else if (bookings.lending.length > 0) {
+        const foundLending = bookings.lending.find(b => b.id === urlId);
+        if (foundLending) {
+          autoOpenedRef.current = true;
+          setTab("lending");
+          setSelectedBookingForModal(foundLending);
+          const status = foundLending.status.toLowerCase();
+          if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+          else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+          else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+          else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        }
+      }
+    }
+  }, [bookings, searchParams]);
 
   const loadBookingsList = () => {
     setLoading(true);
