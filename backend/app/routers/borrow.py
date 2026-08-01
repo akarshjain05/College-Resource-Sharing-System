@@ -267,11 +267,6 @@ def handover_resource(
     if br.status != BorrowStatus.APPROVED:
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    req_end = _to_date(br.requested_end_date)
-    today = date.today()
-    if req_end and today > req_end:
-        raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
-
     br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()
 
