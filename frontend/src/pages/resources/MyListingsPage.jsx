@@ -314,6 +314,34 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
           </div>
         </div>
 
+        {/* Item Availability & Date Schedule */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-3 text-xs">
+          <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+            Item Date Schedule & Availability
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Listing Available Dates</span>
+              <p className="font-extrabold text-slate-850 dark:text-slate-100 text-xs">
+                {item.available_from && item.available_to ? (
+                  `${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} → ${new Date(item.available_to).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+                ) : item.available_from ? (
+                  `From ${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} onwards`
+                ) : (
+                  "Available Indefinitely (Active)"
+                )}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Date Listed</span>
+              <p className="font-extrabold text-slate-850 dark:text-slate-100 text-xs">
+                {item.created_at ? new Date(item.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Description & Tags */}
         {item.description && (
           <div className="space-y-1.5 text-xs">

@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi, resourceApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-function NeedDetailsModal({ request, onClose, onOpenOffer }) {
+function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
   if (!request) return null;
 
   return (
@@ -52,12 +52,17 @@ function NeedDetailsModal({ request, onClose, onOpenOffer }) {
 
           <button
             onClick={() => {
+              if (hasOffered) return;
               onClose();
               onOpenOffer(request);
             }}
-            className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 text-xs font-bold shadow-sm transition-all active:scale-95"
+            disabled={hasOffered}
+            className={`inline-flex items-center gap-1 rounded-xl px-4 py-2 text-xs font-bold shadow-sm transition-all active:scale-95 ${hasOffered
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 pointer-events-none"
+                : "bg-primary-600 hover:bg-primary-700 text-white"
+              }`}
           >
-            I Have This →
+            {hasOffered ? "Offer Sent" : "I Have This →"}
           </button>
         </div>
 
@@ -220,7 +225,6 @@ export default function WantedPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests
-            .filter((r) => !offeredWantedIds.has(r.id))
             .map((r) => {
               return (
                 <div
@@ -268,11 +272,16 @@ export default function WantedPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (r.has_offered || offeredWantedIds.has(r.id)) return;
                           openOfferModal(r);
                         }}
-                        className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                        disabled={r.has_offered || offeredWantedIds.has(r.id)}
+                        className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs ${(r.has_offered || offeredWantedIds.has(r.id))
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 pointer-events-none"
+                            : "bg-primary-600 hover:bg-primary-700 text-white"
+                          }`}
                       >
-                        I Have This
+                        {(r.has_offered || offeredWantedIds.has(r.id)) ? "Offer Sent" : "I Have This"}
                       </button>
                     </div>
 
@@ -295,6 +304,7 @@ export default function WantedPage() {
           request={selectedNeedForModal}
           onClose={() => setSelectedNeedForModal(null)}
           onOpenOffer={openOfferModal}
+          hasOffered={selectedNeedForModal.has_offered || offeredWantedIds.has(selectedNeedForModal.id)}
         />
       )}
 

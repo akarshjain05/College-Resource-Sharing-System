@@ -1,7 +1,8 @@
 import { differenceInCalendarDays } from "date-fns";
 
 export default function DueBadge({ endDate, status, className = "" }) {
-  if (!["approved", "active"].includes(status)) return null;
+  const st = (status || "").toLowerCase();
+  if (!["active", "ongoing", "late"].includes(st)) return null;
 
   const days = differenceInCalendarDays(new Date(endDate), new Date());
   

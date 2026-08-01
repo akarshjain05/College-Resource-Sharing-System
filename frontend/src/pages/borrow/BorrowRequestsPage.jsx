@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban, Calendar, User, Star } from "lucide-react";
@@ -19,14 +19,30 @@ const STATUS_STYLE = {
   late: "bg-red-50 text-red-600",
 };
 
-// Removed dead RequestCard component
+const getStatusBadge = (status) => {
+  const st = status.toLowerCase();
+  if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
+  if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
+  if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
+  if (st === "handover_requested") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Handover Requested</span>;
+  if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
+  if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
+  return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
+};
 
 export default function BorrowRequestsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [tab, setTab] = useState("borrowing"); // "borrowing" (my requests) or "lending" (incoming)
+  // Determine initial tab based on search params URL query
+  const getInitialTab = () => {
+    const pTab = searchParams.get("tab");
+    if (pTab === "incoming" || pTab === "lending") return "lending";
+    return "borrowing";
+  };
+
+  const [tab, setTab] = useState(getInitialTab); // "borrowing" (my requests) or "lending" (incoming)
   const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState({ borrowing: [], lending: [] });
   const [loading, setLoading] = useState(true);
 
   // Review & Modal states
@@ -36,6 +52,37 @@ export default function BorrowRequestsPage() {
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
   const [openChatId, setOpenChatId] = useState(null);
+
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    const urlId = searchParams.get("id");
+    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+      const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
+      if (foundBorrowing) {
+        autoOpenedRef.current = true;
+        setTab("borrowing");
+        setSelectedBookingForModal(foundBorrowing);
+        const status = foundBorrowing.status.toLowerCase();
+        if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+      } else if (bookings.lending.length > 0) {
+        const foundLending = bookings.lending.find(b => b.id === urlId);
+        if (foundLending) {
+          autoOpenedRef.current = true;
+          setTab("lending");
+          setSelectedBookingForModal(foundLending);
+          const status = foundLending.status.toLowerCase();
+          if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+          else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+          else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+          else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        }
+      }
+    }
+  }, [bookings, searchParams]);
 
   const loadBookingsList = () => {
     setLoading(true);
@@ -139,6 +186,7 @@ export default function BorrowRequestsPage() {
         return;
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
+      if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") {
         if (!window.confirm("Are you sure you want to cancel this request?")) return;
         await borrowApi.cancel(bookingId);
@@ -187,7 +235,7 @@ export default function BorrowRequestsPage() {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing", "return_requested", "late"].includes(status);
+        return ["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status);
       }
       if (subTab === "completed") {
         return ["returned", "confirmed_return", "damaged"].includes(status);
@@ -201,16 +249,7 @@ export default function BorrowRequestsPage() {
 
   const activeList = getFilteredBookings();
 
-  // Style helper for card status pills matching design
-  const getStatusBadge = (status) => {
-    const st = status.toLowerCase();
-    if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
-    if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
-    if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
-    if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
-    if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
-    return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
-  };
+
 
   return (
     <div className="space-y-6">
@@ -360,9 +399,18 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
                   {tab === "borrowing" && book.status === "approved" && (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                      <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                    </span>
+                    isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary flex items-center gap-1.5 !py-2 text-xs text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950/30 font-bold"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner for Handover
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
+                      </span>
+                    )
                   )}
                   {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
                     isStarted ? (

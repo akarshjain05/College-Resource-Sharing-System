@@ -47,6 +47,7 @@ class WantedResponse(BaseModel):
     end_date: Optional[date] = None
     is_fulfilled: bool
     created_at: datetime
+    has_offered: Optional[bool] = False
 
     user: UserResponse
     category: CategoryResponse
