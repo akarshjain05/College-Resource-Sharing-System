@@ -238,7 +238,7 @@ function ItemBorrowersSection({ requests, onAction }) {
   );
 }
 
-function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onAction }) {
+function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onAction, onDelete }) {
   if (!item) return null;
   const primaryImg = item.images?.find((img) => img.is_primary) || item.images?.[0];
   const isAvailable = item.status === "available";
@@ -335,18 +335,32 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
 
         {/* Modal Actions Footer */}
         <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
-          <Link
-            to={`/resources/${item.id}`}
-            className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 font-bold hover:underline"
-          >
-            <Eye className="h-3.5 w-3.5" /> View Public Page
-          </Link>
-          <button
-            onClick={onClose}
-            className="btn-secondary !py-2 !px-4 text-xs"
-          >
-            Close Details
-          </button>
+          <div className="flex gap-3 items-center">
+            <Link
+              to={`/resources/${item.id}`}
+              className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 font-bold hover:underline"
+            >
+              <Eye className="h-3.5 w-3.5" /> View Public Page
+            </Link>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+                  onDelete(item.id, e);
+                }
+              }}
+              className="btn-secondary !py-2 !px-4 text-xs !bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100 dark:!bg-red-950/40 dark:!text-red-400 dark:!border-red-800"
+            >
+              Delete Listing
+            </button>
+            <button
+              onClick={onClose}
+              className="btn-secondary !py-2 !px-4 text-xs"
+            >
+              Close Details
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -579,6 +593,23 @@ export default function MyListingsPage() {
         setSelectedItemForModal((prev) => ({ ...prev, status: "unavailable" }));
       }
       toast.error(err.response?.data?.detail || "Failed to publish item");
+    }
+  };
+
+  const handleDeleteItem = async (itemId, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    try {
+      await resourceApi.remove(itemId);
+      toast.success("Listing deleted successfully");
+      setItems((prev) => prev.filter((item) => item.id !== itemId));
+      setTotal((prev) => prev - 1);
+      setSelectedItemForModal(null);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to delete listing");
     }
   };
 
@@ -829,6 +860,7 @@ export default function MyListingsPage() {
           onClose={() => setSelectedItemForModal(null)}
           onTogglePublish={handleTogglePublish}
           onAction={handleAction}
+          onDelete={handleDeleteItem}
         />
       )}
 
