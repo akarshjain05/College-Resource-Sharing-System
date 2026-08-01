@@ -65,14 +65,14 @@ export default function ResourceCreatePage() {
   useEffect(() => {
     categoryApi.list()
       .then(({ data }) => {
-        setCategories(data);
-        if (data.length > 0) {
-          setForm(prev => ({ ...prev, category_id: data[0].id }));
+        const catList = Array.isArray(data) ? data : (data?.items || []);
+        setCategories(catList);
+        if (catList.length > 0) {
+          setForm(prev => ({ ...prev, category_id: prev.category_id || catList[0].id }));
         }
       })
       .catch(() => {
         toast.error("Failed to load categories.");
-        setCategories([]);
       });
   }, []);
 
@@ -277,6 +277,7 @@ export default function ResourceCreatePage() {
                     value={form.category_id}
                     onChange={update("category_id")}
                   >
+                    <option value="" disabled>-- Select a Category --</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}

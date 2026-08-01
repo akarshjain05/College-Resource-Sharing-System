@@ -103,7 +103,7 @@ export default function WantedPage() {
     ])
       .then(([reqRes, catRes, resRes]) => {
         setRequests(reqRes.data || []);
-        setCategories(catRes.data || []);
+        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.items || []));
         if (user) {
           setMyResources((resRes.data?.items || resRes.data || []).filter(r => r.owner_id === user.id));
         }
