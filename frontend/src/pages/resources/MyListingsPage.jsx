@@ -121,7 +121,7 @@ function ItemBorrowersSection({ requests, onAction }) {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800/60 pb-2.5">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 font-bold text-white shadow-xs">
-                    {req.borrower?.full_name?.charAt(0).toUpperCase() || "B"}
+                    {(req.borrower?.full_name?.charAt(0) || "B").toUpperCase()}
                   </div>
                   <div>
                     <Link
