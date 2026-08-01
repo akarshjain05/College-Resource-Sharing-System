@@ -616,7 +616,10 @@ export default function MyListingsPage() {
   const handleAction = async (action, requestId) => {
     try {
       if (action === "approve") await borrowApi.approve(requestId);
-      if (action === "reject") await borrowApi.reject(requestId, "Unavailable right now");
+      if (action === "reject") {
+        if (!window.confirm("Are you sure you want to reject this request?")) return;
+        await borrowApi.reject(requestId, "Unavailable right now");
+      }
       if (action === "handover") await borrowApi.handover(requestId);
       if (action === "confirm_return") await borrowApi.confirmReturn(requestId, 5, "");
 

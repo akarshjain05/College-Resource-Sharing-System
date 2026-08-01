@@ -364,37 +364,6 @@ export default function ResourceDetailPage() {
         {/* Right Side: Request/Booking Widget & Sidebar Controls */}
         <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
 
-          {/* Owner Info Box (from main) */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-slate-400 mb-3">Shared by</p>
-            <Link
-              to={`/users/${resource.owner.id}`}
-              className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-ink-50 dark:hover:bg-slate-800 transition-colors group"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-100 dark:bg-emerald-950/40 font-bold text-forest-700 dark:text-emerald-400">
-                {resource.owner.full_name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-display text-base font-semibold text-ink-900 dark:text-white group-hover:text-forest-700 dark:group-hover:text-emerald-400 transition-colors">
-                  {resource.owner.full_name}
-                </p>
-                <p className="text-sm text-ink-500 dark:text-slate-400">{resource.owner.department || "Campus member"}</p>
-                {resource.owner.avg_response_seconds != null && (
-                  <p className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold flex items-center gap-1 mt-1">
-                    <Clock className="h-3 w-3" />
-                    {formatAvgResponseTime(resource.owner.avg_response_seconds)}
-                  </p>
-                )}
-              </div>
-            </Link>
-
-            <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between text-xs">
-              <span className="text-ink-500 dark:text-slate-400 font-medium">Security Deposit:</span>
-              <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700 dark:text-emerald-400" : "text-ink-600 dark:text-slate-300"}`}>
-                {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
-              </span>
-            </div>
-          </div>
 
           {/* Regular Borrow Form (using your friend's wrapper styling, but main's logic) */}
           {!isOwner && resource.status !== "unavailable" && (

@@ -103,14 +103,20 @@ export default function BorrowRequestsPage() {
   const handleStatusChange = async (bookingId, newStatus) => {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
-      if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
+      if (newStatus === "rejected" || newStatus === "reject") {
+        if (!window.confirm("Are you sure you want to reject this request?")) return;
+        await borrowApi.reject(bookingId, "Not available right now");
+      }
       if (newStatus === "nudge") {
         await borrowApi.nudge(bookingId);
         toast.success("Nudge sent successfully!");
         return;
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
-      if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
+      if (newStatus === "cancelled" || newStatus === "cancel") {
+        if (!window.confirm("Are you sure you want to cancel this request?")) return;
+        await borrowApi.cancel(bookingId);
+      }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
 

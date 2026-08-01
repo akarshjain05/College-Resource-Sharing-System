@@ -5,40 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
-  const handleClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggle(e);
-  };
 
-  return (
-    <div
-      className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
-      onClick={handleClick}
-      title={isFulfilled ? "Status: Fulfilled" : "Status: Active Need"}
-    >
-      <div
-        role="switch"
-        aria-checked={isFulfilled}
-        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-          isFulfilled ? "bg-emerald-500" : "bg-amber-500"
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-            isFulfilled ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </div>
-      {label && (
-        <span className={`text-[10px] font-extrabold uppercase tracking-wider ${isFulfilled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-          {isFulfilled ? "Fulfilled" : "Active"}
-        </span>
-      )}
-    </div>
-  );
-}
 
 function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, acceptingId }) {
   if (!request) return null;
@@ -255,6 +222,7 @@ export default function MyNeedsPage() {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
     try {
       await wantedApi.delete(id);
       toast.success("Request deleted");
@@ -298,6 +266,7 @@ export default function MyNeedsPage() {
   };
 
   const handleCancelOffer = async (offerId) => {
+    if (!window.confirm("Are you sure you want to decline this offer?")) return;
     try {
       await wantedApi.cancelOffer(offerId);
       toast.success("Offer declined");
@@ -348,10 +317,16 @@ export default function MyNeedsPage() {
                     <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {r.title}
                     </h3>
-                    <FulfilledToggleSwitch
-                      isFulfilled={Boolean(r.is_fulfilled)}
-                      onToggle={(e) => handleToggleFulfill(r.id, r.is_fulfilled, e)}
-                    />
+                    <div className="flex gap-2">
+                      <span className="shrink-0 rounded-md bg-primary-50 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400 px-2 py-0.5 text-[10px] font-bold border border-primary-200 dark:border-primary-800">
+                        {r.requested_days} {r.requested_days === 1 ? 'Day' : 'Days'}
+                      </span>
+                      {r.is_fulfilled && (
+                        <span className="shrink-0 rounded-md bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
+                          Fulfilled
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                     {r.description || "No description provided."}
