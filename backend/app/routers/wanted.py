@@ -42,12 +42,19 @@ def list_wanted_requests(
     db: Session = Depends(get_db)
 ):
     from app.models.wanted import WantedOffer
-    # Sort by newest first, only unfulfilled, excluding current user's own requests and requests already offered by current user
-    return db.query(WantedRequest).filter(
+    # Sort by newest first, only unfulfilled, excluding current user's own requests
+    requests = db.query(WantedRequest).filter(
         WantedRequest.is_fulfilled == False,
-        WantedRequest.user_id != current_user.id,
-        ~WantedRequest.offers.any(WantedOffer.offerer_id == current_user.id)
+        WantedRequest.user_id != current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
+
+    for r in requests:
+        r.has_offered = db.query(WantedOffer).filter(
+            WantedOffer.wanted_request_id == r.id,
+            WantedOffer.offerer_id == current_user.id
+        ).first() is not None
+
+    return requests
 
 
 @router.get("/me", response_model=list[WantedResponse])

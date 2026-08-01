@@ -167,6 +167,46 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     assert any(n["type"] == NotificationType.RETURN_CONFIRMED.value for n in borrower_notifs_updated)
 
 
+def test_borrow_cancel_notification(client, test_user, second_user, test_category, db_session):
+    """Verify lender receives a notification when borrower cancels a request."""
+    owner_headers = auth_headers(client, test_user.email, "Password123!")
+    borrower_headers = auth_headers(client, second_user.email, "Password123!")
+
+    res_resp = client.post(
+        "/api/v1/resources",
+        headers=owner_headers,
+        json={
+            "title": "Projector",
+            "description": "HD Portable Projector",
+            "condition": "good",
+            "quantity": 1,
+            "category_id": str(test_category.id),
+            "max_borrow_days": 3,
+        },
+    )
+    resource_id = res_resp.json()["id"]
+
+    req_resp = client.post(
+        "/api/v1/borrow-requests",
+        headers=borrower_headers,
+        json={
+            "resource_id": resource_id,
+            "requested_start_date": "2026-08-01",
+            "requested_end_date": "2026-08-03",
+            "purpose": "Presentation",
+        },
+    )
+    req_id = req_resp.json()["id"]
+
+    # Borrower cancels request
+    cancel_resp = client.post(f"/api/v1/borrow-requests/{req_id}/cancel", headers=borrower_headers)
+    assert cancel_resp.status_code == 200
+
+    # Verify owner (lender) receives cancellation notification
+    owner_notifs = client.get("/api/v1/notifications", headers=owner_headers).json()
+    assert any(n["title"] == "Borrow request cancelled" for n in owner_notifs)
+
+
 def test_notify_all_except_owner_bg_helper(db_session, test_user, second_user):
     """Test background notification helper for newly listed resources."""
     resource_id = uuid.uuid4()
