@@ -237,7 +237,8 @@ export default function BorrowRequestsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Review states
+  // Review & Modal states
+  const [selectedBookingForModal, setSelectedBookingForModal] = useState(null);
   const [reviewingId, setReviewingId] = useState(null);
   const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
@@ -501,7 +502,8 @@ export default function BorrowRequestsPage() {
             return (
             <div
               key={book.id}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 hover:border-slate-300 transition-colors"
+              onClick={() => setSelectedBookingForModal(book)}
+              className="cursor-pointer rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 transition-colors"
             >
               {/* Card Header (Item and Status Badge) */}
               <div className="flex items-start justify-between gap-4">
@@ -699,6 +701,66 @@ export default function BorrowRequestsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Details Modal */}
+      {selectedBookingForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
+            <button
+              onClick={() => setSelectedBookingForModal(null)}
+              className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8">
+              <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
+                {selectedBookingForModal.resource?.image_placeholder || "🪜"}
+              </div>
+              <div>
+                <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                  <Link to={`/resources/${selectedBookingForModal.resource?.id}`} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
+                    {selectedBookingForModal.resource?.title}
+                  </Link>
+                </h2>
+                <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5">
+                  {tab === "borrowing" ? `Lender: ${selectedBookingForModal.lender?.full_name}` : `Borrower: ${selectedBookingForModal.borrower?.full_name}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                <span className="text-[9px] font-bold uppercase text-slate-400 block">Lending Window</span>
+                <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs">
+                  {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} →{" "}
+                  {new Date(selectedBookingForModal.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Amount</span>
+                <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
+              <span className="inline-block rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-3 py-1 text-xs font-bold uppercase border border-emerald-200 dark:border-emerald-800">
+                {selectedBookingForModal.status?.replace("_", " ")}
+              </span>
+            </div>
+
+            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4">
+              <button
+                onClick={() => setSelectedBookingForModal(null)}
+                className="btn-secondary !py-2 !px-4 text-xs"
+              >
+                Close Details
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import {
   PlusCircle,
   Calendar,
   Bell,
+  BellOff,
   User,
   LogOut,
   ShieldCheck,
@@ -45,6 +46,31 @@ export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pushEnabled, setPushEnabled] = useState(
+    () => localStorage.getItem("notif_push_enabled") !== "false"
+  );
+  const [emailEnabled, setEmailEnabled] = useState(
+    () => localStorage.getItem("notif_email_enabled") !== "false"
+  );
+  const [showNotifMenu, setShowNotifMenu] = useState(false);
+
+  const togglePushNotifications = () => {
+    setPushEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("notif_push_enabled", String(next));
+      toast.success(next ? "Push notifications ON" : "Push notifications OFF");
+      return next;
+    });
+  };
+
+  const toggleEmailNotifications = () => {
+    setEmailEnabled((prev) => {
+      const next = !prev;
+      localStorage.setItem("notif_email_enabled", String(next));
+      toast.success(next ? "Email notifications ON" : "Email notifications OFF");
+      return next;
+    });
+  };
 
   const [selectedLocation, setSelectedLocation] = useState(
     localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"

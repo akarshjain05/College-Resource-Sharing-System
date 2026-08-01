@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell,
+  BellOff,
   CheckCheck,
   CheckCircle,
   Mail,
@@ -157,12 +158,15 @@ export default function NotificationsPage() {
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     return `${days} day${days > 1 ? "s" : ""} ago`;
   };
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Notifications</h1>
+          <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Notifications
+          </h1>
           <p className="text-xs text-slate-400 dark:text-slate-550 font-semibold uppercase tracking-wider mt-0.5">Inbox notifications alert log</p>
         </div>
 
