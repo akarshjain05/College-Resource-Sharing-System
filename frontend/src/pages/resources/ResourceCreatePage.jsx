@@ -77,7 +77,15 @@ export default function ResourceCreatePage() {
   }, []);
 
   const update = (field) => (e) => {
-    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
+    let value = e.target.value;
+    if (e.target.type === "number") {
+      if (value === "") {
+        value = "";
+      } else {
+        const stripped = value.replace(/^0+(?=\d)/, "");
+        value = stripped === "" ? 0 : Number(stripped);
+      }
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -111,11 +119,14 @@ export default function ResourceCreatePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.daily_price <= 0) {
+    const dailyPriceNum = form.daily_price === "" ? 0 : Number(form.daily_price);
+    const depositAmountNum = form.deposit_amount === "" ? 0 : Number(form.deposit_amount);
+
+    if (isNaN(dailyPriceNum) || dailyPriceNum <= 0) {
       toast.error("Daily price must be greater than 0.");
       return;
     }
-    if (form.deposit_amount < 0) {
+    if (isNaN(depositAmountNum) || depositAmountNum < 0) {
       toast.error("Deposit amount must be 0 or more.");
       return;
     }
@@ -133,10 +144,66 @@ export default function ResourceCreatePage() {
 
     const selectedCat = categories.find(c => c.id === form.category_id);
     const categoryName = selectedCat ? selectedCat.name : "Other";
-    const finalPlaceholder = photos[0]?.previewUrl || "🛠️";
 
+    const emojiMap = {
+      "Tools": "🔌",
+      "Sports": "🏸",
+      "Party": "❄️",
+      "Kitchen": "🌪️",
+      "Camping": "⛺",
+    };
+    const finalPlaceholder = photos[0]?.previewUrl || emojiMap[categoryName] || "🛠️";
 
-    // 1. Trigger actual endpoint
+    // 1. Add to localStorage mocks
+    const currentLoc = form.location;
+    const rawMocks = localStorage.getItem("share_neighbour_mocks");
+    let savedMocks = {};
+    if (rawMocks) {
+      savedMocks = JSON.parse(rawMocks);
+    } else {
+      savedMocks = {
+        "Koramangala, Bengaluru": []
+      };
+    }
+
+    const newItem = {
+      id: generatedId,
+      title: form.title,
+      category: categoryName,
+      daily_price: form.daily_price,
+      deposit_amount: form.deposit_amount,
+      average_rating: 5.0,
+      reviews_count: 0,
+      distance: "0.1 km",
+      owner: user?.full_name || "You",
+      image_placeholder: finalPlaceholder,
+      description: form.description,
+      coordinates: { x: 30 + Math.random() * 40, y: 25 + Math.random() * 40 },
+      is_primary: true,
+      condition: form.condition.charAt(0).toUpperCase() + form.condition.slice(1),
+    };
+
+    if (!savedMocks[currentLoc]) savedMocks[currentLoc] = [];
+    savedMocks[currentLoc].unshift(newItem);
+    localStorage.setItem("share_neighbour_mocks", JSON.stringify(savedMocks));
+
+    // Update user sharing score in localStorage
+    const localUser = JSON.parse(sessionStorage.getItem("share_neighbour_user_score") || "15");
+    sessionStorage.setItem("share_neighbour_user_score", String(localUser + 1));
+
+    // 2. Add notification log
+    const savedNotifs = JSON.parse(localStorage.getItem("share_neighbour_notifs") || "[]");
+    savedNotifs.unshift({
+      id: "notif-" + Date.now(),
+      title: "New Item Published",
+      message: `Your item "${form.title}" is now active in ${currentLoc}.`,
+      created_at: new Date().toISOString(),
+      is_read: false,
+      type: "star",
+    });
+    localStorage.setItem("share_neighbour_notifs", JSON.stringify(savedNotifs));
+
+    // 3. Trigger actual endpoint
     try {
       const response = await resourceApi.create({
         title: form.title,
@@ -145,7 +212,7 @@ export default function ResourceCreatePage() {
         quantity: 1,
         pickup_location: form.location,
         tags: categoryName.toLowerCase(),
-        deposit_amount: form.deposit_amount,
+        deposit_amount: depositAmountNum,
         max_borrow_days: 7,
         category_id: form.category_id,
         available_from: form.available_from || null,
@@ -339,8 +406,8 @@ export default function ResourceCreatePage() {
                     key={opt.value}
                     onClick={() => selectCondition(opt.value)}
                     className={`p-4 rounded-2xl border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between ${isSelected
-                        ? "border-primary-600 bg-primary-50/10 dark:bg-primary-950/20 text-primary-800 dark:text-primary-300 shadow-sm"
-                        : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/50 text-slate-600 dark:text-slate-400"
+                      ? "border-primary-600 bg-primary-50/10 dark:bg-primary-950/20 text-primary-800 dark:text-primary-300 shadow-sm"
+                      : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/50 text-slate-600 dark:text-slate-400"
                       }`}
                   >
                     <div>
@@ -529,7 +596,7 @@ export default function ResourceCreatePage() {
 
               <div className="flex justify-between items-center text-xs font-semibold">
                 <span className="text-slate-500 dark:text-slate-400">Rental Rate:</span>
-                <span className="text-primary-600 dark:text-primary-400 font-extrabold">₹{createdItem.daily_price} / day</span>
+                <span className="text-primary-600 dark:text-primary-400 font-extrabold">₹{createdItem.daily_price ?? 0} / day</span>
               </div>
             </div>
 

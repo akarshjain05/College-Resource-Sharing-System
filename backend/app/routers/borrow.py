@@ -37,6 +37,14 @@ def _borrow_query(db: Session):
     )
 
 
+def _to_date(val) -> Optional[date]:
+    if val is None:
+        return None
+    if isinstance(val, datetime):
+        return val.date()
+    return val
+
+
 @router.post("", response_model=BorrowRequestResponse, status_code=status.HTTP_201_CREATED)
 def create_borrow_request(
     payload: BorrowRequestCreate,
@@ -135,7 +143,7 @@ def approve_borrow_request(
     if br.status != BorrowStatus.REQUESTED:
         raise AppException("Only pending requests can be approved", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    if date.today() > br.requested_end_date:
+    if br.requested_end_date and date.today() > _to_date(br.requested_end_date):
         raise AppException("Cannot approve a request whose lending window has already expired", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     # Lock resource explicitly to prevent concurrent approvals
@@ -169,6 +177,33 @@ def approve_borrow_request(
             (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
         )
     lender.response_count += 1
+
+    resource.quantity_available -= 1
+    if resource.quantity_available <= 0:
+        resource.status = ResourceStatus.BORROWED
+
+        # Auto-decline any remaining pending requests for this resource
+        other_pending_requests = (
+            db.query(BorrowRequest)
+            .filter(
+                BorrowRequest.resource_id == resource.id,
+                BorrowRequest.id != br.id,
+                BorrowRequest.status == BorrowStatus.REQUESTED,
+            )
+            .all()
+        )
+
+        for other_br in other_pending_requests:
+            other_br.status = BorrowStatus.REJECTED
+            other_br.rejection_reason = "Resource is no longer available (approved for another borrower)."
+            create_notification(
+                db,
+                other_br.borrower_id,
+                NotificationType.BORROW_REJECTED,
+                "Borrow Request Auto-Declined",
+                f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
+                link=f"/borrow-requests/{other_br.id}",
+            )
 
     db.commit()
 
@@ -232,20 +267,45 @@ def handover_resource(
     if br.status != BorrowStatus.APPROVED:
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    if date.today() < br.requested_start_date:
-        raise AppException("Cannot hand over resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
-    if date.today() > br.requested_end_date:
+    req_end = _to_date(br.requested_end_date)
+    today = date.today()
+    if req_end and today > req_end:
         raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
-    resource_title = br.resource.title if br.resource else "item"
-
-    br.status = BorrowStatus.ACTIVE
+    br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()
 
     create_notification(
         db, br.borrower_id, NotificationType.SYSTEM,
-        "Resource Handed Over",
-        f"'{resource_title}' has been handed over to you.",
+        "Handover Pending Confirmation",
+        f"'{br.resource.title}' has been handed over by the lender. Please confirm receipt.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
+
+
+@router.post("/{request_id}/confirm-handover", response_model=BorrowRequestResponse)
+def confirm_handover_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can confirm receipt")
+    if br.status != BorrowStatus.HANDOVER_REQUESTED:
+        raise AppException("Only pending handovers can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.ACTIVE
+    db.commit()
+    db.refresh(br)
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "Handover Confirmed",
+        f"'{br.resource.title}' handover was confirmed by {current_user.full_name}.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
@@ -340,11 +400,11 @@ def return_resource(
     if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
         raise AppException("Only active or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    if date.today() < br.requested_start_date:
+    if br.requested_start_date and date.today() < _to_date(br.requested_start_date):
         raise AppException("Cannot return resource before the requested start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
     resource_title = br.resource.title if br.resource else "item"
-    br.actual_return_date = date.today()
+    br.actual_return_date = datetime.now(timezone.utc)
     br.damage_report = payload.damage_report
     br.lender_rating = payload.lender_rating
     br.lender_review = payload.lender_review
@@ -387,7 +447,10 @@ def confirm_return_resource(
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
     if borrower:
         if not is_damaged:
-            if br.actual_return_date and br.actual_return_date > br.requested_end_date:
+            # Only apply normal trust adjustments for non-damaged returns
+            actual_ret = _to_date(br.actual_return_date)
+            req_end = _to_date(br.requested_end_date)
+            if actual_ret and req_end and actual_ret > req_end:
                 borrower.trust_score -= 5
             else:
                 borrower.trust_score += 2
