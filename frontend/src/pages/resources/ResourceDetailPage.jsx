@@ -285,7 +285,19 @@ export default function ResourceDetailPage() {
 
 
           {/* Reviews & Overall score card (Screen 6) */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
+          {reviews.length > 0 && (() => {
+            const ratingCounts = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+            reviews.forEach(r => {
+              if (r.rating >= 1 && r.rating <= 5) ratingCounts[r.rating]++;
+            });
+            const ratingDistribution = [5, 4, 3, 2, 1].map(stars => ({
+              stars,
+              count: ratingCounts[stars],
+              percentage: reviews.length > 0 ? Math.round((ratingCounts[stars] / reviews.length) * 100) + "%" : "0%"
+            }));
+            
+            return (
+              <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Reviews & Trust Score</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
@@ -304,12 +316,7 @@ export default function ResourceDetailPage() {
               </div>
 
               <div className="md:col-span-8 space-y-2">
-                {[
-                  { stars: 5, count: 11, percentage: "73%" },
-                  { stars: 4, count: 3, percentage: "20%" },
-                  { stars: 3, count: 1, percentage: "7%" },
-                  { stars: 2, count: 0, percentage: "0%" },
-                ].map((row) => (
+                {ratingDistribution.map((row) => (
                   <div key={row.stars} className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-semibold">
                     <span className="w-3 text-right">{row.stars}★</span>
                     <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
@@ -332,7 +339,9 @@ export default function ResourceDetailPage() {
                       </div>
                       <div>
                         <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{rev.reviewer?.full_name}</h4>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">12 Aug 2026</p>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
+                          {new Date(rev.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-0.5">
@@ -348,6 +357,8 @@ export default function ResourceDetailPage() {
               ))}
             </div>
           </div>
+            );
+          })()}
         </div>
 
         {/* Right Side: Request/Booking Widget & Sidebar Controls */}
