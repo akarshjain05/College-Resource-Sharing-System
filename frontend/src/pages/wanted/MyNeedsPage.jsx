@@ -185,7 +185,7 @@ export default function MyNeedsPage() {
     ])
       .then(([reqRes, catRes]) => {
         setRequests(reqRes.data || []);
-        setCategories(catRes.data || []);
+        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.items || []));
       })
       .finally(() => setLoading(false));
   };

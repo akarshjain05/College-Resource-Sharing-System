@@ -109,7 +109,7 @@ export default function AppShell() {
   useEffect(() => {
     if (showPostNeedModal && categories.length === 0) {
       categoryApi.list()
-        .then(({ data }) => setCategories(data))
+        .then(({ data }) => setCategories(Array.isArray(data) ? data : (data?.items || [])))
         .catch(() => { });
     }
   }, [showPostNeedModal, categories.length]);
