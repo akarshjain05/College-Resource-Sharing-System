@@ -13,12 +13,7 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      toast.error("Invalid or missing reset token.");
-      navigate("/login");
-    }
-  }, [token, navigate]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +34,26 @@ export default function ResetPasswordPage() {
     }
   };
 
-  if (!token) return null;
+  if (!token) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-paper px-4">
+        <div className="w-full max-w-sm text-center">
+          <div className="card p-6">
+            <h2 className="text-lg font-semibold text-red-600 mb-2">Missing Reset Token</h2>
+            <p className="text-sm text-ink-600 mb-4">
+              The link you clicked doesn't contain a valid reset token. It should look something like <code className="bg-ink-100 p-1 rounded">?token=...</code> at the end of the URL.
+            </p>
+            <p className="text-xs text-ink-500 mb-4 break-all">
+              Current URL: {window.location.href}
+            </p>
+            <Link to="/forgot-password" className="btn-primary w-full inline-block">
+              Request a new link
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper px-4">
