@@ -91,7 +91,37 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
         f'<a href="{reset_link}" style="background:#C08A2E;color:#fff;padding:10px 16px;'
         f'border-radius:6px;text-decoration:none;">Reset password</a>',
     )
-    await send_email(to_email, "Reset your CRSS password", html)
+    
+    api_key = settings.BREVO_API_KEY.strip() if settings.BREVO_API_KEY else None
+    if api_key and not ("pytest" in sys.modules):
+        url = "https://api.brevo.com/v3/smtp/email"
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "api-key": api_key,
+        }
+        payload = {
+            "sender": {
+                "name": settings.BREVO_SENDER_NAME or settings.PROJECT_NAME,
+                "email": settings.BREVO_SENDER_EMAIL or "security@yourdomain.com",
+            },
+            "to": [{"email": to_email, "name": full_name}],
+            "subject": "Reset your CRSS password",
+            "htmlContent": html,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                response = await client.post(url, json=payload, headers=headers)
+                if response.is_success:
+                    logger.info("Password reset email sent via Brevo to %s", to_email)
+                else:
+                    logger.error("Brevo API request failed: %s", response.text)
+                    await send_email(to_email, "Reset your CRSS password", html)
+        except Exception:
+            logger.exception("Failed to dispatch Brevo reset email")
+            await send_email(to_email, "Reset your CRSS password", html)
+    else:
+        await send_email(to_email, "Reset your CRSS password", html)
 
     # Forward event to notification microservice
     try:

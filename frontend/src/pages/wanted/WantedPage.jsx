@@ -204,12 +204,12 @@ export default function WantedPage() {
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Explore requests from students & offer solutions</p>
         </div>
-        <button
+        {/* <button
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
         >
           <Plus className="h-4 w-4" /> Post a Need
-        </button>
+        </button> */}
       </div>
 
       {loading ? (
@@ -237,9 +237,15 @@ export default function WantedPage() {
                       <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {r.title}
                       </h3>
-                      <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {r.category?.name}
-                      </span>
+                      <div className="flex gap-1">
+                        <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {r.category?.name}
+                        </span>
+                        <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(r.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(r.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
                     </div>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                       {r.description || "No description provided."}

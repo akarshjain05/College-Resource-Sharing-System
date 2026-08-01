@@ -1,44 +1,11 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
-  const handleClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggle(e);
-  };
 
-  return (
-    <div
-      className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
-      onClick={handleClick}
-      title={isFulfilled ? "Status: Fulfilled" : "Status: Active Need"}
-    >
-      <div
-        role="switch"
-        aria-checked={isFulfilled}
-        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-          isFulfilled ? "bg-emerald-500" : "bg-amber-500"
-        }`}
-      >
-        <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-            isFulfilled ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </div>
-      {label && (
-        <span className={`text-[10px] font-extrabold uppercase tracking-wider ${isFulfilled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-          {isFulfilled ? "Fulfilled" : "Active"}
-        </span>
-      )}
-    </div>
-  );
-}
 
 function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, acceptingId }) {
   if (!request) return null;
@@ -109,6 +76,16 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
                       <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
                         Item Offered: {offer.resource?.title || "Resource"}
                       </Link>
+                      {offer.resource && (
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+                            Deposit: ₹{offer.resource.deposit_amount}
+                          </span>
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md capitalize">
+                            Cond: {offer.resource.condition}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {isOfferAccepted ? (
@@ -166,13 +143,16 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
 export default function MyNeedsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [requests, setRequests] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState(null);
   
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const [formData, setFormData] = useState({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
@@ -183,9 +163,27 @@ export default function MyNeedsPage() {
       wantedApi.myNeeds(), 
       categoryApi.list(),
     ])
-      .then(([reqRes, catRes]) => {
-        setRequests(reqRes.data || []);
+      .then(async ([reqRes, catRes]) => {
+        const reqs = reqRes.data || [];
+        setRequests(reqs);
         setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.items || []));
+
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          const foundReq = reqs.find(r => String(r.id) === targetId);
+          if (foundReq) {
+            setSelectedNeedForModal(foundReq);
+            try {
+              const res = await wantedApi.listOffers(foundReq.id);
+              setModalOffers(res.data || []);
+            } catch (err) {
+              setModalOffers([]);
+            }
+          }
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("id");
+          setSearchParams(newParams, { replace: true });
+        }
       })
       .finally(() => setLoading(false));
   };
@@ -209,7 +207,7 @@ export default function MyNeedsPage() {
       await wantedApi.create(formData);
       toast.success("Wanted request posted!");
       setShowModal(false);
-      setFormData({ title: "", description: "", category_id: "" });
+      setFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
@@ -245,6 +243,7 @@ export default function MyNeedsPage() {
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this request?")) return;
     try {
       await wantedApi.delete(id);
       toast.success("Request deleted");
@@ -288,6 +287,7 @@ export default function MyNeedsPage() {
   };
 
   const handleCancelOffer = async (offerId) => {
+    if (!window.confirm("Are you sure you want to decline this offer?")) return;
     try {
       await wantedApi.cancelOffer(offerId);
       toast.success("Offer declined");
@@ -304,12 +304,12 @@ export default function MyNeedsPage() {
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Manage your posted campus requests and view incoming offers</p>
         </div>  
-        <button
+        {/* <button
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
         >
           <Plus className="h-4 w-4" /> Post New Need
-        </button>
+        </button> */}
       </div>
 
       {loading ? (
@@ -338,10 +338,17 @@ export default function MyNeedsPage() {
                     <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {r.title}
                     </h3>
-                    <FulfilledToggleSwitch
-                      isFulfilled={Boolean(r.is_fulfilled)}
-                      onToggle={(e) => handleToggleFulfill(r.id, r.is_fulfilled, e)}
-                    />
+                    <div className="flex gap-2">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <Clock className="h-3.5 w-3.5" />
+                        {new Date(r.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(r.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </div>
+                      {r.is_fulfilled && (
+                        <span className="shrink-0 rounded-md bg-emerald-50 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
+                          Fulfilled
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                     {r.description || "No description provided."}
@@ -398,21 +405,45 @@ export default function MyNeedsPage() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
-              <div>
-                <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
-                <select
-                  required
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="col-span-1 md:col-span-2">
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
+                  <select
+                    required
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed From</label>
+                  <input
+                    type="date"
+                    required
+                    min={today}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed Until</label>
+                  <input
+                    type="date"
+                    required
+                    min={formData.start_date || today}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Description (Optional)</label>

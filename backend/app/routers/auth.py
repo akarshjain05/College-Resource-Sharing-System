@@ -401,8 +401,9 @@ def change_password(
 @limiter.limit("3/minute")
 def forgot_password(request: Request, payload: PasswordResetRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email).first()
-    if user:
-        reset_token = create_access_token(str(user.id), {"purpose": "password_reset"})
+    if user and user.hashed_password:
+        hash_fragment = user.hashed_password[-10:]
+        reset_token = create_access_token(str(user.id), {"purpose": "password_reset", "h": hash_fragment})
         reset_link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={reset_token}"
         background_tasks.add_task(send_password_reset_email, user.email, user.full_name, reset_link)
     # Always return 202 regardless of whether the email exists, to avoid user enumeration.
@@ -418,6 +419,10 @@ def reset_password(request: Request, payload: PasswordResetConfirm, db: Session 
     user = db.query(User).filter(User.id == uuid.UUID(data["sub"])).first()
     if not user:
         raise AppException("User not found", status_code=status.HTTP_404_NOT_FOUND, error_code="USER_NOT_FOUND")
+        
+    if user.hashed_password and data.get("h") != user.hashed_password[-10:]:
+        raise AppException("This reset link has already been used", status_code=status.HTTP_400_BAD_REQUEST, error_code="USED_RESET_TOKEN")
+        
     user.hashed_password = hash_password(payload.new_password)
     db.commit()
     return None

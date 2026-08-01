@@ -103,7 +103,10 @@ export default function AppShell() {
     return () => window.removeEventListener("refreshUnreadCount", fetchUnreadCount);
   }, []);
 
-  useNotificationSocket(() => setUnreadCount((prev) => prev + 1), user);
+  useNotificationSocket(() => {
+    setUnreadCount((prev) => prev + 1);
+    window.dispatchEvent(new Event("refreshNotificationsList"));
+  }, user);
   usePushNotification(user);
 
   // Theme dark/light mode state and logic
@@ -131,7 +134,9 @@ export default function AppShell() {
   };
 
   const [showPostNeedModal, setShowPostNeedModal] = useState(false);
-  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "" });
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -153,13 +158,13 @@ export default function AppShell() {
       await wantedApi.create(needFormData);
       toast.success("Wanted request posted!");
       setShowPostNeedModal(false);
-      setNeedFormData({ title: "", description: "", category_id: "" });
+      setNeedFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
 
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
 
-      if (location.pathname !== "/wanted") {
-        navigate("/wanted");
+      if (location.pathname !== "/my-needs") {
+        navigate("/my-needs");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
@@ -191,7 +196,7 @@ export default function AppShell() {
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
-            const isActive = location.pathname === to || (to !== "/dashboard" && location.pathname.startsWith(to));
+            const isActive = location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to));
             return (
               <Link
                 key={to}
@@ -425,25 +430,50 @@ export default function AppShell() {
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
-                    value={needFormData.category_id}
-                    onChange={(e) => setNeedFormData({ ...needFormData, category_id: e.target.value })}
-                  >
-                    <option value="" className="text-slate-400">Select a category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id} className="text-slate-850 dark:text-slate-100 bg-white dark:bg-slate-950">
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
-                    <ChevronDown className="h-4 w-4" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
+                  <div className="relative">
+                    <select
+                      required
+                      className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
+                      value={needFormData.category_id}
+                      onChange={(e) => setNeedFormData({ ...needFormData, category_id: e.target.value })}
+                    >
+                      <option value="" className="text-slate-400">Select a category</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id} className="text-slate-850 dark:text-slate-100 bg-white dark:bg-slate-950">
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
+                      <ChevronDown className="h-4 w-4" />
+                    </div>
                   </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Needed From</label>
+                  <input
+                    type="date"
+                    required
+                    min={today}
+                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
+                    value={needFormData.start_date}
+                    onChange={(e) => setNeedFormData({ ...needFormData, start_date: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Needed Until</label>
+                  <input
+                    type="date"
+                    required
+                    min={needFormData.start_date || today}
+                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
+                    value={needFormData.end_date}
+                    onChange={(e) => setNeedFormData({ ...needFormData, end_date: e.target.value })}
+                  />
                 </div>
               </div>
 

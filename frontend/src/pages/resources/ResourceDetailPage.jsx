@@ -393,7 +393,6 @@ export default function ResourceDetailPage() {
 
         {/* Right Side: Request/Booking Widget & Sidebar Controls */}
         <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-
           {/* Regular Borrow Form (using your friend's wrapper styling, but main's logic) */}
           {!isOwner && resource.status !== "unavailable" && (
             <form onSubmit={handleBorrowRequest} className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-lg space-y-5">
@@ -515,7 +514,6 @@ export default function ResourceDetailPage() {
               </button>
             </form>
           )}
-
 
           {/* Safety instructions */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/30 p-4.5 flex gap-2.5 text-slate-500 dark:text-slate-400">

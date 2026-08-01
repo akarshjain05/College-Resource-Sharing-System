@@ -32,7 +32,7 @@ def get_all_resources(
     for item in items:
         item.is_wishlisted = False
         
-    return {"items": items, "total": total}
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
 
 @router.get("/borrows", response_model=list[BorrowRequestResponse])
 def get_all_borrows(
@@ -43,5 +43,9 @@ def get_all_borrows(
     query = db.query(BorrowRequest)
     if status:
         query = query.filter(BorrowRequest.status == status)
-        
-    return query.order_by(BorrowRequest.created_at.desc()).all()
+    items = query.order_by(BorrowRequest.created_at.desc()).all()
+    for item in items:
+        if item.resource:
+            item.resource.is_wishlisted = False
+            
+    return items
