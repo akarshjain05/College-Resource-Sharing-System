@@ -90,6 +90,7 @@ export const wantedApi = {
   offer: (id, resourceId) => api.post(`/wanted/${id}/offer`, { resource_id: resourceId }),
   listOffers: (id) => api.get(`/wanted/${id}/offers`),
   acceptOffer: (offerId) => api.post(`/wanted/offers/${offerId}/accept`),
+  cancelOffer: (offerId) => api.delete(`/wanted/offers/${offerId}`),
   delete: (id) => api.delete(`/wanted/${id}`),
 };
 

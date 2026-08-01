@@ -36,7 +36,7 @@ export default function ResourceCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState([]); // Array of { file, previewUrl }
   const [categories, setCategories] = useState([]);
-  
+
   // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdItem, setCreatedItem] = useState(null);
@@ -91,7 +91,7 @@ export default function ResourceCreatePage() {
       toast.error("You can only select up to 3 images.");
       return;
     }
-    
+
     files.forEach(file => {
       if (!file.type.startsWith("image/")) {
         toast.error(`${file.name} is not an image file.`);
@@ -204,7 +204,7 @@ export default function ResourceCreatePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Side: Listing Form (8 columns) */}
         <form onSubmit={handleSubmit} className="lg:col-span-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm space-y-8">
-          
+
           {/* Section 1: Item Media */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -216,7 +216,7 @@ export default function ResourceCreatePage() {
                 {photos.length}/3 Selected
               </span>
             </div>
-            
+
             <div className="space-y-4">
               {/* Premium Drag & Drop style trigger */}
               {photos.length < 3 && (
@@ -236,14 +236,14 @@ export default function ResourceCreatePage() {
                   {photos.map((item, idx) => (
                     <div
                       key={idx}
-                      className="relative aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 overflow-hidden group shadow-xs animate-in zoom-in-75 duration-100"
+                      className="relative aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 overflow-hidden group shadow-xs animate-in zoom-in-75 duration-100"
                     >
                       <img
                         src={item.previewUrl}
                         alt={`Preview ${idx + 1}`}
                         className="h-full w-full object-cover"
                       />
-                      
+
                       {idx === 0 && (
                         <span className="absolute top-2.5 left-2.5 bg-primary-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-md tracking-wider uppercase">
                           Cover
@@ -293,7 +293,7 @@ export default function ResourceCreatePage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Location Block</label>
                 <input
                   required
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.location}
                   onChange={update("location")}
                   placeholder="e.g. Koramangala, Bengaluru"
@@ -318,7 +318,7 @@ export default function ResourceCreatePage() {
                 required
                 minLength={10}
                 rows={4}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 resize-none"
                 value={form.description}
                 onChange={update("description")}
                 placeholder="e.g. Describe the item specifications, what accessories are included, and when it's available for pickup..."
@@ -337,11 +337,10 @@ export default function ResourceCreatePage() {
                     type="button"
                     key={opt.value}
                     onClick={() => selectCondition(opt.value)}
-                    className={`p-4 rounded-2xl border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between ${
-                      isSelected
+                    className={`p-4 rounded-2xl border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between ${isSelected
                         ? "border-primary-600 bg-primary-50/10 dark:bg-primary-950/20 text-primary-800 dark:text-primary-300 shadow-sm"
                         : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/50 text-slate-600 dark:text-slate-400"
-                    }`}
+                      }`}
                   >
                     <div>
                       <p className="text-xs font-bold">{opt.label}</p>
@@ -380,7 +379,7 @@ export default function ResourceCreatePage() {
                 <input
                   type="date"
                   min={form.available_from || todayDateString}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
                   value={form.available_to}
                   onChange={update("available_to")}
                 />
@@ -394,7 +393,7 @@ export default function ResourceCreatePage() {
               <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Pricing details</h3>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">Determine the daily borrow fee and security backup deposit.</p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Daily Price (₹)</label>
@@ -402,7 +401,7 @@ export default function ResourceCreatePage() {
                   type="number"
                   min={1}
                   required
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.daily_price}
                   onChange={update("daily_price")}
                   placeholder="e.g. 150"
@@ -414,7 +413,7 @@ export default function ResourceCreatePage() {
                   type="number"
                   min={0}
                   required
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.deposit_amount}
                   onChange={update("deposit_amount")}
                   placeholder="e.g. 500"
@@ -439,13 +438,13 @@ export default function ResourceCreatePage() {
 
         {/* Right Side: Pro Tips & Trend Analytics (4 columns) */}
         <div className="lg:col-span-4 space-y-4">
-          
+
           {/* Listing Tips Card */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
             <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400" /> Professional Tips
             </h3>
-            
+
             <ul className="space-y-3 text-[11px] font-medium text-slate-650 dark:text-slate-400 leading-normal">
               <li className="flex gap-2">
                 <span className="text-primary-600 dark:text-primary-400 font-extrabold">•</span>
@@ -484,10 +483,10 @@ export default function ResourceCreatePage() {
       {showSuccessModal && createdItem && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-850 p-6 max-w-md w-full shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
-            
+
             {/* Sparkles background effect */}
             <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-primary-500 via-purple-500 to-emerald-500" />
-            
+
             {/* Success icon */}
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 shadow-sm">
               <CheckCircle className="h-8 w-8" />
@@ -506,9 +505,9 @@ export default function ResourceCreatePage() {
             {/* Your Contribution Card details */}
             <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-800 text-left space-y-3">
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Your Contribution</p>
-              
+
               <div className="flex gap-3 items-center">
-                <div className="h-12 w-12 rounded-xl bg-white dark:bg-slate-905 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center text-3xl shadow-xs">
+                <div className="h-12 w-12 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center text-3xl shadow-xs">
                   {createdItem.image_placeholder.startsWith("data:") ? (
                     <img src={createdItem.image_placeholder} alt="Contribution preview" className="h-full w-full object-cover" />
                   ) : (
@@ -559,7 +558,7 @@ export default function ResourceCreatePage() {
                 <span>Back to Explore</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              
+
               <button
                 onClick={() => {
                   setShowSuccessModal(false);

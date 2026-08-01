@@ -40,7 +40,7 @@ function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
   );
 }
 
-function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onDelete, acceptingId }) {
+function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, acceptingId }) {
   if (!request) return null;
 
   // Deduplicate offers by offerer ID + resource title/id
@@ -120,13 +120,24 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onDelete, a
                         Fulfilled
                       </span>
                     ) : (
-                      <button
-                        disabled={Boolean(acceptingId)}
-                        onClick={() => onAcceptOffer(offer.id, offer.resource_id, request)}
-                        className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        {isAcceptingThis ? "Accepting..." : "Accept Offer"}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          disabled={Boolean(acceptingId)}
+                          onClick={() => onAcceptOffer(offer.id, offer.resource_id, request)}
+                          className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3.5 py-1.5 text-xs font-bold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          {isAcceptingThis ? "Accepting..." : "Accept Offer"}
+                        </button>
+                        {onCancelOffer && (
+                          <button
+                            onClick={() => onCancelOffer(offer.id)}
+                            className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-500 hover:text-red-600 dark:hover:text-red-400 px-2.5 py-1.5 text-xs font-bold transition-all"
+                            title="Decline Offer"
+                          >
+                            Decline
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -276,6 +287,16 @@ export default function MyNeedsPage() {
     }
   };
 
+  const handleCancelOffer = async (offerId) => {
+    try {
+      await wantedApi.cancelOffer(offerId);
+      toast.success("Offer declined");
+      setModalOffers((prev) => prev.filter((o) => o.id !== offerId));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to decline offer");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -350,6 +371,7 @@ export default function MyNeedsPage() {
           acceptingId={acceptingId}
           onClose={() => setSelectedNeedForModal(null)}
           onAcceptOffer={acceptOffer}
+          onCancelOffer={handleCancelOffer}
           onDelete={handleDelete}
         />
       )}

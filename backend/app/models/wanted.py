@@ -26,7 +26,7 @@ class WantedRequest(Base, UUIDMixin, TimestampMixin):
 class WantedOffer(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "wanted_offers"
 
-    wanted_request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wanted_requests.id"), nullable=False)
+    wanted_request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wanted_requests.id", ondelete="CASCADE"), nullable=False)
     offerer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     resource_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="PENDING", nullable=False) # PENDING, ACCEPTED, REJECTED
