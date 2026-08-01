@@ -23,7 +23,9 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     )
 
     status: Mapped[BorrowStatus] = mapped_column(
-        SAEnum(BorrowStatus), default=BorrowStatus.REQUESTED, index=True
+        SAEnum(BorrowStatus, values_callable=lambda enum_cls: [e.value for e in enum_cls]),
+        default=BorrowStatus.REQUESTED,
+        index=True
     )
 
     requested_start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

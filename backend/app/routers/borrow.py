@@ -267,15 +267,13 @@ def handover_resource(
     if br.status not in (BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED):
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
-    resource_title = br.resource.title if br.resource else "item"
-
-    br.status = BorrowStatus.ACTIVE
+    br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()
 
     create_notification(
         db, br.borrower_id, NotificationType.SYSTEM,
-        "Resource Handed Over",
-        f"'{resource_title}' has been handed over to you.",
+        "Handover Pending Confirmation",
+        f"'{br.resource.title if br.resource else 'item'}' has been handed over by the lender. Please confirm receipt.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
@@ -302,7 +300,7 @@ def confirm_handover_resource(
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Confirmed",
-        f"'{br.resource.title}' handover was confirmed by {current_user.full_name}.",
+        f"'{br.resource.title if br.resource else 'item'}' handover was confirmed by {current_user.full_name}.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
