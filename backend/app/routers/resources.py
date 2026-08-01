@@ -119,8 +119,14 @@ def get_my_listings_with_borrowers(
     Fetch all resources listed by the current user along with complete borrower history,
     contact info, requested dates, actual return dates, and current borrow status.
     """
+    from sqlalchemy.orm import joinedload
+
     resources = (
         db.query(Resource)
+        .options(
+            joinedload(Resource.category),
+            joinedload(Resource.owner)
+        )
         .filter(Resource.owner_id == current_user.id)
         .order_by(Resource.created_at.desc())
         .all()
@@ -129,6 +135,7 @@ def get_my_listings_with_borrowers(
     resource_ids = [r.id for r in resources]
     borrow_requests = (
         db.query(BorrowRequest)
+        .options(joinedload(BorrowRequest.borrower))
         .filter(BorrowRequest.resource_id.in_(resource_ids))
         .order_by(BorrowRequest.created_at.desc())
         .all()
