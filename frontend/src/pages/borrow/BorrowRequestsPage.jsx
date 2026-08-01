@@ -22,8 +22,7 @@ const STATUS_STYLE = {
 // Removed dead RequestCard component
 
 export default function BorrowRequestsPage() {
-  const [searchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Determine initial tab based on search params URL query
   const getInitialTab = () => {
@@ -119,6 +118,33 @@ export default function BorrowRequestsPage() {
           borrowing: dbMyReqs,
           lending: dbIncomingReqs
         });
+
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          let foundBooking = dbMyReqs.find(b => b.id === targetId);
+          let newTab = "borrowing";
+          if (!foundBooking) {
+            foundBooking = dbIncomingReqs.find(b => b.id === targetId);
+            if (foundBooking) newTab = "lending";
+          }
+          
+          if (foundBooking) {
+            setTab(newTab);
+            const status = foundBooking.status.toLowerCase();
+            if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+            else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+            else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+            else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+            
+            setSelectedBookingForModal(foundBooking);
+          }
+          
+          // Remove id from URL so it doesn't reopen if user navigates back
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("id");
+          setSearchParams(newParams, { replace: true });
+        }
+
       })
       .catch((err) => {
         console.error("Failed to load bookings:", err);
@@ -141,14 +167,20 @@ export default function BorrowRequestsPage() {
   const handleStatusChange = async (bookingId, newStatus) => {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
-      if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
+      if (newStatus === "rejected" || newStatus === "reject") {
+        if (!window.confirm("Are you sure you want to reject this request?")) return;
+        await borrowApi.reject(bookingId, "Not available right now");
+      }
       if (newStatus === "nudge") {
         await borrowApi.nudge(bookingId);
         toast.success("Nudge sent successfully!");
         return;
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
-      if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
+      if (newStatus === "cancelled" || newStatus === "cancel") {
+        if (!window.confirm("Are you sure you want to cancel this request?")) return;
+        await borrowApi.cancel(bookingId);
+      }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
 

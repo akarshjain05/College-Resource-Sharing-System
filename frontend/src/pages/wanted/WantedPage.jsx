@@ -241,8 +241,9 @@ export default function WantedPage() {
                         <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           {r.category?.name}
                         </span>
-                        <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
-                          {r.requested_days} {r.requested_days === 1 ? 'Day' : 'Days'}
+                        <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(r.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(r.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                         </span>
                       </div>
                     </div>
