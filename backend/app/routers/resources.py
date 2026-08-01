@@ -16,6 +16,8 @@ from app.models.borrow import BorrowRequest
 from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
 from app.core.deps import get_current_user_optional
 from app.services.notification_service import notify_all_except_owner_bg
+from app.services.availability import get_blocked_dates
+from datetime import date
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
 
@@ -51,7 +53,23 @@ def list_resources(
         query = query.filter(Resource.status == status_filter)
     elif not owner_id:
         # Default to available for public explore page
-        query = query.filter(Resource.status == ResourceStatus.AVAILABLE)
+        # A resource is available today if current active bookings for today are less than its total quantity
+        from sqlalchemy import func
+        today = date.today()
+        blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED, BorrowStatus.LATE]
+        
+        subq = (
+            db.query(BorrowRequest.resource_id, func.count(BorrowRequest.id).label('booked_count'))
+            .filter(BorrowRequest.status.in_(blocking_statuses))
+            .filter(BorrowRequest.requested_start_date <= today)
+            .filter(BorrowRequest.requested_end_date >= today)
+            .group_by(BorrowRequest.resource_id)
+            .subquery()
+        )
+        
+        query = query.outerjoin(subq, Resource.id == subq.c.resource_id)
+        query = query.filter(or_(subq.c.booked_count == None, subq.c.booked_count < Resource.quantity_available))
+        query = query.filter(Resource.status != ResourceStatus.UNAVAILABLE)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
     if owner_id:
@@ -203,17 +221,7 @@ def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
     if not resource:
         raise NotFoundException("Resource not found")
 
-    blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
-    bookings = (
-        db.query(BorrowRequest.requested_start_date, BorrowRequest.requested_end_date, BorrowRequest.status)
-        .filter(BorrowRequest.resource_id == resource_id, BorrowRequest.status.in_(blocking_statuses))
-        .all()
-    )
-    
-    return [
-        {"start": b.requested_start_date, "end": b.requested_end_date, "status": b.status}
-        for b in bookings
-    ]
+    return get_blocked_dates(db, resource.id)
 
 
 @router.put("/{resource_id}", response_model=ResourceResponse)
