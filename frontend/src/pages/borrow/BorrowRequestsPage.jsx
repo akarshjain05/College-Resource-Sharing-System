@@ -16,144 +16,142 @@ const STATUS_STYLE = {
   late: "bg-red-50 text-red-600",
 };
 
-function RequestCard({ request, isIncoming, onAction }) {
-  const [showRating, setShowRating] = useState(false);
-  const [rating, setRating] = useState(5);
-  const [review, setReview] = useState("");
-  const [actionType, setActionType] = useState("");
+const getStatusBadge = (status) => {
+  const st = status.toLowerCase();
+  if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
+  if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
+  if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
+  if (st === "handover_requested") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Handover Requested</span>;
+  if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
+  if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
+  return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
+};
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const end = new Date(request.requested_end_date);
-  end.setHours(0, 0, 0, 0);
-  const daysRemaining = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+function BookingCard({ book, tab, handleStatusChange, setReviewingId }) {
+  const [now, setNow] = useState(new Date());
 
-  const handleActionClick = (action) => {
-    if (action === "return" || action === "confirm_return") {
-      setActionType(action);
-      setShowRating(true);
-    } else {
-      onAction(action, request.id);
+  useEffect(() => {
+    if (book.status === "active" || book.status === "ongoing") {
+      const interval = setInterval(() => setNow(new Date()), 60000); // update every minute
+      return () => clearInterval(interval);
     }
-  };
+  }, [book.status]);
 
-  const submitRatingAction = () => {
-    // Pass the rating and review up via onAction
-    onAction(actionType, request.id, rating, review);
-    setShowRating(false);
+  const end = new Date(book.requested_end_date);
+  const timeDiff = end - now;
+  const daysRemaining = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hoursRemaining = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutesRemaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+  useEffect(() => {
+    if (book.status === "active" && timeDiff > 0 && timeDiff <= 30 * 60 * 1000) {
+      toast(`Only ${minutesRemaining} minutes remaining to return ${book.resource.title}!`, {
+        icon: '⏳',
+        id: `time-warning-${book.id}`,
+        duration: 60000,
+      });
+    }
+  }, [timeDiff, book.status, book.id, book.resource.title, minutesRemaining]);
+
+  const formatTimeRemaining = () => {
+    if (timeDiff < 0) return `Overdue by ${Math.abs(daysRemaining)} day(s)`;
+    if (daysRemaining > 0) return `${daysRemaining}d ${hoursRemaining}h remaining`;
+    if (hoursRemaining > 0) return `${hoursRemaining}h ${minutesRemaining}m remaining`;
+    return `${minutesRemaining}m remaining`;
   };
 
   return (
-    <div className="index-card p-4 pl-5">
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="font-display text-sm font-semibold text-ink-900">{request.resource.title}</p>
-          <p className="text-xs text-ink-500">
-            {isIncoming ? (
-              <>Requested by <Link to={`/users/${request.borrower.id}`} className="hover:underline text-ink-900 font-medium">{request.borrower.full_name}</Link></>
-            ) : (
-              <>Owned by <Link to={`/users/${request.lender.id}`} className="hover:underline text-ink-900 font-medium">{request.lender.full_name}</Link></>
-            )}
-          </p>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 hover:border-slate-300 transition-colors relative">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
+            {book.resource.image_placeholder || "🪜"}
+          </div>
+          <div>
+            <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight">
+              {book.resource.title}
+            </h3>
+            <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+              {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className={`rounded px-2 py-0.5 text-[11px] font-semibold capitalize ${STATUS_STYLE[request.status]}`}>
-            {request.status.replace("_", " ")}
-          </span>
-          {(request.status === "active" || request.status === "late") && (
-            <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${
-              daysRemaining < 0 || request.status === "late" ? "bg-red-100 text-red-700" :
-              daysRemaining === 0 ? "bg-orange-100 text-orange-700" :
-              daysRemaining <= 2 ? "bg-yellow-100 text-yellow-700" : "bg-forest-100 text-forest-700"
+        <div className="flex flex-col items-end gap-2">
+          {getStatusBadge(book.status)}
+          {book.status === "active" && (
+            <span className={`rounded-lg px-2 py-1 text-[10px] font-bold ${
+              timeDiff < 0 ? "bg-red-100 text-red-700" :
+              timeDiff <= 30 * 60 * 1000 ? "bg-orange-100 text-orange-700 animate-pulse" :
+              "bg-emerald-100 text-emerald-700"
             }`}>
-              {daysRemaining < 0 || request.status === "late" ? `Overdue by ${Math.abs(daysRemaining)} day(s)` :
-               daysRemaining === 0 ? "Due today" :
-               `${daysRemaining} days remaining`}
+              ⏱️ {formatTimeRemaining()}
             </span>
           )}
         </div>
       </div>
 
-      <p className="mt-2 text-xs text-ink-500">
-        {request.requested_start_date} → {request.requested_end_date}
-      </p>
-      {request.purpose && <p className="mt-1 text-sm text-ink-700">{request.purpose}</p>}
-
-      {showRating ? (
-        <div className="mt-3 rounded bg-ink-50 p-3">
-          <p className="text-xs font-semibold text-ink-900 mb-2">
-            {actionType === "return" ? "Rate the lender & item:" : "Rate the borrower:"}
+      <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
+        <div className="space-y-1">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
+          <p className="text-slate-800 font-bold">
+            {new Date(book.requested_start_date).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} →{" "}
+            {new Date(book.requested_end_date).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
           </p>
-          <div className="flex flex-col gap-2 mb-3">
-            <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="input !w-24 text-xs !py-1">
-              <option value={5}>5 Stars</option>
-              <option value={4}>4 Stars</option>
-              <option value={3}>3 Stars</option>
-              <option value={2}>2 Stars</option>
-              <option value={1}>1 Star</option>
-            </select>
-            <textarea
-              className="input text-xs"
-              placeholder="Leave a written review (optional)"
-              rows={2}
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button onClick={submitRatingAction} className="btn-primary !py-1 !px-3 text-xs">
-              Submit
-            </button>
-            <button onClick={() => setShowRating(false)} className="btn-secondary !py-1 !px-3 text-xs">
-              Cancel
-            </button>
-          </div>
         </div>
-      ) : (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {isIncoming && request.status === "requested" && (
-            <>
-              <button onClick={() => handleActionClick("approve")} className="btn-primary !py-1.5 !px-3 text-xs">
-                <Check className="h-3.5 w-3.5" /> Approve
-              </button>
-              <button onClick={() => handleActionClick("reject")} className="btn-secondary !py-1.5 !px-3 text-xs">
-                <X className="h-3.5 w-3.5" /> Reject
-              </button>
-            </>
-          )}
-          {!isIncoming && request.status === "requested" && (
-            <button onClick={() => handleActionClick("cancel")} className="btn-secondary !py-1.5 !px-3 text-xs">
-              <Ban className="h-3.5 w-3.5" /> Cancel
-            </button>
-          )}
-          {!isIncoming && request.status === "approved" && (
-            <span className="text-xs font-semibold text-brass-700">Waiting for owner to hand over</span>
-          )}
-          {isIncoming && request.status === "approved" && (
-            <button onClick={() => handleActionClick("handover")} className="btn-primary !py-1.5 !px-3 text-xs">
-              <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-            </button>
-          )}
-          {!isIncoming && request.status === "active" && (
-            <button onClick={() => handleActionClick("return")} className="btn-brass !py-1.5 !px-3 text-xs">
-              <RotateCcw className="h-3.5 w-3.5" /> Return Resource
-            </button>
-          )}
-          {!isIncoming && ["active", "returned", "damaged", "late"].includes(request.status) && (
-            <a href={`/complaints?borrow_request_id=${request.id}`} className="btn-secondary !py-1.5 !px-3 text-xs text-red-600">
-              File Complaint
-            </a>
-          )}
-          {!isIncoming && request.status === "return_requested" && (
-            <span className="text-xs font-semibold text-brass-700">Return pending confirmation</span>
-          )}
-          {isIncoming && request.status === "return_requested" && (
-            <button onClick={() => handleActionClick("confirm_return")} className="btn-primary !py-1.5 !px-3 text-xs">
-              <Check className="h-3.5 w-3.5" /> Confirm Return
-            </button>
-          )}
+        <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
+          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
+          <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
         </div>
-      )}
+      </div>
+
+      <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
+        {tab === "borrowing" && book.status === "requested" && (
+          <button onClick={() => handleStatusChange(book.id, "cancelled")} className="btn-secondary !py-2 text-xs">
+            <Ban className="h-3.5 w-3.5" /> Cancel Request
+          </button>
+        )}
+        {tab === "borrowing" && book.status === "approved" && (
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+            <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
+          </span>
+        )}
+        {tab === "borrowing" && book.status === "handover_requested" && (
+          <button onClick={() => handleStatusChange(book.id, "confirm_handover")} className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs">
+            <Check className="h-3.5 w-3.5" /> Confirm Receipt
+          </button>
+        )}
+        {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
+          <button onClick={() => setReviewingId(book.id)} className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs">
+            <RotateCcw className="h-3.5 w-3.5" /> Return Item
+          </button>
+        )}
+
+        {tab === "lending" && book.status === "requested" && (
+          <>
+            <button onClick={() => handleStatusChange(book.id, "approved")} className="btn-primary !py-2 text-xs">
+              <Check className="h-3.5 w-3.5" /> Approve
+            </button>
+            <button onClick={() => handleStatusChange(book.id, "rejected")} className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs">
+              <X className="h-3.5 w-3.5" /> Decline
+            </button>
+          </>
+        )}
+        {tab === "lending" && book.status === "approved" && (
+          <button onClick={() => handleStatusChange(book.id, "handover")} className="btn-primary !py-2 text-xs">
+            <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+          </button>
+        )}
+        {tab === "lending" && book.status === "handover_requested" && (
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+            <User className="h-3.5 w-3.5 text-slate-400" /> Pending borrower confirmation
+          </span>
+        )}
+        {tab === "lending" && (book.status === "active" || book.status === "ongoing") && (
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -239,7 +237,8 @@ export default function BorrowRequestsPage() {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
       if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
-      if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
+      if (newStatus === "handover") await borrowApi.handover(bookingId);
+      if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, ""); 
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
@@ -303,7 +302,7 @@ export default function BorrowRequestsPage() {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing"].includes(status);
+        return ["handover_requested", "active", "ongoing"].includes(status);
       }
       if (subTab === "completed") {
         return ["returned", "confirmed_return"].includes(status);
@@ -317,16 +316,7 @@ export default function BorrowRequestsPage() {
 
   const activeList = getFilteredBookings();
 
-  // Style helper for card status pills matching design
-  const getStatusBadge = (status) => {
-    const st = status.toLowerCase();
-    if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
-    if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
-    if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
-    if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
-    if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
-    return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
-  };
+
 
   return (
     <div className="space-y-6">
@@ -404,100 +394,13 @@ export default function BorrowRequestsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {activeList.map((book) => (
-            <div
-              key={book.id}
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 hover:border-slate-300 transition-colors"
-            >
-              {/* Card Header (Item and Status Badge) */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
-                    {book.resource.image_placeholder || "🪜"}
-                  </div>
-                  <div>
-                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight">
-                      {book.resource.title}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-                      {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
-                    </p>
-                  </div>
-                </div>
-                {getStatusBadge(book.status)}
-              </div>
-
-              {/* Booking specifications */}
-              <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
-                <div className="space-y-1">
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
-                  <p className="text-slate-800 font-bold">
-                    {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
-                    {new Date(book.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                  </p>
-                </div>
-                <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
-                  <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
-                </div>
-              </div>
-
-              {/* Actions row */}
-              <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
-                {/* Borrower Actions */}
-                {tab === "borrowing" && book.status === "requested" && (
-                  <button
-                    onClick={() => handleStatusChange(book.id, "cancelled")}
-                    className="btn-secondary !py-2 text-xs"
-                  >
-                    <Ban className="h-3.5 w-3.5" /> Cancel Request
-                  </button>
-                )}
-                {tab === "borrowing" && book.status === "approved" && (
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                  </span>
-                )}
-                {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
-                  <button
-                    onClick={() => setReviewingId(book.id)}
-                    className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" /> Return Item
-                  </button>
-                )}
-
-                {/* Lender Actions */}
-                {tab === "lending" && book.status === "requested" && (
-                  <>
-                    <button
-                      onClick={() => handleStatusChange(book.id, "approved")}
-                      className="btn-primary !py-2 text-xs"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Approve
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(book.id, "rejected")}
-                      className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs"
-                    >
-                      <X className="h-3.5 w-3.5" /> Decline
-                    </button>
-                  </>
-                )}
-                {tab === "lending" && book.status === "approved" && (
-                  <button
-                    onClick={() => handleStatusChange(book.id, "active")}
-                    className="btn-primary !py-2 text-xs"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                  </button>
-                )}
-                {tab === "lending" && (book.status === "active" || book.status === "ongoing") && (
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
-                  </span>
-                )}
-              </div>
-            </div>
+            <BookingCard 
+              key={book.id} 
+              book={book} 
+              tab={tab} 
+              handleStatusChange={handleStatusChange} 
+              setReviewingId={setReviewingId} 
+            />
           ))}
         </div>
       )}

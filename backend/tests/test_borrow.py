@@ -100,3 +100,31 @@ def test_non_owner_cannot_approve(client, test_user, second_user, test_category)
 
     resp = client.post(f"/api/v1/borrow-requests/{request_id}/approve", headers=borrower_headers)
     assert resp.status_code == 403
+
+
+def test_auto_decline_other_requests_on_approval(client, test_user, second_user, admin_user, test_category):
+    owner_headers = auth_headers(client, test_user.email, "Password123!")
+    borrower1_headers = auth_headers(client, second_user.email, "Password123!")
+    borrower2_headers = auth_headers(client, admin_user.email, "Password123!")
+
+    # Single quantity item
+    resource = create_resource(client, owner_headers, str(test_category.id))
+
+    # Two borrowers request the same item
+    req1 = request_borrow(client, borrower1_headers, resource["id"]).json()
+    req2 = request_borrow(client, borrower2_headers, resource["id"]).json()
+
+    assert req1["status"] == "requested"
+    assert req2["status"] == "requested"
+
+    # Owner approves req1
+    approve_resp = client.post(f"/api/v1/borrow-requests/{req1['id']}/approve", headers=owner_headers)
+    assert approve_resp.status_code == 200
+    assert approve_resp.json()["status"] == "approved"
+
+    # Req2 should be automatically rejected / declined
+    req2_check = client.get("/api/v1/borrow-requests/my-requests", headers=borrower2_headers).json()
+    req2_status = next(r for r in req2_check if r["id"] == req2["id"])
+    assert req2_status["status"] == "rejected"
+    assert "approved for another borrower" in req2_status["rejection_reason"]
+

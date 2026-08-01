@@ -33,6 +33,7 @@ class ResourceStatus(str, enum.Enum):
 class BorrowStatus(str, enum.Enum):
     REQUESTED = "requested"
     APPROVED = "approved"
+    HANDOVER_REQUESTED = "handover_requested"
     REJECTED = "rejected"
     CANCELLED = "cancelled"
     ACTIVE = "active"

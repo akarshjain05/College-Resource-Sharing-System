@@ -80,7 +80,15 @@ export default function ResourceCreatePage() {
   }, []);
 
   const update = (field) => (e) => {
-    const value = e.target.type === "number" ? Number(e.target.value) : e.target.value;
+    let value = e.target.value;
+    if (e.target.type === "number") {
+      if (value === "") {
+        value = "";
+      } else {
+        const stripped = value.replace(/^0+(?=\d)/, "");
+        value = stripped === "" ? 0 : Number(stripped);
+      }
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -114,11 +122,14 @@ export default function ResourceCreatePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.daily_price <= 0) {
+    const dailyPriceNum = form.daily_price === "" ? 0 : Number(form.daily_price);
+    const depositAmountNum = form.deposit_amount === "" ? 0 : Number(form.deposit_amount);
+
+    if (isNaN(dailyPriceNum) || dailyPriceNum <= 0) {
       toast.error("Daily price must be greater than 0.");
       return;
     }
-    if (form.deposit_amount < 0) {
+    if (isNaN(depositAmountNum) || depositAmountNum < 0) {
       toast.error("Deposit amount must be 0 or more.");
       return;
     }
@@ -153,8 +164,9 @@ export default function ResourceCreatePage() {
       id: generatedId,
       title: form.title,
       category: categoryName,
-      daily_price: form.daily_price,
-      deposit_amount: form.deposit_amount,
+      daily_price: dailyPriceNum,
+      deposit_amount: depositAmountNum,
+      location: currentLoc,
       average_rating: 5.0,
       reviews_count: 0,
       distance: "0.1 km",
@@ -195,7 +207,7 @@ export default function ResourceCreatePage() {
         quantity: 1,
         pickup_location: form.location,
         tags: categoryName.toLowerCase(),
-        deposit_amount: form.deposit_amount,
+        deposit_amount: depositAmountNum,
         max_borrow_days: 7,
         category_id: form.category_id,
       });
@@ -574,7 +586,7 @@ export default function ResourceCreatePage() {
 
               <div className="flex justify-between items-center text-xs font-semibold">
                 <span className="text-slate-500 dark:text-slate-400">Rental Rate:</span>
-                <span className="text-primary-600 dark:text-primary-400 font-extrabold">₹{createdItem.daily_price} / day</span>
+                <span className="text-primary-600 dark:text-primary-400 font-extrabold">₹{createdItem.daily_price ?? 0} / day</span>
               </div>
             </div>
 

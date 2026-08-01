@@ -188,13 +188,21 @@ def accept_wanted_offer(
     offer.status = "ACCEPTED"
     wanted.is_fulfilled = True
     
-    # Reject other offers
+    # Reject other offers & notify each offerer
     other_offers = db.query(WantedOffer).filter(
         WantedOffer.wanted_request_id == wanted.id,
         WantedOffer.id != offer.id
     ).all()
     for other in other_offers:
         other.status = "REJECTED"
+        create_notification(
+            db,
+            user_id=other.offerer_id,
+            notif_type=NotificationType.SYSTEM,
+            title="Offer status update",
+            message=f"Your offer for '{wanted.title}' was automatically declined because another offer was selected.",
+            link=f"/wanted"
+        )
 
     db.commit()
     db.refresh(wanted)
