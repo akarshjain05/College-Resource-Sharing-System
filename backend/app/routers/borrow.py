@@ -269,14 +269,14 @@ def nudge_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Borrower nudges a pending request to remind the owner to respond."""
+    """Borrower nudges a request to remind the owner to respond or hand over the item."""
     br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
     if not br:
         raise NotFoundException("Borrow request not found")
     if br.borrower_id != current_user.id:
         raise ForbiddenException("Only the requester can nudge")
-    if br.status != BorrowStatus.REQUESTED:
-        raise AppException("This request is no longer pending", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
+        raise AppException("This request cannot be nudged", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     # Rate-limit: one nudge per 24 hours
     if br.last_nudged_at and (datetime.now(timezone.utc) - br.last_nudged_at).total_seconds() < 86400:
@@ -285,11 +285,18 @@ def nudge_request(
     br.last_nudged_at = datetime.now(timezone.utc)
     db.commit()
 
+    if br.status == BorrowStatus.APPROVED:
+        notif_title = "Borrower is waiting for handover"
+        notif_msg = f"{current_user.full_name} is waiting for handover of '{br.resource.title}'. Please mark as handed over when delivered."
+    else:
+        notif_title = "A borrower is waiting on your response"
+        notif_msg = f"{current_user.full_name} is still waiting on your decision for '{br.resource.title}'."
+
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
-        "A borrower is waiting on your response",
-        f"{current_user.full_name} is still waiting on your decision for '{br.resource.title}'.",
-        link=f"/borrow-requests?tab=incoming",
+        notif_title,
+        notif_msg,
+        link=f"/borrow-requests/{br.id}",
     )
     return {"detail": "Nudge sent"}
 
