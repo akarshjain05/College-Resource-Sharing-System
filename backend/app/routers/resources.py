@@ -38,7 +38,11 @@ def list_resources(
     page_size: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    query = db.query(Resource)
+    from sqlalchemy.orm import joinedload
+    query = db.query(Resource).options(
+        joinedload(Resource.category),
+        joinedload(Resource.owner)
+    )
 
     if search:
         like = f"%{search}%"
@@ -171,7 +175,16 @@ def get_resource(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    from sqlalchemy.orm import joinedload
+    resource = (
+        db.query(Resource)
+        .options(
+            joinedload(Resource.category),
+            joinedload(Resource.owner)
+        )
+        .filter(Resource.id == resource_id)
+        .first()
+    )
     if not resource:
         raise NotFoundException("Resource not found")
     resource.view_count += 1
