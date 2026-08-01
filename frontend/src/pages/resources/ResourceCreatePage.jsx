@@ -20,13 +20,7 @@ import {
 import { resourceApi, categoryApi, uploadApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-const CATEGORIES_LIST = [
-  { id: "cat-1", name: "Tools", icon: "🔌" },
-  { id: "cat-2", name: "Sports", icon: "🏸" },
-  { id: "cat-3", name: "Party", icon: "❄️" },
-  { id: "cat-4", name: "Kitchen", icon: "🌪️" },
-  { id: "cat-5", name: "Camping", icon: "⛺" },
-];
+
 
 const CONDITION_OPTS = [
   { value: "new", label: "Brand New", desc: "Unopened or unused" },
@@ -49,13 +43,13 @@ export default function ResourceCreatePage() {
 
   // Form State
   const [form, setForm] = useState({
-    title: "Bosch Drill Machine",
+    title: "",
     category_id: "",
-    description: "Powerful drill machine. Used only a few times. Comes with bits.",
+    description: "",
     condition: "good",
     daily_price: 150,
     deposit_amount: 500,
-    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+    location: localStorage.getItem("share_neighbour_location") || "",
     available_from: "",
     available_to: "",
   });
@@ -77,15 +71,8 @@ export default function ResourceCreatePage() {
         }
       })
       .catch(() => {
-        const fallback = [
-          { id: "cat-1", name: "Tools" },
-          { id: "cat-2", name: "Sports" },
-          { id: "cat-3", name: "Party" },
-          { id: "cat-4", name: "Kitchen" },
-          { id: "cat-5", name: "Camping" },
-        ];
-        setCategories(fallback);
-        setForm(prev => ({ ...prev, category_id: fallback[0].id }));
+        toast.error("Failed to load categories.");
+        setCategories([]);
       });
   }, []);
 
@@ -144,20 +131,11 @@ export default function ResourceCreatePage() {
     }
     setSubmitting(true);
 
-    const generatedId = "mock-user-item-" + Date.now();
     const selectedCat = categories.find(c => c.id === form.category_id);
     const categoryName = selectedCat ? selectedCat.name : "Other";
-    
-    const emojiMap = {
-      "Tools": "🔌",
-      "Sports": "🏸",
-      "Party": "❄️",
-      "Kitchen": "🌪️",
-      "Camping": "⛺",
-    };
-    const finalPlaceholder = photos[0]?.previewUrl || emojiMap[categoryName] || "🛠️";
+    const finalPlaceholder = photos[0]?.previewUrl || "🛠️";
 
-    // 1. Add to localStorage mocks
+
     // 1. Trigger actual endpoint
     try {
       const response = await resourceApi.create({
@@ -313,22 +291,13 @@ export default function ResourceCreatePage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Location Block</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
-                    value={form.location}
-                    onChange={update("location")}
-                  >
-                    <option value="Koramangala, Bengaluru">Koramangala, Bengaluru</option>
-                    <option value="Indiranagar, Bengaluru">Indiranagar, Bengaluru</option>
-                    <option value="HSR Layout, Bengaluru">HSR Layout, Bengaluru</option>
-                    <option value="Whitefield, Bengaluru">Whitefield, Bengaluru</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
-                    <ChevronDown className="h-4 w-4" />
-                  </div>
-                </div>
+                <input
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  value={form.location}
+                  onChange={update("location")}
+                  placeholder="e.g. Koramangala, Bengaluru"
+                />
               </div>
             </div>
 
@@ -507,26 +476,7 @@ export default function ResourceCreatePage() {
             </div>
           </div>
 
-          {/* Local demand widget */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-3.5">
-            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-500" /> Hot in {form.location.split(",")[0]}
-            </h3>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Top items requested this week</p>
-            
-            <div className="space-y-2">
-              {[
-                { name: "Drills & Hammers", count: "12 requests" },
-                { name: "Camping Tents", count: "8 requests" },
-                { name: "Kitchen Blenders", count: "5 requests" }
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-850">
-                  <span>{item.name}</span>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -621,7 +571,7 @@ export default function ResourceCreatePage() {
                     condition: "good",
                     daily_price: 100,
                     deposit_amount: 300,
-                    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+                    location: localStorage.getItem("share_neighbour_location") || "",
                   });
                 }}
                 className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 py-3.5 text-xs font-bold rounded-2xl transition-all"

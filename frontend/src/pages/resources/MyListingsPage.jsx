@@ -104,6 +104,15 @@ function ItemBorrowersSection({ requests, onAction }) {
           const endDate = req.requested_end_date ? new Date(req.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A";
           const actualReturn = req.actual_return_date ? new Date(req.actual_return_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : null;
 
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const sDate = new Date(req.requested_start_date);
+          sDate.setHours(0, 0, 0, 0);
+          const eDate = new Date(req.requested_end_date);
+          eDate.setHours(0, 0, 0, 0);
+          const isStarted = today >= sDate;
+          const isExpired = today > eDate;
+
           return (
             <div
               key={req.id}
@@ -170,28 +179,46 @@ function ItemBorrowersSection({ requests, onAction }) {
               {/* Action Buttons for Lender */}
               {req.status === "requested" && (
                 <div className="flex gap-2 justify-end pt-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => onAction("approve", req.id)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Approve Request
-                  </button>
-                  <button
-                    onClick={() => onAction("reject", req.id)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-bold transition-all active:scale-95"
-                  >
-                    <X className="h-3.5 w-3.5" /> Decline
-                  </button>
+                  {isExpired ? (
+                    <span className="text-[10px] font-bold text-red-500">
+                      Lending window expired
+                    </span>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => onAction("approve", req.id)}
+                        className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve Request
+                      </button>
+                      <button
+                        onClick={() => onAction("reject", req.id)}
+                        className="inline-flex items-center gap-1 rounded-xl bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-3 py-1.5 text-xs font-bold transition-all active:scale-95"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
               {req.status === "approved" && (
                 <div className="flex justify-end pt-1" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => onAction("handover", req.id)}
-                    className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-                  >
-                    <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                  </button>
+                  {isExpired ? (
+                    <span className="text-[10px] font-bold text-red-500">
+                      Lending window expired
+                    </span>
+                  ) : isStarted ? (
+                    <button
+                      onClick={() => onAction("handover", req.id)}
+                      className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                    </button>
+                  ) : (
+                    <span className="text-[10px] font-bold text-slate-400">
+                      Handover unlocks on {sDate.toLocaleDateString()}
+                    </span>
+                  )}
                 </div>
               )}
               {req.status === "return_requested" && (
@@ -643,7 +670,7 @@ export default function MyListingsPage() {
                       </div>
                       <div>
                         <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {r.category?.name || "Resource"}
+                          {r.category?.name || "Other"}
                         </span>
                         <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                           {r.title}

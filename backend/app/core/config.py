@@ -3,7 +3,7 @@ Application configuration loaded from environment variables (.env).
 Uses pydantic-settings so every value is validated at startup.
 """
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -80,6 +80,23 @@ class Settings(BaseSettings):
     OTP_MAX_ATTEMPTS: int = 5
     OTP_RESEND_COOLDOWN_SECONDS: int = 60
 
+
+    @model_validator(mode="after")
+    def validate_secrets_in_prod(self) -> 'Settings':
+        if self.ENVIRONMENT == "production":
+            import secrets
+            import logging
+            logger = logging.getLogger("crss")
+            
+            if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
+                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
+                self.SECRET_KEY = secrets.token_urlsafe(32)
+                
+            if self.OTP_SECRET == "change-this-otp-secret-in-production":
+                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
+                self.OTP_SECRET = secrets.token_urlsafe(32)
+                
+        return self
 
 settings = Settings()
 
