@@ -366,9 +366,18 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
                   {tab === "borrowing" && book.status === "approved" && (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                      <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                    </span>
+                    isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary flex items-center gap-1.5 !py-2 text-xs text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950/30 font-bold"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner for Handover
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
+                      </span>
+                    )
                   )}
                   {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
                     isStarted ? (
