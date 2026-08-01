@@ -384,7 +384,7 @@ export default function ResourceDetailPage() {
           </div>
 
           {/* Regular Borrow Form (using your friend's wrapper styling, but main's logic) */}
-          {!isOwner && resource.status === "available" && (
+          {!isOwner && resource.status !== "unavailable" && (
             <form onSubmit={handleBorrowRequest} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg space-y-5">
               <div>
                 <h3 className="text-lg font-bold font-display text-slate-900">Request to Borrow</h3>

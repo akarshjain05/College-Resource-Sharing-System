@@ -24,6 +24,7 @@ from app.routers import (
     borrow,
     reviews,
     admin_analytics,
+    admin_management,
     uploads,
     complaints,
     damage_claims,
@@ -73,6 +74,7 @@ app.include_router(resources.router, prefix=API_PREFIX)
 app.include_router(borrow.router, prefix=API_PREFIX)
 app.include_router(reviews.router, prefix=API_PREFIX)
 app.include_router(admin_analytics.router, prefix=API_PREFIX)
+app.include_router(admin_management.router, prefix=API_PREFIX)
 app.include_router(uploads.router, prefix=API_PREFIX)
 app.include_router(complaints.router, prefix=API_PREFIX)
 app.include_router(damage_claims.router, prefix="/api/v1")
