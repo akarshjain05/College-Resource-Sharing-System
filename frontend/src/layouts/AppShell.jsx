@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Home,
   PlusCircle,
@@ -51,6 +51,37 @@ export default function AppShell() {
     localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [customLocationInput, setCustomLocationInput] = useState("");
+  const locationDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const newLoc = localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru";
+      setSelectedLocation(newLoc);
+    };
+    window.addEventListener("locationChanged", handleLocationChange);
+    return () => window.removeEventListener("locationChanged", handleLocationChange);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (locationDropdownRef.current && !locationDropdownRef.current.contains(event.target)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectLocation = (loc) => {
+    if (!loc || !loc.trim()) return;
+    const cleanLoc = loc.trim();
+    setSelectedLocation(cleanLoc);
+    localStorage.setItem("share_neighbour_location", cleanLoc);
+    setShowLocationDropdown(false);
+    window.dispatchEvent(new Event("locationChanged"));
+    toast.success(`Location set to: ${cleanLoc}`);
+  };
 
   const fetchUnreadCount = () => {
     notificationApi
@@ -222,11 +253,89 @@ export default function AppShell() {
       <div className="flex flex-1 flex-col min-w-0">
         {/* HEADER BAR */}
         <header className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 sticky top-0 z-10 shadow-sm shadow-slate-100/40 dark:shadow-none transition-colors duration-200">
-          {/* Welcome Text / Desktop Title */}
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-block text-sm text-slate-500 dark:text-slate-400 font-medium">
+          {/* Welcome Text & Location Selector */}
+          <div className="flex items-center gap-3">
+            <span className="hidden md:inline-block text-sm text-slate-500 dark:text-slate-400 font-medium">
               Hello, <span className="text-slate-800 dark:text-white font-bold">{user?.full_name?.split(" ")[0] || "Neighbor"}</span> 👋
             </span>
+
+            {/* LOCATION SELECTOR IN HEADER NAVBAR */}
+            <div className="relative" ref={locationDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                className="flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-150 dark:hover:bg-slate-750 border border-slate-200/80 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-all active:scale-95 shadow-xs"
+                title="Select location"
+              >
+                <MapPin className="h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+                <span className="max-w-[130px] sm:max-w-[200px] truncate font-bold">{selectedLocation}</span>
+                <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${showLocationDropdown ? "rotate-180" : ""}`} />
+              </button>
+
+              {/* LOCATION DROPDOWN MENU */}
+              {showLocationDropdown && (
+                <div className="absolute left-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="mb-2 px-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Select Community Location</p>
+                  </div>
+
+                  {/* Preset Locations */}
+                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                    {[
+                      "All Locations",
+                      "Koramangala, Bengaluru",
+                      "Indiranagar, Bengaluru",
+                      "HSR Layout, Bengaluru",
+                      "Hostel Block C, Room 204",
+                      "Robotics Lab, Block D",
+                      "Library Annex",
+                    ].map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => handleSelectLocation(loc)}
+                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedLocation === loc
+                          ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
+                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                          }`}
+                      >
+                        <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${selectedLocation === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
+                        <span className="truncate">{loc}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Location Input */}
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 px-1">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5">Custom Location</p>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (customLocationInput.trim()) {
+                          handleSelectLocation(customLocationInput.trim());
+                          setCustomLocationInput("");
+                        }
+                      }}
+                      className="flex gap-1.5"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Enter location name..."
+                        value={customLocationInput}
+                        onChange={(e) => setCustomLocationInput(e.target.value)}
+                        className="flex-1 min-w-0 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-2.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all shadow-xs shrink-0"
+                      >
+                        Set
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
