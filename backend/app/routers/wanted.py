@@ -28,6 +28,7 @@ def create_wanted_request(
         title=payload.title,
         description=payload.description,
         category_id=payload.category_id,
+        requested_days=payload.requested_days,
     )
     db.add(wanted)
     db.commit()

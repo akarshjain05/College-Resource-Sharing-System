@@ -103,7 +103,7 @@ export default function AppShell() {
   };
 
   const [showPostNeedModal, setShowPostNeedModal] = useState(false);
-  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "" });
+  const [needFormData, setNeedFormData] = useState({ title: "", description: "", category_id: "", requested_days: 1 });
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function AppShell() {
       await wantedApi.create(needFormData);
       toast.success("Wanted request posted!");
       setShowPostNeedModal(false);
-      setNeedFormData({ title: "", description: "", category_id: "" });
+      setNeedFormData({ title: "", description: "", category_id: "", requested_days: 1 });
 
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
@@ -319,25 +319,40 @@ export default function AppShell() {
                 />
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
-                    value={needFormData.category_id}
-                    onChange={(e) => setNeedFormData({ ...needFormData, category_id: e.target.value })}
-                  >
-                    <option value="" className="text-slate-400">Select a category</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id} className="text-slate-850 dark:text-slate-100 bg-white dark:bg-slate-950">
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
-                    <ChevronDown className="h-4 w-4" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Category</label>
+                  <div className="relative">
+                    <select
+                      required
+                      className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
+                      value={needFormData.category_id}
+                      onChange={(e) => setNeedFormData({ ...needFormData, category_id: e.target.value })}
+                    >
+                      <option value="" className="text-slate-400">Select a category</option>
+                      {categories.map((c) => (
+                        <option key={c.id} value={c.id} className="text-slate-850 dark:text-slate-100 bg-white dark:bg-slate-950">
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
+                      <ChevronDown className="h-4 w-4" />
+                    </div>
                   </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">For how many days?</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    max="30"
+                    className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
+                    value={needFormData.requested_days}
+                    onChange={(e) => setNeedFormData({ ...needFormData, requested_days: parseInt(e.target.value) || 1 })}
+                  />
                 </div>
               </div>
 

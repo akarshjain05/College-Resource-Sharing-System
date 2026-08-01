@@ -31,6 +31,7 @@ class WantedCreate(BaseModel):
     title: str = Field(..., min_length=2, max_length=100)
     description: Optional[str] = Field(None, max_length=1000)
     category_id: uuid.UUID
+    requested_days: int = Field(default=1, ge=1, le=30)
 
 
 class WantedResponse(BaseModel):
@@ -41,6 +42,7 @@ class WantedResponse(BaseModel):
     title: str
     description: Optional[str] = None
     category_id: uuid.UUID
+    requested_days: int
     is_fulfilled: bool
     created_at: datetime
 
