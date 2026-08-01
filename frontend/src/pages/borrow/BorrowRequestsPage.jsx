@@ -40,7 +40,7 @@ export default function BorrowRequestsPage() {
 
   const loadBookingsList = () => {
     setLoading(true);
-    
+
     Promise.all([
       borrowApi.myRequests().catch(() => ({ data: [] })),
       borrowApi.incoming().catch(() => ({ data: [] }))
@@ -111,9 +111,9 @@ export default function BorrowRequestsPage() {
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
-      if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, ""); 
+      if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
-      
+
       toast.success("Updated successfully");
       if (typeof loadBookingsList === 'function') loadBookingsList();
       else load();
@@ -148,7 +148,7 @@ export default function BorrowRequestsPage() {
   // Status mapping for SubTabs
   const getFilteredBookings = () => {
     const list = bookings[tab] || [];
-    
+
     return list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
@@ -192,21 +192,19 @@ export default function BorrowRequestsPage() {
       <div className="flex rounded-2xl bg-slate-100 p-1.5 w-fit border border-slate-200/40">
         <button
           onClick={() => { setTab("borrowing"); setSubTab("upcoming"); }}
-          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${
-            tab === "borrowing"
+          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "borrowing"
               ? "bg-white text-primary-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
-          }`}
+            }`}
         >
           Items I'm Borrowing
         </button>
         <button
           onClick={() => { setTab("lending"); setSubTab("upcoming"); }}
-          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${
-            tab === "lending"
+          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "lending"
               ? "bg-white text-primary-600 shadow-sm"
               : "text-slate-500 hover:text-slate-900"
-          }`}
+            }`}
         >
           Items I'm Lending
         </button>
@@ -223,11 +221,10 @@ export default function BorrowRequestsPage() {
           <button
             key={st.key}
             onClick={() => setSubTab(st.key)}
-            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${
-              subTab === st.key
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${subTab === st.key
                 ? "border-primary-600 text-primary-600 font-extrabold"
                 : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
+              }`}
           >
             {st.label}
           </button>
@@ -266,175 +263,166 @@ export default function BorrowRequestsPage() {
             const isExpired = today > end;
 
             return (
-            <div
-              key={book.id}
-              onClick={() => setSelectedBookingForModal(book)}
-              className="cursor-pointer rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 transition-colors"
-            >
-              {/* Card Header (Item and Status Badge) */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
-                    {book.resource.image_placeholder || "🪜"}
+              <div
+                key={book.id}
+                onClick={() => setSelectedBookingForModal(book)}
+                className="cursor-pointer rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 transition-colors"
+              >
+                {/* Card Header (Item and Status Badge) */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
+                      {book.resource.image_placeholder || "🪜"}
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                        <Link to={`/resources/${book.resource.id}`}>
+                          {book.resource.title}
+                        </Link>
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+                        {tab === "borrowing" ? (
+                          <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
+                        ) : (
+                          <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight hover:text-brand-500 hover:underline cursor-pointer">
-                      <Link to={`/resources/${book.resource.id}`}>
-                        {book.resource.title}
-                      </Link>
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-                      {tab === "borrowing" ? (
-                        <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
-                      ) : (
-                        <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
-                      )}
+                  {getStatusBadge(book.status)}
+                </div>
+
+                {/* Booking specifications */}
+                <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
+                    <p className="text-slate-800 font-bold flex items-center gap-2">
+                      {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
+                      {new Date(book.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      <DueBadge endDate={book.requested_end_date} status={book.status} />
                     </p>
                   </div>
+                  <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
+                    <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
+                  </div>
                 </div>
-                {getStatusBadge(book.status)}
-              </div>
 
-              {/* Booking specifications */}
-              <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
-                <div className="space-y-1">
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
-                  <p className="text-slate-800 font-bold flex items-center gap-2">
-                    {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
-                    {new Date(book.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    <DueBadge endDate={book.requested_end_date} status={book.status} />
-                  </p>
-                </div>
-                <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
-                  <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
-                </div>
-              </div>
+                {/* Actions row */}
+                <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
+                  {/* Borrower Actions */}
+                  {tab === "borrowing" && book.status === "requested" && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary !py-2 text-xs"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                        className="btn-secondary !py-2 text-xs"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Request
+                      </button>
+                    </>
+                  )}
+                  {tab === "borrowing" && book.status === "approved" && (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
+                    </span>
+                  )}
+                  {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
+                    isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("return"); }}
+                        className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Return Item
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+                  {tab === "borrowing" && book.status === "return_requested" && (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
+                    </span>
+                  )}
 
-              {/* Actions row */}
-              <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
-                {/* Borrower Actions */}
-                {tab === "borrowing" && book.status === "requested" && (
-                  <>
+                  {/* Lender Actions */}
+                  {tab === "lending" && book.status === "requested" && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "approved"); }}
+                        className="btn-primary !py-2 text-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "rejected"); }}
+                        className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </>
+                  )}
+                  {tab === "lending" && book.status === "approved" && (
+                    isExpired ? (
+                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                      </span>
+                    ) : isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "active"); }}
+                        className="btn-primary !py-2 text-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+                  {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
+                    </span>
+                  )}
+                  {tab === "lending" && book.status === "return_requested" && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                      className="btn-secondary !py-2 text-xs"
-                    >
-                      <BellRing className="h-3.5 w-3.5" /> Nudge Owner
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
-                      className="btn-secondary !py-2 text-xs"
-                    >
-                      <Ban className="h-3.5 w-3.5" /> Cancel Request
-                    </button>
-                  </>
-                )}
-                {tab === "borrowing" && book.status === "approved" && (
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                  </span>
-                )}
-                {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
-                  isStarted ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("return"); }}
+                      onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("confirm_return"); }}
                       className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
                     >
-                      <RotateCcw className="h-3.5 w-3.5" /> Return Item
+                      <Check className="h-3.5 w-3.5" /> Confirm Return
                     </button>
-                  ) : (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
-                    </span>
-                  )
-                )}
-                {tab === "borrowing" && book.status === "return_requested" && (
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
-                  </span>
-                )}
+                  )}
 
-                {/* Lender Actions */}
-                {tab === "lending" && book.status === "requested" && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "approved"); }}
-                      className="btn-primary !py-2 text-xs"
+                  {/* Global Actions (Chat & Complaint) */}
+                  {["active", "returned", "damaged", "late"].includes(book.status) && (
+                    <a
+                      href={`/complaints?borrow_request_id=${book.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
                     >
-                      <Check className="h-3.5 w-3.5" /> Approve
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "rejected"); }}
-                      className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs"
-                    >
-                      <X className="h-3.5 w-3.5" /> Decline
-                    </button>
-                  </>
-                )}
-                {tab === "lending" && book.status === "approved" && (
-                  isExpired ? (
-                    <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
-                    </span>
-                  ) : isStarted ? (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "active"); }}
-                      className="btn-primary !py-2 text-xs"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                    </button>
-                  ) : (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
-                    </span>
-                  )
-                )}
-                {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
-                  </span>
-                )}
-                {tab === "lending" && book.status === "return_requested" && (
+                      File Complaint
+                    </a>
+                  )}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("confirm_return"); }}
-                    className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenChatId(book.id);
+                    }}
+                    className="btn-secondary flex items-center gap-1.5 !py-2 text-xs"
                   >
-                    <Check className="h-3.5 w-3.5" /> Confirm Return
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Message
                   </button>
-                )}
-                
-                {/* Global Actions (Chat & Complaint) */}
-                {["active", "returned", "damaged", "late"].includes(book.status) && (
-                  <a 
-                    href={`/complaints?borrow_request_id=${book.id}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
-                  >
-                    File Complaint
-                  </a>
-                )}
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenChatId(openChatId === book.id ? null : book.id);
-                  }} 
-                  className={`btn-secondary flex items-center gap-1.5 !py-2 text-xs ${openChatId === book.id ? 'bg-slate-100 text-slate-800' : ''}`}
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  {openChatId === book.id ? "Close Chat" : "Message"}
-                </button>
-              </div>
-
-              {openChatId === book.id && (
-                <div onClick={(e) => e.stopPropagation()} className="pt-2 border-t border-slate-100">
-                  <ChatThread 
-                    request={book} 
-                    onReportIssue={(req) => window.location.href = `/complaints?borrow_request_id=${req.id}`} 
-                  />
                 </div>
-              )}
-            </div>
+              </div>
             );
           })}
         </div>
@@ -452,7 +440,7 @@ export default function BorrowRequestsPage() {
                 {reviewAction === "confirm_return" ? "Rate the borrower" : "Tell us about your experience"}
               </p>
             </div>
-            
+
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               <div>
                 <label className="label">Rating Stars</label>
@@ -561,6 +549,52 @@ export default function BorrowRequestsPage() {
           </div>
         </div>
       )}
+
+      {/* Chat Popup Modal */}
+      {openChatId && (() => {
+        const book = (Array.isArray(bookings?.borrowing) ? bookings.borrowing : []).find(b => b.id === openChatId) ||
+          (Array.isArray(bookings?.lending) ? bookings.lending : []).find(b => b.id === openChatId);
+        if (!book) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] p-4 animate-in fade-in duration-200">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+            >
+              <button
+                onClick={() => setOpenChatId(null)}
+                className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-150 dark:hover:bg-slate-800 transition-colors z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8 mb-2">
+                <div className="h-11 w-11 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-2xl flex-shrink-0">
+                  {book.resource?.image_placeholder || "🛠️"}
+                </div>
+                <div>
+                  <h2 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
+                    Chat: {book.resource?.title}
+                  </h2>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+                    {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-y-auto flex-1 min-h-0">
+                <ChatThread
+                  request={book}
+                  onReportIssue={(req) => {
+                    setOpenChatId(null);
+                    window.location.href = `/complaints?borrow_request_id=${req.id}`;
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
