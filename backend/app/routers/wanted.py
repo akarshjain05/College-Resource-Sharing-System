@@ -84,14 +84,43 @@ def delete_wanted_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    from app.models.borrow import BorrowRequest
+
     wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
     if not wanted:
         raise NotFoundException("Wanted request not found")
     if wanted.user_id != current_user.id and current_user.role != "admin":
         raise ForbiddenException("Only the owner or an admin can delete this request")
 
+    # Disassociate any auto-created or linked borrow request so FK constraint is satisfied
+    db.query(BorrowRequest).filter(BorrowRequest.wanted_request_id == wanted_id).update(
+        {"wanted_request_id": None}, synchronize_session=False
+    )
+
     db.delete(wanted)
     db.commit()
+
+
+@router.delete("/offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_wanted_offer(
+    offer_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
+    if not offer:
+        raise NotFoundException("Offer not found")
+
+    wanted = offer.wanted_request
+    if offer.offerer_id != current_user.id and wanted.user_id != current_user.id and current_user.role != "admin":
+        raise ForbiddenException("You cannot cancel this offer")
+
+    if offer.status == "ACCEPTED":
+        raise ForbiddenException("Accepted offers cannot be deleted. Manage the active borrow request instead.")
+
+    db.delete(offer)
+    db.commit()
+
 
 
 from app.models.wanted import WantedRequest, WantedOffer

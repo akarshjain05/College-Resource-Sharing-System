@@ -94,3 +94,34 @@ def test_accept_after_fulfilled(client, test_user, second_user, test_category):
     # 5. Try to accept second
     accept2 = client.post(f"/api/v1/wanted/offers/{offer2_id}/accept", headers=requester_headers)
     assert accept2.status_code == 403
+
+
+def test_delete_fulfilled_wanted_request(client, test_user, second_user, test_category):
+    requester_headers = auth_headers(client, test_user.email, "Password123!")
+    offerer_headers = auth_headers(client, second_user.email, "Password123!")
+
+    # 1. Requester creates wanted request
+    req_resp = client.post("/api/v1/wanted", headers=requester_headers, json={
+        "title": "Need a laptop",
+        "description": "dedo laptop",
+        "category_id": str(test_category.id)
+    })
+    assert req_resp.status_code == 201
+    wanted_id = req_resp.json()["id"]
+
+    # 2. Offerer creates resource and offers it
+    resource = create_resource(client, offerer_headers, str(test_category.id))
+    offer_resp = client.post(f"/api/v1/wanted/{wanted_id}/offer", headers=offerer_headers, json={
+        "resource_id": resource["id"]
+    })
+    assert offer_resp.status_code == 201
+    offer_id = offer_resp.json()["id"]
+
+    # 3. Requester accepts offer (creates borrow request linked to wanted_id)
+    accept_resp = client.post(f"/api/v1/wanted/offers/{offer_id}/accept", headers=requester_headers)
+    assert accept_resp.status_code == 200
+
+    # 4. Requester deletes the fulfilled wanted request -> must NOT throw DB integrity error (409/500)
+    del_resp = client.delete(f"/api/v1/wanted/{wanted_id}", headers=requester_headers)
+    assert del_resp.status_code == 204
+
