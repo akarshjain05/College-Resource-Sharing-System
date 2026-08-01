@@ -249,6 +249,17 @@ def cancel_borrow_request(
 
     db.commit()
     db.refresh(br)
+
+    status_text = "approved borrow request" if was_approved else "borrow request"
+    create_notification(
+        db,
+        br.lender_id,
+        NotificationType.SYSTEM,
+        "Borrow request cancelled",
+        f"{current_user.full_name} cancelled their {status_text} for '{br.resource.title}'.",
+        link=f"/borrow-requests/{br.id}",
+    )
+
     return br
 
 
