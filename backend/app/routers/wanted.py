@@ -70,7 +70,7 @@ def fulfill_wanted_request(
     if wanted.user_id != current_user.id:
         raise ForbiddenException("Only the owner can mark this as fulfilled")
 
-    wanted.is_fulfilled = True
+    wanted.is_fulfilled = not wanted.is_fulfilled
     db.commit()
     db.refresh(wanted)
     return wanted
