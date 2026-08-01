@@ -551,7 +551,7 @@ export default function ResourceCreatePage() {
               <button
                 onClick={() => {
                   setShowSuccessModal(false);
-                  navigate("/dashboard");
+                  navigate("/resources");
                 }}
                 className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-2xl py-3.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
