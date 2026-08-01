@@ -203,6 +203,7 @@ def accept_wanted_offer(
     db: Session = Depends(get_db),
 ):
     from app.services.notification_service import create_notification
+    from app.services.availability import is_resource_available_for_dates
     from datetime import date, timedelta
 
     offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
@@ -221,20 +222,17 @@ def accept_wanted_offer(
     if not resource:
         raise NotFoundException("Resource not found")
         
-    if resource.quantity_available < 1:
-        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+    start_date = date.today()
+    end_date = start_date + timedelta(days=resource.max_borrow_days)
 
-    # Decrement resource quantity
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
+    if not is_resource_available_for_dates(db, resource.id, start_date, end_date, resource.quantity):
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
 
     offer.status = "ACCEPTED"
     wanted.is_fulfilled = True
     
     # Auto-create BorrowRequest
-    start_date = date.today()
-    end_date = start_date + timedelta(days=resource.max_borrow_days)
+
     
     borrow_request = BorrowRequest(
         resource_id=resource.id,

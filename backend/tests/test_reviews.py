@@ -16,7 +16,7 @@ def create_resource(client, headers, category_id):
 
 
 def request_borrow(client, headers, resource_id):
-    start = date.today() + timedelta(days=1)
+    start = date.today()
     end = start + timedelta(days=3)
     return client.post(
         "/api/v1/borrow-requests",
