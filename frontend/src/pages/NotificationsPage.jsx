@@ -70,6 +70,8 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     loadNotifications();
+    window.addEventListener("refreshNotificationsList", loadNotifications);
+    return () => window.removeEventListener("refreshNotificationsList", loadNotifications);
   }, []);
 
   const handleMarkAll = async () => {
