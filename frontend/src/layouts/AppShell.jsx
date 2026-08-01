@@ -236,7 +236,7 @@ export default function AppShell() {
           <div className="flex items-center justify-between gap-2 px-1">
             <Link to="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 -ml-1.5 transition-colors cursor-pointer group">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
-                {user?.full_name?.charAt(0).toUpperCase() || "U"}
+                {(user?.full_name?.charAt(0) || "U").toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{user?.full_name || "Neighbor User"}</p>

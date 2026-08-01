@@ -263,7 +263,7 @@ export default function ResourceDetailPage() {
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white text-base shadow-sm">
-                {resource.owner?.full_name?.charAt(0).toUpperCase()}
+                {(resource.owner?.full_name?.charAt(0) || "U").toUpperCase()}
               </div>
               <div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium leading-none">Listed by Owner</p>
@@ -351,7 +351,7 @@ export default function ResourceDetailPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
                           <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                            {rev.reviewer?.full_name?.charAt(0).toUpperCase() || "U"}
+                            {(rev.reviewer?.full_name?.charAt(0) || "U").toUpperCase()}
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{rev.reviewer?.full_name || "Neighbor User"}</h4>
