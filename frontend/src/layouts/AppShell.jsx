@@ -52,20 +52,25 @@ export default function AppShell() {
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
-  useEffect(() => {
-    let mounted = true;
+  const fetchUnreadCount = () => {
     notificationApi
       .list()
       .then(({ data }) => {
-        if (mounted && Array.isArray(data)) {
+        if (Array.isArray(data)) {
           setUnreadCount(data.filter((n) => !n.is_read).length);
         }
       })
       .catch(() => { });
-    return () => {
-      mounted = false;
-    };
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
   }, [location.pathname]);
+
+  useEffect(() => {
+    window.addEventListener("refreshUnreadCount", fetchUnreadCount);
+    return () => window.removeEventListener("refreshUnreadCount", fetchUnreadCount);
+  }, []);
 
   useNotificationSocket(() => setUnreadCount((prev) => prev + 1), user);
   usePushNotification(user);
