@@ -22,6 +22,7 @@ from app.schemas.borrow import (
 )
 from app.services.notification_service import create_notification
 from app.services.email_service import send_borrow_request_email
+from app.services.availability import is_resource_available_for_dates
 
 router = APIRouter(prefix="/borrow-requests", tags=["Borrow Requests"])
 
@@ -38,33 +39,14 @@ def create_borrow_request(
         raise NotFoundException("Resource not found")
     if resource.owner_id == current_user.id:
         raise AppException("You cannot borrow your own resource", status_code=status.HTTP_400_BAD_REQUEST, error_code="SELF_BORROW")
-    if resource.quantity_available < 1:
-        raise AppException("This resource is currently unavailable", status_code=status.HTTP_400_BAD_REQUEST, error_code="OUT_OF_STOCK")
-        
-    requested_days = (payload.requested_end_date - payload.requested_start_date).days + 1
-    if requested_days > resource.max_borrow_days:
-        raise AppException(f"This resource can only be borrowed for a maximum of {resource.max_borrow_days} days", status_code=status.HTTP_400_BAD_REQUEST, error_code="MAX_DAYS_EXCEEDED")
-    if requested_days <= 0:
-        raise AppException("End date must be on or after start date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
-    if payload.requested_start_date < date.today():
-        raise AppException("Cannot request to borrow in the past", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATES")
-
-    if resource.available_from and payload.requested_start_date < resource.available_from:
-        raise AppException(f"Resource is not available before {resource.available_from}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
-    if resource.available_to and payload.requested_end_date > resource.available_to:
-        raise AppException(f"Resource is not available after {resource.available_to}", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_OUT_OF_BOUNDS")
-
-    # Check for date overlaps if it's a single-quantity item (for now, assume we enforce strictly)
-    if resource.quantity_available <= 1:
-        overlap_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED]
-        conflict = db.query(BorrowRequest).filter(
-            BorrowRequest.resource_id == resource.id,
-            BorrowRequest.status.in_(overlap_statuses),
-            BorrowRequest.requested_start_date <= payload.requested_end_date,
-            BorrowRequest.requested_end_date >= payload.requested_start_date,
-        ).first()
-        if conflict:
-            raise AppException("Those dates overlap an existing approved borrow", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_CONFLICT")
+    if not is_resource_available_for_dates(
+        db, 
+        resource.id, 
+        payload.requested_start_date, 
+        payload.requested_end_date, 
+        resource.quantity_available
+    ):
+        raise AppException("Those dates overlap an existing approved borrow", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_CONFLICT")
 
     borrow_request = BorrowRequest(
         resource_id=resource.id,
@@ -138,19 +120,22 @@ def approve_borrow_request(
     if date.today() > br.requested_end_date:
         raise AppException("Cannot approve a request whose lending window has already expired", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
-    # Lock resource explicitly to prevent concurrent approvals on the last unit
+    # Lock resource explicitly to prevent concurrent approvals
     resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
     if not resource:
         raise NotFoundException("Resource not found")
-    if resource.quantity_available < 1:
-        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+        
+    if not is_resource_available_for_dates(
+        db, 
+        resource.id, 
+        br.requested_start_date, 
+        br.requested_end_date, 
+        resource.quantity_available
+    ):
+        raise AppException("This resource is no longer available for the requested dates", status_code=status.HTTP_409_CONFLICT, error_code="DATE_CONFLICT")
 
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
-    
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
 
     decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
     created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
@@ -261,13 +246,6 @@ def cancel_borrow_request(
 
     was_approved = br.status == BorrowStatus.APPROVED
     br.status = BorrowStatus.CANCELLED
-    
-    if was_approved:
-        resource = db.query(Resource).filter(Resource.id == br.resource_id).with_for_update().first()
-        if resource:
-            resource.quantity_available += 1
-            if resource.status == ResourceStatus.BORROWED:
-                resource.status = ResourceStatus.AVAILABLE
 
     db.commit()
     db.refresh(br)
@@ -358,12 +336,6 @@ def confirm_return_resource(
 
     resource = br.resource
     resource.total_borrows += 1
-    
-    locked_resource = db.query(Resource).filter(Resource.id == resource.id).with_for_update().first()
-    if locked_resource:
-        locked_resource.quantity_available += 1
-        if locked_resource.status == ResourceStatus.BORROWED:
-            locked_resource.status = ResourceStatus.AVAILABLE
 
     # Trust Score Logic (Borrower) — damage penalty is DEFERRED to admin adjudication
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
