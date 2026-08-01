@@ -11,8 +11,8 @@ from app.schemas.resource import ResourceResponse
 
 class BorrowRequestCreate(BaseModel):
     resource_id: uuid.UUID
-    requested_start_date: date
-    requested_end_date: date
+    requested_start_date: datetime
+    requested_end_date: datetime
     purpose: Optional[str] = None
 
     @model_validator(mode="after")
@@ -42,9 +42,9 @@ class BorrowRequestResponse(BaseModel):
 
     id: uuid.UUID
     status: BorrowStatus
-    requested_start_date: date
-    requested_end_date: date
-    actual_return_date: Optional[date] = None
+    requested_start_date: datetime
+    requested_end_date: datetime
+    actual_return_date: Optional[datetime] = None
     purpose: Optional[str] = None
     deposit_paid: Optional[float] = None
     damage_report: Optional[str] = None

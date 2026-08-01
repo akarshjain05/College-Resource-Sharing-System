@@ -19,7 +19,16 @@ const STATUS_STYLE = {
   late: "bg-red-50 text-red-600",
 };
 
-// Removed dead RequestCard component
+const getStatusBadge = (status) => {
+  const st = status.toLowerCase();
+  if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
+  if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
+  if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
+  if (st === "handover_requested") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Handover Requested</span>;
+  if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
+  if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
+  return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
+};
 
 export default function BorrowRequestsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -177,6 +186,7 @@ export default function BorrowRequestsPage() {
         return;
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
+      if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") {
         if (!window.confirm("Are you sure you want to cancel this request?")) return;
         await borrowApi.cancel(bookingId);
@@ -225,7 +235,7 @@ export default function BorrowRequestsPage() {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing", "return_requested", "late"].includes(status);
+        return ["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status);
       }
       if (subTab === "completed") {
         return ["returned", "confirmed_return", "damaged"].includes(status);
@@ -239,16 +249,7 @@ export default function BorrowRequestsPage() {
 
   const activeList = getFilteredBookings();
 
-  // Style helper for card status pills matching design
-  const getStatusBadge = (status) => {
-    const st = status.toLowerCase();
-    if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
-    if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
-    if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
-    if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
-    if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
-    return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
-  };
+
 
   return (
     <div className="space-y-6">

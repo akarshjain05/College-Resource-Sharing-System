@@ -26,9 +26,9 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
         SAEnum(BorrowStatus), default=BorrowStatus.REQUESTED, index=True
     )
 
-    requested_start_date: Mapped[date] = mapped_column(Date, nullable=False)
-    requested_end_date: Mapped[date] = mapped_column(Date, nullable=False)
-    actual_return_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    requested_start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    requested_end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    actual_return_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     purpose: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     deposit_paid: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)

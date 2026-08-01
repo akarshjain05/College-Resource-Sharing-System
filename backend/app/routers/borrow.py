@@ -150,6 +150,33 @@ def approve_borrow_request(
         )
     lender.response_count += 1
 
+    resource.quantity_available -= 1
+    if resource.quantity_available <= 0:
+        resource.status = ResourceStatus.BORROWED
+
+        # Auto-decline any remaining pending requests for this resource
+        other_pending_requests = (
+            db.query(BorrowRequest)
+            .filter(
+                BorrowRequest.resource_id == resource.id,
+                BorrowRequest.id != br.id,
+                BorrowRequest.status == BorrowStatus.REQUESTED,
+            )
+            .all()
+        )
+
+        for other_br in other_pending_requests:
+            other_br.status = BorrowStatus.REJECTED
+            other_br.rejection_reason = "Resource is no longer available (approved for another borrower)."
+            create_notification(
+                db,
+                other_br.borrower_id,
+                NotificationType.BORROW_REJECTED,
+                "Borrow Request Auto-Declined",
+                f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
+                link=f"/borrow-requests/{other_br.id}",
+            )
+
     db.commit()
     db.refresh(br)
 
@@ -217,14 +244,41 @@ def handover_resource(
     if date.today() > br.requested_end_date:
         raise AppException("Cannot hand over resource after the requested end date", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_DATE")
 
-    br.status = BorrowStatus.ACTIVE
+    br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()
     db.refresh(br)
 
     create_notification(
         db, br.borrower_id, NotificationType.SYSTEM,
-        "Resource Handed Over",
-        f"'{br.resource.title}' has been handed over to you.",
+        "Handover Pending Confirmation",
+        f"'{br.resource.title}' has been handed over by the lender. Please confirm receipt.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    return br
+
+
+@router.post("/{request_id}/confirm-handover", response_model=BorrowRequestResponse)
+def confirm_handover_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can confirm receipt")
+    if br.status != BorrowStatus.HANDOVER_REQUESTED:
+        raise AppException("Only pending handovers can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.ACTIVE
+    db.commit()
+    db.refresh(br)
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "Handover Confirmed",
+        f"'{br.resource.title}' handover was confirmed by {current_user.full_name}.",
         link=f"/borrow-requests/{br.id}",
     )
     return br
