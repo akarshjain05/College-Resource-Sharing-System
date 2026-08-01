@@ -173,6 +173,22 @@ export default function ResourceDetailPage() {
 
 
 
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Dynamic Rating calculations from real reviews
+  const totalReviewsCount = reviews.length > 0 ? reviews.length : (resource.reviews_count || 0);
+  const calculatedAvgRating = reviews.length > 0
+    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    : (resource.average_rating || "5.0");
+
+  const ratingCounts = [5, 4, 3, 2, 1].map((stars) => {
+    const count = reviews.filter((r) => r.rating === stars).length;
+    const percentage = reviews.length > 0 ? Math.round((count / reviews.length) * 100) : 0;
+    return { stars, count, percentage: `${percentage}%` };
+  });
+
+  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
+
   return (
     <div className="space-y-6">
       {/* Back to explore */}
@@ -207,8 +223,8 @@ export default function ResourceDetailPage() {
               {/* Floating rating overlay */}
               <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs rounded-xl border border-slate-200/80 dark:border-slate-700/80 px-3.5 py-1.5 shadow-sm flex items-center gap-1">
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{resource.average_rating}</span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">({resource.reviews_count} reviews)</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{calculatedAvgRating}</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">({totalReviewsCount} reviews)</span>
               </div>
 
               <button
@@ -230,7 +246,7 @@ export default function ResourceDetailPage() {
                   {resource.category?.name || "Tools"}
                 </span>
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
-                  {resource.total_borrows || 45} bookings completed
+                  {resource.total_borrows || 0} bookings completed
                 </span>
               </div>
               <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white leading-tight">
@@ -282,40 +298,41 @@ export default function ResourceDetailPage() {
             </p>
           </div>
 
-
-
-          {/* Reviews & Overall score card (Screen 6) */}
+          {/* Reviews & Rating breakdown card */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-6">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Reviews & Trust Score</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Reviews & Ratings</h3>
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+                {totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"}
+              </span>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
               <div className="md:col-span-4 text-center border-b md:border-b-0 md:border-r border-slate-100 dark:border-slate-800 pb-4 md:pb-0 md:pr-4">
                 <span className="font-display text-5xl font-extrabold text-slate-900 dark:text-white leading-none">
-                  {resource.average_rating}
+                  {calculatedAvgRating}
                 </span>
                 <div className="flex justify-center gap-0.5 mt-2">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4.5 w-4.5 fill-amber-400 text-amber-400" />
+                    <Star
+                      key={i}
+                      className={`h-4.5 w-4.5 ${i < Math.round(Number(calculatedAvgRating)) ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-800"}`}
+                    />
                   ))}
                 </div>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mt-2.5">
-                  Overall Rating <br />({resource.reviews_count} reviews)
+                  Overall Rating <br />({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})
                 </p>
               </div>
 
               <div className="md:col-span-8 space-y-2">
-                {[
-                  { stars: 5, count: 11, percentage: "73%" },
-                  { stars: 4, count: 3, percentage: "20%" },
-                  { stars: 3, count: 1, percentage: "7%" },
-                  { stars: 2, count: 0, percentage: "0%" },
-                ].map((row) => (
+                {ratingCounts.map((row) => (
                   <div key={row.stars} className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-300 font-semibold">
                     <span className="w-3 text-right">{row.stars}★</span>
                     <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-950 rounded-full overflow-hidden">
-                      <div className="h-full bg-amber-400 rounded-full" style={{ width: row.percentage }} />
+                      <div className="h-full bg-amber-400 rounded-full transition-all duration-300" style={{ width: row.percentage }} />
                     </div>
-                    <span className="w-5 text-slate-400 dark:text-slate-500 text-right">{row.count}</span>
+                    <span className="w-6 text-slate-400 dark:text-slate-500 text-right">{row.count}</span>
                   </div>
                 ))}
               </div>
@@ -323,67 +340,59 @@ export default function ResourceDetailPage() {
 
             {/* List of comments */}
             <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-              {reviews.map((rev) => (
-                <div key={rev.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center font-bold text-xs">
-                        {rev.reviewer?.full_name?.charAt(0)}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{rev.reviewer?.full_name}</h4>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">12 Aug 2026</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-0.5">
-                      {[...Array(rev.rating)].map((_, i) => (
-                        <Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400 pl-9 leading-relaxed">
-                    {rev.comment}
-                  </p>
+              {reviews.length === 0 ? (
+                <div className="text-center py-6 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                  No reviews yet for this item. Borrow it to leave the first review!
                 </div>
-              ))}
+              ) : (
+                <>
+                  {displayedReviews.map((rev) => (
+                    <div key={rev.id} className="space-y-2 border-b border-slate-50 dark:border-slate-850 last:border-0 pb-3 last:pb-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                            {rev.reviewer?.full_name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">{rev.reviewer?.full_name || "Neighbor User"}</h4>
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
+                              {rev.created_at ? new Date(rev.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Recently"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-3.5 w-3.5 ${i < rev.rating ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-800"}`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs font-medium text-slate-650 dark:text-slate-350 pl-10 leading-relaxed">
+                        {rev.comment || "Great item and smooth transaction!"}
+                      </p>
+                    </div>
+                  ))}
+
+                  {reviews.length > 3 && (
+                    <div className="pt-2 text-center">
+                      <button
+                        onClick={() => setShowAllReviews(!showAllReviews)}
+                        className="inline-flex items-center gap-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-2 text-xs font-bold text-primary-600 dark:text-primary-400 transition-all shadow-xs active:scale-95"
+                      >
+                        {showAllReviews ? "Show Less" : `Show All Reviews (${reviews.length})`}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Right Side: Request/Booking Widget & Sidebar Controls */}
         <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-4">
-
-          {/* Owner Info Box (from main) */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-slate-400 mb-3">Shared by</p>
-            <Link
-              to={`/users/${resource.owner.id}`}
-              className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-ink-50 dark:hover:bg-slate-800 transition-colors group"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-100 dark:bg-emerald-950/40 font-bold text-forest-700 dark:text-emerald-400">
-                {resource.owner.full_name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-display text-base font-semibold text-ink-900 dark:text-white group-hover:text-forest-700 dark:group-hover:text-emerald-400 transition-colors">
-                  {resource.owner.full_name}
-                </p>
-                <p className="text-sm text-ink-500 dark:text-slate-400">{resource.owner.department || "Campus member"}</p>
-                {resource.owner.avg_response_seconds != null && (
-                  <p className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold flex items-center gap-1 mt-1">
-                    <Clock className="h-3 w-3" />
-                    {formatAvgResponseTime(resource.owner.avg_response_seconds)}
-                  </p>
-                )}
-              </div>
-            </Link>
-
-            <div className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 flex justify-between text-xs">
-              <span className="text-ink-500 dark:text-slate-400 font-medium">Security Deposit:</span>
-              <span className={`font-semibold ${resource.deposit_amount > 0 ? "text-forest-700 dark:text-emerald-400" : "text-ink-600 dark:text-slate-300"}`}>
-                {resource.deposit_amount > 0 ? `₹${resource.deposit_amount}` : "No deposit required"}
-              </span>
-            </div>
-          </div>
 
           {/* Regular Borrow Form (using your friend's wrapper styling, but main's logic) */}
           {!isOwner && resource.status !== "unavailable" && (
