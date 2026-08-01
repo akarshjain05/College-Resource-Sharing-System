@@ -163,7 +163,7 @@ export default function AppShell() {
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
-            const isActive = location.pathname === to || (to !== "/dashboard" && location.pathname.startsWith(to));
+            const isActive = location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to));
             return (
               <Link
                 key={to}

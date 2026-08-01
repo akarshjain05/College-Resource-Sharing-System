@@ -244,7 +244,7 @@ export default function BorrowRequestsPage() {
           <p className="text-sm font-bold text-slate-700">No bookings in this tab</p>
           <p className="mt-1 text-xs text-slate-400">Borrow something or list an item to get started!</p>
           <Link
-            to="/dashboard"
+            to="/resources"
             className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold shadow-sm transition-all active:scale-95"
           >
             Explore Nearby Items
