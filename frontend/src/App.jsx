@@ -8,11 +8,12 @@ import AdminLayout from "./layouts/AdminLayout";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ComplaintsPage from "./pages/ComplaintsPage";
 import ResourceListPage from "./pages/resources/ResourceListPage";
 import MyListingsPage from "./pages/resources/MyListingsPage";
+import WishlistPage from "./pages/resources/WishlistPage";
 import ResourceDetailPage from "./pages/resources/ResourceDetailPage";
 import ResourceCreatePage from "./pages/resources/ResourceCreatePage";
 import BorrowRequestsPage from "./pages/borrow/BorrowRequestsPage";
@@ -23,6 +24,8 @@ import MyNeedsPage from "./pages/wanted/MyNeedsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
+import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
+import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 
 export default function App() {
@@ -34,6 +37,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route
             element={
@@ -42,9 +46,9 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/resources" element={<ResourceListPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/my-listings" element={<MyListingsPage />} />
             <Route path="/resources/new" element={<ResourceCreatePage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
@@ -66,12 +70,14 @@ export default function App() {
               <Route index element={<AdminDashboardPage />} />
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="resources" element={<AdminResourcesPage />} />
+              <Route path="borrows" element={<AdminBorrowsPage />} />
               <Route path="complaints" element={<AdminComplaintsPage />} />
             </Route>
           </Route>
 
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/resources" replace />} />
+          <Route path="*" element={<Navigate to="/resources" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

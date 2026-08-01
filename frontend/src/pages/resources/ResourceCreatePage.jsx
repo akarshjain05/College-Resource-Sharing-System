@@ -20,13 +20,7 @@ import {
 import { resourceApi, categoryApi, uploadApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-const CATEGORIES_LIST = [
-  { id: "cat-1", name: "Tools", icon: "🔌" },
-  { id: "cat-2", name: "Sports", icon: "🏸" },
-  { id: "cat-3", name: "Party", icon: "❄️" },
-  { id: "cat-4", name: "Kitchen", icon: "🌪️" },
-  { id: "cat-5", name: "Camping", icon: "⛺" },
-];
+
 
 const CONDITION_OPTS = [
   { value: "new", label: "Brand New", desc: "Unopened or unused" },
@@ -42,40 +36,43 @@ export default function ResourceCreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [photos, setPhotos] = useState([]); // Array of { file, previewUrl }
   const [categories, setCategories] = useState([]);
-  
+
   // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [createdItem, setCreatedItem] = useState(null);
 
   // Form State
   const [form, setForm] = useState({
-    title: "Bosch Drill Machine",
+    title: "",
     category_id: "",
-    description: "Powerful drill machine. Used only a few times. Comes with bits.",
+    description: "",
     condition: "good",
     daily_price: 150,
     deposit_amount: 500,
-    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+    location: localStorage.getItem("share_neighbour_location") || "",
+    available_from: "",
+    available_to: "",
   });
+
+  const formatLocalDate = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayDateString = formatLocalDate(new Date());
 
   useEffect(() => {
     categoryApi.list()
       .then(({ data }) => {
-        setCategories(data);
-        if (data.length > 0) {
-          setForm(prev => ({ ...prev, category_id: data[0].id }));
+        const catList = Array.isArray(data) ? data : (data?.items || []);
+        setCategories(catList);
+        if (catList.length > 0) {
+          setForm(prev => ({ ...prev, category_id: prev.category_id || catList[0].id }));
         }
       })
       .catch(() => {
-        const fallback = [
-          { id: "cat-1", name: "Tools" },
-          { id: "cat-2", name: "Sports" },
-          { id: "cat-3", name: "Party" },
-          { id: "cat-4", name: "Kitchen" },
-          { id: "cat-5", name: "Camping" },
-        ];
-        setCategories(fallback);
-        setForm(prev => ({ ...prev, category_id: fallback[0].id }));
+        toast.error("Failed to load categories.");
       });
   }, []);
 
@@ -102,7 +99,7 @@ export default function ResourceCreatePage() {
       toast.error("You can only select up to 3 images.");
       return;
     }
-    
+
     files.forEach(file => {
       if (!file.type.startsWith("image/")) {
         toast.error(`${file.name} is not an image file.`);
@@ -133,12 +130,21 @@ export default function ResourceCreatePage() {
       toast.error("Deposit amount must be 0 or more.");
       return;
     }
+    if (form.available_from && form.available_to) {
+      if (form.available_from > form.available_to) {
+        toast.error("Available From date cannot be later than Available To date.");
+        return;
+      }
+    }
+    if (form.available_from && form.available_from < todayDateString) {
+      toast.error("Available dates cannot be in the past.");
+      return;
+    }
     setSubmitting(true);
 
-    const generatedId = "mock-user-item-" + Date.now();
     const selectedCat = categories.find(c => c.id === form.category_id);
     const categoryName = selectedCat ? selectedCat.name : "Other";
-    
+
     const emojiMap = {
       "Tools": "🔌",
       "Sports": "🏸",
@@ -164,9 +170,8 @@ export default function ResourceCreatePage() {
       id: generatedId,
       title: form.title,
       category: categoryName,
-      daily_price: dailyPriceNum,
-      deposit_amount: depositAmountNum,
-      location: currentLoc,
+      daily_price: form.daily_price,
+      deposit_amount: form.deposit_amount,
       average_rating: 5.0,
       reviews_count: 0,
       distance: "0.1 km",
@@ -210,6 +215,8 @@ export default function ResourceCreatePage() {
         deposit_amount: depositAmountNum,
         max_borrow_days: 7,
         category_id: form.category_id,
+        available_from: form.available_from || null,
+        available_to: form.available_to || null,
       });
 
       const createdId = response.data.id;
@@ -225,13 +232,14 @@ export default function ResourceCreatePage() {
         }
       }
       toast.success("Listing created successfully!");
-    } catch (dbErr) {
-      console.log("Database upload bypassed. Local listing created.");
+      setCreatedItem({ ...response.data, image_placeholder: finalPlaceholder });
+      setSubmitting(false);
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || "Failed to create listing on the server.");
+      setSubmitting(false);
     }
-
-    setCreatedItem(newItem);
-    setSubmitting(false);
-    setShowSuccessModal(true);
   };
 
   return (
@@ -263,7 +271,7 @@ export default function ResourceCreatePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Side: Listing Form (8 columns) */}
         <form onSubmit={handleSubmit} className="lg:col-span-8 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-sm space-y-8">
-          
+
           {/* Section 1: Item Media */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
@@ -275,7 +283,7 @@ export default function ResourceCreatePage() {
                 {photos.length}/3 Selected
               </span>
             </div>
-            
+
             <div className="space-y-4">
               {/* Premium Drag & Drop style trigger */}
               {photos.length < 3 && (
@@ -295,14 +303,14 @@ export default function ResourceCreatePage() {
                   {photos.map((item, idx) => (
                     <div
                       key={idx}
-                      className="relative aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-955 overflow-hidden group shadow-xs animate-in zoom-in-75 duration-100"
+                      className="relative aspect-square rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 overflow-hidden group shadow-xs animate-in zoom-in-75 duration-100"
                     >
                       <img
                         src={item.previewUrl}
                         alt={`Preview ${idx + 1}`}
                         className="h-full w-full object-cover"
                       />
-                      
+
                       {idx === 0 && (
                         <span className="absolute top-2.5 left-2.5 bg-primary-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-lg shadow-md tracking-wider uppercase">
                           Cover
@@ -336,6 +344,7 @@ export default function ResourceCreatePage() {
                     value={form.category_id}
                     onChange={update("category_id")}
                   >
+                    <option value="" disabled>-- Select a Category --</option>
                     {categories.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.name}
@@ -350,22 +359,13 @@ export default function ResourceCreatePage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Location Block</label>
-                <div className="relative">
-                  <select
-                    required
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 appearance-none pr-10"
-                    value={form.location}
-                    onChange={update("location")}
-                  >
-                    <option value="Koramangala, Bengaluru">Koramangala, Bengaluru</option>
-                    <option value="Indiranagar, Bengaluru">Indiranagar, Bengaluru</option>
-                    <option value="HSR Layout, Bengaluru">HSR Layout, Bengaluru</option>
-                    <option value="Whitefield, Bengaluru">Whitefield, Bengaluru</option>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-slate-500 dark:text-slate-400">
-                    <ChevronDown className="h-4 w-4" />
-                  </div>
-                </div>
+                <input
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  value={form.location}
+                  onChange={update("location")}
+                  placeholder="e.g. Koramangala, Bengaluru"
+                />
               </div>
             </div>
 
@@ -386,7 +386,7 @@ export default function ResourceCreatePage() {
                 required
                 minLength={10}
                 rows={4}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 resize-none"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 resize-none"
                 value={form.description}
                 onChange={update("description")}
                 placeholder="e.g. Describe the item specifications, what accessories are included, and when it's available for pickup..."
@@ -405,11 +405,10 @@ export default function ResourceCreatePage() {
                     type="button"
                     key={opt.value}
                     onClick={() => selectCondition(opt.value)}
-                    className={`p-4 rounded-2xl border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between ${
-                      isSelected
-                        ? "border-primary-600 bg-primary-50/10 dark:bg-primary-950/20 text-primary-800 dark:text-primary-300 shadow-sm"
-                        : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/50 text-slate-600 dark:text-slate-400"
-                    }`}
+                    className={`p-4 rounded-2xl border text-left transition-all duration-150 relative overflow-hidden flex flex-col justify-between ${isSelected
+                      ? "border-primary-600 bg-primary-50/10 dark:bg-primary-950/20 text-primary-800 dark:text-primary-300 shadow-sm"
+                      : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850/50 text-slate-600 dark:text-slate-400"
+                      }`}
                   >
                     <div>
                       <p className="text-xs font-bold">{opt.label}</p>
@@ -426,13 +425,43 @@ export default function ResourceCreatePage() {
             </div>
           </div>
 
-          {/* Section 4: Price & Trust Escrow Deposit */}
+          {/* Section 3.5: Available Dates (Optional) */}
+          <div className="space-y-4 pt-6 border-t border-slate-200/60 dark:border-slate-800">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Availability Dates (Optional)</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Specify if this item is only available for a certain period. Leave blank to make it available indefinitely.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available From</label>
+                <input
+                  type="date"
+                  min={todayDateString}
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_from}
+                  onChange={update("available_from")}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available To</label>
+                <input
+                  type="date"
+                  min={form.available_from || todayDateString}
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
+                  value={form.available_to}
+                  onChange={update("available_to")}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 4: Pricing & Trust Escrow Deposit */}
           <div className="space-y-4">
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Pricing details</h3>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">Determine the daily borrow fee and security backup deposit.</p>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Daily Price (₹)</label>
@@ -440,7 +469,7 @@ export default function ResourceCreatePage() {
                   type="number"
                   min={1}
                   required
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.daily_price}
                   onChange={update("daily_price")}
                   placeholder="e.g. 150"
@@ -452,7 +481,7 @@ export default function ResourceCreatePage() {
                   type="number"
                   min={0}
                   required
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.deposit_amount}
                   onChange={update("deposit_amount")}
                   placeholder="e.g. 500"
@@ -477,13 +506,13 @@ export default function ResourceCreatePage() {
 
         {/* Right Side: Pro Tips & Trend Analytics (4 columns) */}
         <div className="lg:col-span-4 space-y-4">
-          
+
           {/* Listing Tips Card */}
           <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4">
             <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-primary-600 dark:text-primary-400" /> Professional Tips
             </h3>
-            
+
             <ul className="space-y-3 text-[11px] font-medium text-slate-650 dark:text-slate-400 leading-normal">
               <li className="flex gap-2">
                 <span className="text-primary-600 dark:text-primary-400 font-extrabold">•</span>
@@ -514,26 +543,7 @@ export default function ResourceCreatePage() {
             </div>
           </div>
 
-          {/* Local demand widget */}
-          <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-3.5">
-            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-500" /> Hot in {form.location.split(",")[0]}
-            </h3>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Top items requested this week</p>
-            
-            <div className="space-y-2">
-              {[
-                { name: "Drills & Hammers", count: "12 requests" },
-                { name: "Camping Tents", count: "8 requests" },
-                { name: "Kitchen Blenders", count: "5 requests" }
-              ].map((item, i) => (
-                <div key={i} className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-850">
-                  <span>{item.name}</span>
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{item.count}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -541,10 +551,10 @@ export default function ResourceCreatePage() {
       {showSuccessModal && createdItem && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-850 p-6 max-w-md w-full shadow-2xl space-y-6 text-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
-            
+
             {/* Sparkles background effect */}
             <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-primary-500 via-purple-500 to-emerald-500" />
-            
+
             {/* Success icon */}
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900 shadow-sm">
               <CheckCircle className="h-8 w-8" />
@@ -563,9 +573,9 @@ export default function ResourceCreatePage() {
             {/* Your Contribution Card details */}
             <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200/60 dark:border-slate-800 text-left space-y-3">
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Your Contribution</p>
-              
+
               <div className="flex gap-3 items-center">
-                <div className="h-12 w-12 rounded-xl bg-white dark:bg-slate-905 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center text-3xl shadow-xs">
+                <div className="h-12 w-12 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center text-3xl shadow-xs">
                   {createdItem.image_placeholder.startsWith("data:") ? (
                     <img src={createdItem.image_placeholder} alt="Contribution preview" className="h-full w-full object-cover" />
                   ) : (
@@ -577,7 +587,7 @@ export default function ResourceCreatePage() {
                     {createdItem.title}
                   </h4>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mt-0.5">
-                    {createdItem.category} · {createdItem.location}
+                    {(typeof createdItem.category === 'object' ? createdItem.category?.name : createdItem.category) || "Resource"} · {createdItem.pickup_location || createdItem.location}
                   </p>
                 </div>
               </div>
@@ -609,14 +619,14 @@ export default function ResourceCreatePage() {
               <button
                 onClick={() => {
                   setShowSuccessModal(false);
-                  navigate("/dashboard");
+                  navigate("/resources");
                 }}
                 className="w-full bg-primary-600 hover:bg-primary-700 text-white rounded-2xl py-3.5 text-xs font-bold shadow-sm flex items-center justify-center gap-1.5 active:scale-95 transition-all"
               >
                 <span>Back to Explore</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              
+
               <button
                 onClick={() => {
                   setShowSuccessModal(false);
@@ -628,7 +638,7 @@ export default function ResourceCreatePage() {
                     condition: "good",
                     daily_price: 100,
                     deposit_amount: 300,
-                    location: localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru",
+                    location: localStorage.getItem("share_neighbour_location") || "",
                   });
                 }}
                 className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 py-3.5 text-xs font-bold rounded-2xl transition-all"

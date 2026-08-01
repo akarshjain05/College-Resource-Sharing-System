@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import PasswordInput from "../../components/PasswordInput";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
 import CompleteGoogleProfileForm from "../../components/CompleteGoogleProfileForm";
+import VerificationCodeInput from "../../components/VerificationCodeInput";
 
 const ROLES = [
   { value: "student", label: "Student" },
@@ -30,16 +31,24 @@ export default function RegisterPage() {
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleSignup, setGoogleSignup] = useState(null); // { registrationToken, fullName, email }
+  const [otpSignup, setOtpSignup] = useState(null); // { challengeId, email, expiresIn }
 
   const update = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const campusEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(svnit\.ac\.in)$/i;
+    if (!campusEmailRegex.test(form.email.trim())) {
+      toast.error("Please use an official campus email address (@svnit.ac.in)");
+      return;
+    }
+
     if (form.password !== form.confirm_password) {
       toast.error("Passwords don't match.");
       return;
     }
+
 
     setSubmitting(true);
     try {
@@ -47,11 +56,24 @@ export default function RegisterPage() {
         ...form,
         year_of_study: form.year_of_study ? Number(form.year_of_study) : undefined,
       };
-      await register(payload);
-      toast.success("Account created! Please sign in.");
-      navigate("/login");
+      const res = await register(payload);
+      if (res && res.challenge_id) {
+        toast.success("Verification code sent to your email!");
+        setOtpSignup({
+          challengeId: res.challenge_id,
+          email: form.email,
+          expiresIn: res.expires_in || 600,
+        });
+      } else {
+        toast.success("Account created! Please sign in.");
+        navigate("/login");
+      }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Registration failed. Please try again.");
+      if (err.response?.status === 429) {
+        toast.error("Too many attempts. Please try again later.");
+      } else {
+        toast.error(err.response?.data?.detail || "Registration failed. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -69,7 +91,7 @@ export default function RegisterPage() {
         });
       } else {
         toast.success("Welcome back!");
-        navigate("/dashboard");
+        navigate("/resources");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Google sign-up failed. Please try again.");
@@ -90,15 +112,24 @@ export default function RegisterPage() {
         </div>
 
         <div className="card space-y-5 p-6">
-          {googleSignup ? (
+          {otpSignup ? (
+            <VerificationCodeInput
+              email={otpSignup.email}
+              initialChallengeId={otpSignup.challengeId}
+              initialExpiresIn={otpSignup.expiresIn}
+              onVerified={() => navigate("/resources")}
+              onCancel={() => setOtpSignup(null)}
+            />
+          ) : googleSignup ? (
             <CompleteGoogleProfileForm
               registrationToken={googleSignup.registrationToken}
               fullName={googleSignup.fullName}
               email={googleSignup.email}
-              onDone={() => navigate("/dashboard")}
+              onDone={() => navigate("/resources")}
               onCancel={() => setGoogleSignup(null)}
             />
           ) : (
+
             <>
               <div>
                 <div className="relative">
@@ -127,8 +158,16 @@ export default function RegisterPage() {
                 </div>
                 <div>
                   <label className="label">Campus email</label>
-                  <input required type="email" className="input" value={form.email} onChange={update("email")} />
+                  <input
+                    required
+                    type="email"
+                    className="input"
+                    value={form.email}
+                    onChange={update("email")}
+                    placeholder="student@svnit.ac.in"
+                  />
                 </div>
+
                 <div>
                   <label className="label">Password</label>
                   <PasswordInput

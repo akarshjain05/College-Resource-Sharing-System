@@ -1,6 +1,7 @@
 from typing import List, Optional
+from datetime import datetime
 
-from sqlalchemy import String, Boolean, Enum as SAEnum, Text
+from sqlalchemy import String, Boolean, Enum as SAEnum, Text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -34,11 +35,16 @@ class User(Base, UUIDMixin, TimestampMixin):
     phone_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    email_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
     is_suspended: Mapped[bool] = mapped_column(Boolean, default=False)
 
     trust_score: Mapped[int] = mapped_column(default=100)
     sharing_score: Mapped[int] = mapped_column(default=0)
+
+    avg_response_seconds: Mapped[Optional[int]] = mapped_column(nullable=True)
+    response_count: Mapped[int] = mapped_column(default=0)
 
     resources: Mapped[List["Resource"]] = relationship(
         "Resource", back_populates="owner", cascade="all, delete-orphan"

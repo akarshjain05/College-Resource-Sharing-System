@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Check, X, RotateCcw, Ban, Calendar, User, ShieldAlert, Star } from "lucide-react";
+import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban, Calendar, User, Star } from "lucide-react";
 import { borrowApi } from "../../api/endpoints";
+import DueBadge from "../../components/DueBadge";
+import ChatThread from "../../components/ChatThread";
+import { chatEventBus } from "../../utils/chatEventBus";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -27,152 +30,63 @@ const getStatusBadge = (status) => {
   return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
 };
 
-function BookingCard({ book, tab, handleStatusChange, setReviewingId }) {
-  const [now, setNow] = useState(new Date());
+export default function BorrowRequestsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => {
-    if (book.status === "active" || book.status === "ongoing") {
-      const interval = setInterval(() => setNow(new Date()), 60000); // update every minute
-      return () => clearInterval(interval);
-    }
-  }, [book.status]);
-
-  const end = new Date(book.requested_end_date);
-  const timeDiff = end - now;
-  const daysRemaining = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const hoursRemaining = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutesRemaining = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-
-  useEffect(() => {
-    if (book.status === "active" && timeDiff > 0 && timeDiff <= 30 * 60 * 1000) {
-      toast(`Only ${minutesRemaining} minutes remaining to return ${book.resource.title}!`, {
-        icon: '⏳',
-        id: `time-warning-${book.id}`,
-        duration: 60000,
-      });
-    }
-  }, [timeDiff, book.status, book.id, book.resource.title, minutesRemaining]);
-
-  const formatTimeRemaining = () => {
-    if (timeDiff < 0) return `Overdue by ${Math.abs(daysRemaining)} day(s)`;
-    if (daysRemaining > 0) return `${daysRemaining}d ${hoursRemaining}h remaining`;
-    if (hoursRemaining > 0) return `${hoursRemaining}h ${minutesRemaining}m remaining`;
-    return `${minutesRemaining}m remaining`;
+  // Determine initial tab based on search params URL query
+  const getInitialTab = () => {
+    const pTab = searchParams.get("tab");
+    if (pTab === "incoming" || pTab === "lending") return "lending";
+    return "borrowing";
   };
 
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 hover:border-slate-300 transition-colors relative">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
-            {book.resource.image_placeholder || "🪜"}
-          </div>
-          <div>
-            <h3 className="font-display text-sm font-extrabold text-slate-900 leading-tight">
-              {book.resource.title}
-            </h3>
-            <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-              {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          {getStatusBadge(book.status)}
-          {book.status === "active" && (
-            <span className={`rounded-lg px-2 py-1 text-[10px] font-bold ${
-              timeDiff < 0 ? "bg-red-100 text-red-700" :
-              timeDiff <= 30 * 60 * 1000 ? "bg-orange-100 text-orange-700 animate-pulse" :
-              "bg-emerald-100 text-emerald-700"
-            }`}>
-              ⏱️ {formatTimeRemaining()}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-slate-50 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 border border-slate-100">
-        <div className="space-y-1">
-          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
-          <p className="text-slate-800 font-bold">
-            {new Date(book.requested_start_date).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} →{" "}
-            {new Date(book.requested_end_date).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </div>
-        <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-3.5">
-          <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
-          <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
-        {tab === "borrowing" && book.status === "requested" && (
-          <button onClick={() => handleStatusChange(book.id, "cancelled")} className="btn-secondary !py-2 text-xs">
-            <Ban className="h-3.5 w-3.5" /> Cancel Request
-          </button>
-        )}
-        {tab === "borrowing" && book.status === "approved" && (
-          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-            <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-          </span>
-        )}
-        {tab === "borrowing" && book.status === "handover_requested" && (
-          <button onClick={() => handleStatusChange(book.id, "confirm_handover")} className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs">
-            <Check className="h-3.5 w-3.5" /> Confirm Receipt
-          </button>
-        )}
-        {tab === "borrowing" && (book.status === "active" || book.status === "ongoing") && (
-          <button onClick={() => setReviewingId(book.id)} className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs">
-            <RotateCcw className="h-3.5 w-3.5" /> Return Item
-          </button>
-        )}
-
-        {tab === "lending" && book.status === "requested" && (
-          <>
-            <button onClick={() => handleStatusChange(book.id, "approved")} className="btn-primary !py-2 text-xs">
-              <Check className="h-3.5 w-3.5" /> Approve
-            </button>
-            <button onClick={() => handleStatusChange(book.id, "rejected")} className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs">
-              <X className="h-3.5 w-3.5" /> Decline
-            </button>
-          </>
-        )}
-        {tab === "lending" && book.status === "approved" && (
-          <button onClick={() => handleStatusChange(book.id, "handover")} className="btn-primary !py-2 text-xs">
-            <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-          </button>
-        )}
-        {tab === "lending" && book.status === "handover_requested" && (
-          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-            <User className="h-3.5 w-3.5 text-slate-400" /> Pending borrower confirmation
-          </span>
-        )}
-        {tab === "lending" && (book.status === "active" || book.status === "ongoing") && (
-          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function BorrowRequestsPage() {
-  const [searchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status");
-
-  const [tab, setTab] = useState("borrowing"); // "borrowing" (my requests) or "lending" (incoming)
+  const [tab, setTab] = useState(getInitialTab); // "borrowing" (my requests) or "lending" (incoming)
   const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState({ borrowing: [], lending: [] });
   const [loading, setLoading] = useState(true);
 
-  // Review states
+  // Review & Modal states
+  const [selectedBookingForModal, setSelectedBookingForModal] = useState(null);
   const [reviewingId, setReviewingId] = useState(null);
+  const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
+  const [openChatId, setOpenChatId] = useState(null);
+
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    const urlId = searchParams.get("id");
+    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+      const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
+      if (foundBorrowing) {
+        autoOpenedRef.current = true;
+        setTab("borrowing");
+        setSelectedBookingForModal(foundBorrowing);
+        const status = foundBorrowing.status.toLowerCase();
+        if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+      } else if (bookings.lending.length > 0) {
+        const foundLending = bookings.lending.find(b => b.id === urlId);
+        if (foundLending) {
+          autoOpenedRef.current = true;
+          setTab("lending");
+          setSelectedBookingForModal(foundLending);
+          const status = foundLending.status.toLowerCase();
+          if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+          else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+          else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+          else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        }
+      }
+    }
+  }, [bookings, searchParams]);
 
   const loadBookingsList = () => {
     setLoading(true);
-    
+
     Promise.all([
       borrowApi.myRequests().catch(() => ({ data: [] })),
       borrowApi.incoming().catch(() => ({ data: [] }))
@@ -190,8 +104,8 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: r.lender?.full_name || "Unknown" },
-          borrower: { full_name: "You" },
+          lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
+          borrower: { id: r.borrower?.id, full_name: "You" },
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
@@ -205,14 +119,41 @@ export default function BorrowRequestsPage() {
           requested_end_date: r.requested_end_date,
           total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
           status: r.status,
-          lender: { full_name: "You" },
-          borrower: { full_name: r.borrower?.full_name || "Unknown" },
+          lender: { id: r.lender?.id, full_name: "You" },
+          borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
         }));
 
         setBookings({
           borrowing: dbMyReqs,
           lending: dbIncomingReqs
         });
+
+        const targetId = searchParams.get("id");
+        if (targetId) {
+          let foundBooking = dbMyReqs.find(b => b.id === targetId);
+          let newTab = "borrowing";
+          if (!foundBooking) {
+            foundBooking = dbIncomingReqs.find(b => b.id === targetId);
+            if (foundBooking) newTab = "lending";
+          }
+          
+          if (foundBooking) {
+            setTab(newTab);
+            const status = foundBooking.status.toLowerCase();
+            if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+            else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+            else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+            else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+            
+            setSelectedBookingForModal(foundBooking);
+          }
+          
+          // Remove id from URL so it doesn't reopen if user navigates back
+          const newParams = new URLSearchParams(searchParams);
+          newParams.delete("id");
+          setSearchParams(newParams, { replace: true });
+        }
+
       })
       .catch((err) => {
         console.error("Failed to load bookings:", err);
@@ -231,36 +172,28 @@ export default function BorrowRequestsPage() {
     }
   }, []);
 
-  // 1. Keep your friend's function name so their UI buttons don't break, 
-  // but hook it up to the real database API!
+  // 1. Hook it up to the real database API
   const handleStatusChange = async (bookingId, newStatus) => {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
-      if (newStatus === "rejected" || newStatus === "reject") await borrowApi.reject(bookingId, "Not available right now");
-      if (newStatus === "handover") await borrowApi.handover(bookingId);
+      if (newStatus === "rejected" || newStatus === "reject") {
+        if (!window.confirm("Are you sure you want to reject this request?")) return;
+        await borrowApi.reject(bookingId, "Not available right now");
+      }
+      if (newStatus === "nudge") {
+        await borrowApi.nudge(bookingId);
+        toast.success("Nudge sent successfully!");
+        return;
+      }
+      if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
-      if (newStatus === "cancelled" || newStatus === "cancel") await borrowApi.cancel(bookingId);
-      if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, ""); 
+      if (newStatus === "cancelled" || newStatus === "cancel") {
+        if (!window.confirm("Are you sure you want to cancel this request?")) return;
+        await borrowApi.cancel(bookingId);
+      }
+      if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
-      
-      toast.success("Updated successfully");
-      if (typeof loadBookingsList === 'function') loadBookingsList();
-      else load();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Action failed");
-    }
-  };
 
-  // 2. Keep the original handleAction from main just in case any buttons still rely on it
-  const handleAction = async (action, id, rating, review) => {
-    try {
-      if (action === "approve") await borrowApi.approve(id);
-      if (action === "reject") await borrowApi.reject(id, "Not available right now");
-      if (action === "handover") await borrowApi.handover(id);
-      if (action === "cancel") await borrowApi.cancel(id);
-      if (action === "return") await borrowApi.returnItem(id, null, rating, review);
-      if (action === "confirm_return") await borrowApi.confirmReturn(id, rating, review);
-      
       toast.success("Updated successfully");
       if (typeof loadBookingsList === 'function') loadBookingsList();
       else load();
@@ -270,42 +203,42 @@ export default function BorrowRequestsPage() {
   };
 
 
-  const handleReviewSubmit = (e) => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewingId) return;
 
-    // Update status in localStorage
-    const local = JSON.parse(localStorage.getItem("share_neighbour_bookings") || "[]");
-    const idx = local.findIndex(b => b.id === reviewingId);
-    if (idx !== -1) {
-      local[idx].status = "returned";
-      localStorage.setItem("share_neighbour_bookings", JSON.stringify(local));
+    try {
+      if (reviewAction === "return") {
+        await borrowApi.returnItem(reviewingId, null, ratingInput, commentInput);
+      } else if (reviewAction === "confirm_return") {
+        await borrowApi.confirmReturn(reviewingId, ratingInput, commentInput);
+      }
+      toast.success("Thank you for your rating!");
+      setReviewingId(null);
+      setReviewAction(null);
+      setCommentInput("");
+      setRatingInput(5);
+      if (typeof loadBookingsList === 'function') loadBookingsList();
+      else load();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Action failed");
     }
-
-    toast.success("Thank you for your rating!");
-    setReviewingId(null);
-    setCommentInput("");
-    loadBookingsList();
   };
 
   // Status mapping for SubTabs
-  // Upcoming: requested, pending, approved
-  // Ongoing: active
-  // Completed: returned, confirmed_return
-  // Cancelled: cancelled, rejected
   const getFilteredBookings = () => {
     const list = bookings[tab] || [];
-    
+
     return list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
         return ["requested", "pending", "approved"].includes(status);
       }
       if (subTab === "ongoing") {
-        return ["handover_requested", "active", "ongoing"].includes(status);
+        return ["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status);
       }
       if (subTab === "completed") {
-        return ["returned", "confirmed_return"].includes(status);
+        return ["returned", "confirmed_return", "damaged"].includes(status);
       }
       if (subTab === "cancelled") {
         return ["cancelled", "rejected"].includes(status);
@@ -322,7 +255,7 @@ export default function BorrowRequestsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="font-display text-2xl font-extrabold text-slate-900 tracking-tight">My Bookings</h1>
+        <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Bookings</h1>
         <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Manage borrowing & lending orders</p>
       </div>
 
@@ -330,21 +263,19 @@ export default function BorrowRequestsPage() {
       <div className="flex rounded-2xl bg-slate-100 p-1.5 w-fit border border-slate-200/40">
         <button
           onClick={() => { setTab("borrowing"); setSubTab("upcoming"); }}
-          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${
-            tab === "borrowing"
-              ? "bg-white text-primary-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          }`}
+          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "borrowing"
+            ? "bg-white text-primary-600 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
+            }`}
         >
           Items I'm Borrowing
         </button>
         <button
           onClick={() => { setTab("lending"); setSubTab("upcoming"); }}
-          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${
-            tab === "lending"
-              ? "bg-white text-primary-600 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          }`}
+          className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "lending"
+            ? "bg-white text-primary-600 shadow-sm"
+            : "text-slate-500 hover:text-slate-900"
+            }`}
         >
           Items I'm Lending
         </button>
@@ -361,11 +292,10 @@ export default function BorrowRequestsPage() {
           <button
             key={st.key}
             onClick={() => setSubTab(st.key)}
-            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${
-              subTab === st.key
-                ? "border-primary-600 text-primary-600 font-extrabold"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
+            className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${subTab === st.key
+              ? "border-primary-600 text-primary-600 font-extrabold"
+              : "border-transparent text-slate-500 hover:text-slate-900"
+              }`}
           >
             {st.label}
           </button>
@@ -385,7 +315,7 @@ export default function BorrowRequestsPage() {
           <p className="text-sm font-bold text-slate-700">No bookings in this tab</p>
           <p className="mt-1 text-xs text-slate-400">Borrow something or list an item to get started!</p>
           <Link
-            to="/dashboard"
+            to="/resources"
             className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold shadow-sm transition-all active:scale-95"
           >
             Explore Nearby Items
@@ -393,15 +323,188 @@ export default function BorrowRequestsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeList.map((book) => (
-            <BookingCard 
-              key={book.id} 
-              book={book} 
-              tab={tab} 
-              handleStatusChange={handleStatusChange} 
-              setReviewingId={setReviewingId} 
-            />
-          ))}
+          {activeList.map((book) => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const startDate = new Date(book.requested_start_date);
+            startDate.setHours(0, 0, 0, 0);
+            const end = new Date(book.requested_end_date);
+            end.setHours(0, 0, 0, 0);
+            const isStarted = today >= startDate;
+            const isExpired = today > end;
+
+            return (
+              <div
+                key={book.id}
+                onClick={() => setSelectedBookingForModal(book)}
+                className="cursor-pointer rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 transition-colors"
+              >
+                {/* Card Header (Item and Status Badge) */}
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
+                      {book.resource.image_placeholder || "🪜"}
+                    </div>
+                    <div>
+                      <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                        <Link to={`/resources/${book.resource.id}`}>
+                          {book.resource.title}
+                        </Link>
+                      </h3>
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+                        {tab === "borrowing" ? (
+                          <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
+                        ) : (
+                          <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  {getStatusBadge(book.status)}
+                </div>
+
+                {/* Booking specifications */}
+                <div className="bg-slate-50 dark:bg-slate-950 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Lending Window</p>
+                    <p className="text-slate-800 dark:text-slate-100 font-bold flex items-center gap-2">
+                      {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} →{" "}
+                      {new Date(book.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      <DueBadge endDate={book.requested_end_date} status={book.status} />
+                    </p>
+                  </div>
+                  <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3.5">
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
+                    <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
+                  </div>
+                </div>
+
+                {/* Actions row */}
+                <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
+                  {/* Borrower Actions */}
+                  {tab === "borrowing" && book.status === "requested" && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary !py-2 text-xs"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                        className="btn-secondary !py-2 text-xs"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Request
+                      </button>
+                    </>
+                  )}
+                  {tab === "borrowing" && book.status === "approved" && (
+                    isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary flex items-center gap-1.5 !py-2 text-xs text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950/30 font-bold"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner for Handover
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
+                      </span>
+                    )
+                  )}
+                  {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
+                    isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("return"); }}
+                        className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Return Item
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+                  {tab === "borrowing" && book.status === "return_requested" && (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
+                    </span>
+                  )}
+
+                  {/* Lender Actions */}
+                  {tab === "lending" && book.status === "requested" && (
+                    <>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "approved"); }}
+                        className="btn-primary !py-2 text-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "rejected"); }}
+                        className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </>
+                  )}
+                  {tab === "lending" && book.status === "approved" && (
+                    isExpired ? (
+                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                      </span>
+                    ) : isStarted ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "active"); }}
+                        className="btn-primary !py-2 text-xs"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+                  {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
+                    </span>
+                  )}
+                  {tab === "lending" && book.status === "return_requested" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setReviewingId(book.id); setReviewAction("confirm_return"); }}
+                      className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Confirm Return
+                    </button>
+                  )}
+
+                  {/* Global Actions (Chat & Complaint) */}
+                  {["active", "returned", "damaged", "late"].includes(book.status) && (
+                    <a
+                      href={`/complaints?borrow_request_id=${book.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
+                    >
+                      File Complaint
+                    </a>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenChatId(book.id);
+                    }}
+                    className="btn-secondary flex items-center gap-1.5 !py-2 text-xs"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Message
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -410,10 +513,14 @@ export default function BorrowRequestsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div>
-              <h3 className="font-display text-base font-extrabold text-slate-900">Return & Rate Item</h3>
-              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Tell us about your experience</p>
+              <h3 className="font-display text-base font-extrabold text-slate-900">
+                {reviewAction === "confirm_return" ? "Confirm Return & Rate" : "Return & Rate Item"}
+              </h3>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
+                {reviewAction === "confirm_return" ? "Rate the borrower" : "Tell us about your experience"}
+              </p>
             </div>
-            
+
             <form onSubmit={handleReviewSubmit} className="space-y-4">
               <div>
                 <label className="label">Rating Stars</label>
@@ -452,7 +559,7 @@ export default function BorrowRequestsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setReviewingId(null)}
+                  onClick={() => { setReviewingId(null); setReviewAction(null); }}
                   className="btn-secondary !py-2 text-xs"
                 >
                   Cancel
@@ -462,6 +569,112 @@ export default function BorrowRequestsPage() {
           </div>
         </div>
       )}
+
+      {/* Booking Details Modal */}
+      {selectedBookingForModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
+            <button
+              onClick={() => setSelectedBookingForModal(null)}
+              className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8">
+              <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
+                {selectedBookingForModal.resource?.image_placeholder || "🪜"}
+              </div>
+              <div>
+                <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                  <Link to={`/resources/${selectedBookingForModal.resource?.id}`} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
+                    {selectedBookingForModal.resource?.title}
+                  </Link>
+                </h2>
+                <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5">
+                  {tab === "borrowing" ? `Lender: ${selectedBookingForModal.lender?.full_name}` : `Borrower: ${selectedBookingForModal.borrower?.full_name}`}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                <span className="text-[9px] font-bold uppercase text-slate-400 block">Lending Window</span>
+                <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs">
+                  {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} →{" "}
+                  {new Date(selectedBookingForModal.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                </span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Amount</span>
+                <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
+              <span className="inline-block rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-3 py-1 text-xs font-bold uppercase border border-emerald-200 dark:border-emerald-800">
+                {selectedBookingForModal.status?.replace("_", " ")}
+              </span>
+            </div>
+
+            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4">
+              <button
+                onClick={() => setSelectedBookingForModal(null)}
+                className="btn-secondary !py-2 !px-4 text-xs"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Popup Modal */}
+      {openChatId && (() => {
+        const book = (Array.isArray(bookings?.borrowing) ? bookings.borrowing : []).find(b => b.id === openChatId) ||
+          (Array.isArray(bookings?.lending) ? bookings.lending : []).find(b => b.id === openChatId);
+        if (!book) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] p-4 animate-in fade-in duration-200">
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+            >
+              <button
+                onClick={() => setOpenChatId(null)}
+                className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-150 dark:hover:bg-slate-800 transition-colors z-10"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8 mb-2">
+                <div className="h-11 w-11 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-2xl flex-shrink-0">
+                  {book.resource?.image_placeholder || "🛠️"}
+                </div>
+                <div>
+                  <h2 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight">
+                    Chat: {book.resource?.title}
+                  </h2>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
+                    {tab === "borrowing" ? `Lender: ${book.lender?.full_name}` : `Borrower: ${book.borrower?.full_name}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-y-auto flex-1 min-h-0">
+                <ChatThread
+                  request={book}
+                  onReportIssue={(req) => {
+                    setOpenChatId(null);
+                    window.location.href = `/complaints?borrow_request_id=${req.id}`;
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

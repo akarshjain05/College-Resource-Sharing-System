@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional, List
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -26,23 +26,27 @@ class ResourceBase(BaseModel):
     tags: Optional[str] = None
     deposit_amount: Optional[float] = Field(0, ge=0)
     max_borrow_days: int = Field(7, ge=1, le=90)
+    available_from: Optional[date] = None
+    available_to: Optional[date] = None
     category_id: uuid.UUID
 
 
 class ResourceCreate(ResourceBase):
-    pass
+    status: Optional[ResourceStatus] = None
 
 
 class ResourceUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     condition: Optional[ResourceCondition] = None
+    status: Optional[ResourceStatus] = None
     quantity: Optional[int] = None
     pickup_location: Optional[str] = None
     tags: Optional[str] = None
     deposit_amount: Optional[float] = None
     max_borrow_days: Optional[int] = None
-    status: Optional[ResourceStatus] = None
+    available_from: Optional[date] = None
+    available_to: Optional[date] = None
     category_id: Optional[uuid.UUID] = None
 
 
@@ -60,6 +64,7 @@ class ResourceResponse(ResourceBase):
     owner: UserResponse
     category: CategoryResponse
     images: List[ResourceImageResponse] = []
+    is_wishlisted: Optional[bool] = False
     created_at: datetime
 
 

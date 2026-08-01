@@ -4,6 +4,8 @@ const TABS = [
   { to: "/admin", label: "Overview", exact: true },
   { to: "/admin/users", label: "Users" },
   { to: "/admin/categories", label: "Categories" },
+  { to: "/admin/resources", label: "Resources" },
+  { to: "/admin/borrows", label: "Borrows" },
   { to: "/admin/complaints", label: "Complaints" },
 ];
 

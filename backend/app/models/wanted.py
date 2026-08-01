@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, ForeignKey, Boolean
+from sqlalchemy import String, ForeignKey, Boolean, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,6 +16,8 @@ class WantedRequest(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(1000), nullable=True)
     category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
+    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
+    end_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
     is_fulfilled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user = relationship("User")
@@ -26,7 +28,7 @@ class WantedRequest(Base, UUIDMixin, TimestampMixin):
 class WantedOffer(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "wanted_offers"
 
-    wanted_request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wanted_requests.id"), nullable=False)
+    wanted_request_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("wanted_requests.id", ondelete="CASCADE"), nullable=False)
     offerer_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     resource_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False)
     status: Mapped[str] = mapped_column(String(50), default="PENDING", nullable=False) # PENDING, ACCEPTED, REJECTED

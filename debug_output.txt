@@ -1,0 +1,32 @@
+Filesystem       Size  Used Avail Use% Mounted on
+/dev/root         19G   13G  5.6G  70% /
+tmpfs            954M     0  954M   0% /dev/shm
+tmpfs            382M  1.4M  381M   1% /run
+tmpfs            5.0M     0  5.0M   0% /run/lock
+efivarfs         128K  3.3K  120K   3% /sys/firmware/efi/efivars
+/dev/nvme0n1p16  881M  163M  657M  20% /boot
+/dev/nvme0n1p15  105M  6.2M   99M   6% /boot/efi
+tmpfs            191M   12K  191M   1% /run/user/1000
+total 84
+drwxr-xr-x 3 ubuntu ubuntu 4096 Jul 19 15:15 .
+drwxr-xr-x 4 ubuntu ubuntu 4096 Jul 19 11:29 ..
+-rw-r--r-- 1 ubuntu ubuntu  212 Jul  1 07:28 ._.gitkeep
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._0001_add_google_oauth.py
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 17 06:22 ._2060cdf0bdda_add_wanted_offers_table.py
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._39c9af6a8397_add_ratings_to_borrow_request.py
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._641076744664_add_borrow_request_id_to_complaints.py
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._65ced69fc265_add_text_reviews_to_borrowrequest.py
+-rwxr-xr-x 1 ubuntu ubuntu  163 Jul 17 06:22 .___pycache__
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._b0e53ea6347d_add_wanted_request_table.py
+-rw-r--r-- 1 ubuntu ubuntu  163 Jul 16 12:10 ._e8049efbe935_add_wanted_request_model.py
+-rw-rw-r-- 1 ubuntu ubuntu    0 Jul 19 11:29 .gitkeep
+-rw-rw-r-- 1 ubuntu ubuntu 2416 Jul 19 11:29 0001_add_google_oauth.py
+-rw-rw-r-- 1 ubuntu ubuntu 1502 Jul 19 11:29 2060cdf0bdda_add_wanted_offers_table.py
+-rw-rw-r-- 1 ubuntu ubuntu  994 Jul 19 11:29 39c9af6a8397_add_ratings_to_borrow_request.py
+-rw-rw-r-- 1 ubuntu ubuntu 1458 Jul 19 11:29 641076744664_add_borrow_request_id_to_complaints.py
+-rw-rw-r-- 1 ubuntu ubuntu  790 Jul 19 11:29 65ced69fc265_add_text_reviews_to_borrowrequest.py
+drwxr-xr-x 2 ubuntu ubuntu 4096 Jul 19 09:55 __pycache__
+-rw-rw-r-- 1 ubuntu ubuntu 1188 Jul 19 11:29 a7c3e9ed1944_add_wanted_request_id_to_borrow_request.py
+-rw-rw-r-- 1 ubuntu ubuntu  705 Jul 19 11:29 b0e53ea6347d_add_wanted_request_table.py
+-rw-rw-r-- 1 ubuntu ubuntu  874 Jul 19 15:15 c7f260b43a82_add_is_suspended.py
+-rw-rw-r-- 1 ubuntu ubuntu 1983 Jul 19 11:29 e8049efbe935_add_wanted_request_model.py

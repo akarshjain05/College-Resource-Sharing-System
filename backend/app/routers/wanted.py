@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundException, ForbiddenException
+from app.core.exceptions import NotFoundException, ForbiddenException, AppException
 from app.models.user import User
 from app.models.wanted import WantedRequest
 from app.models.category import Category
@@ -23,11 +23,16 @@ def create_wanted_request(
     if not category:
         raise NotFoundException("Category not found")
 
+    if payload.end_date < payload.start_date:
+        raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+
     wanted = WantedRequest(
         user_id=current_user.id,
         title=payload.title,
         description=payload.description,
         category_id=payload.category_id,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
     )
     db.add(wanted)
     db.commit()
@@ -40,11 +45,20 @@ def list_wanted_requests(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Sort by newest first and only unfulfilled, excluding current user's own requests
-    return db.query(WantedRequest).filter(
+    from app.models.wanted import WantedOffer
+    # Sort by newest first, only unfulfilled, excluding current user's own requests
+    requests = db.query(WantedRequest).filter(
         WantedRequest.is_fulfilled == False,
         WantedRequest.user_id != current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
+
+    for r in requests:
+        r.has_offered = db.query(WantedOffer).filter(
+            WantedOffer.wanted_request_id == r.id,
+            WantedOffer.offerer_id == current_user.id
+        ).first() is not None
+
+    return requests
 
 
 @router.get("/me", response_model=list[WantedResponse])
@@ -70,7 +84,7 @@ def fulfill_wanted_request(
     if wanted.user_id != current_user.id:
         raise ForbiddenException("Only the owner can mark this as fulfilled")
 
-    wanted.is_fulfilled = True
+    wanted.is_fulfilled = not wanted.is_fulfilled
     db.commit()
     db.refresh(wanted)
     return wanted
@@ -82,21 +96,50 @@ def delete_wanted_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    from app.models.borrow import BorrowRequest
+
     wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
     if not wanted:
         raise NotFoundException("Wanted request not found")
     if wanted.user_id != current_user.id and current_user.role != "admin":
         raise ForbiddenException("Only the owner or an admin can delete this request")
 
+    # Disassociate any auto-created or linked borrow request so FK constraint is satisfied
+    db.query(BorrowRequest).filter(BorrowRequest.wanted_request_id == wanted_id).update(
+        {"wanted_request_id": None}, synchronize_session=False
+    )
+
     db.delete(wanted)
     db.commit()
+
+
+@router.delete("/offers/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
+def cancel_wanted_offer(
+    offer_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
+    if not offer:
+        raise NotFoundException("Offer not found")
+
+    wanted = offer.wanted_request
+    if offer.offerer_id != current_user.id and wanted.user_id != current_user.id and current_user.role != "admin":
+        raise ForbiddenException("You cannot cancel this offer")
+
+    if offer.status == "ACCEPTED":
+        raise ForbiddenException("Accepted offers cannot be deleted. Manage the active borrow request instead.")
+
+    db.delete(offer)
+    db.commit()
+
 
 
 from app.models.wanted import WantedRequest, WantedOffer
 from app.schemas.wanted import WantedCreate, WantedResponse, WantedOfferCreate, WantedOfferResponse
 from app.models.resource import Resource
 from app.models.borrow import BorrowRequest
-from app.models.enums import NotificationType, BorrowStatus
+from app.models.enums import NotificationType, BorrowStatus, ResourceStatus
 
 
 @router.post("/{wanted_id}/offer", response_model=WantedOfferResponse, status_code=status.HTTP_201_CREATED)
@@ -122,14 +165,13 @@ def offer_wanted_request(
     if resource.owner_id != current_user.id:
         raise ForbiddenException("You can only offer your own resources")
 
-    # Check if already offered
+    # Strict rule: A user can only send 1 offer per wanted request
     existing_offer = db.query(WantedOffer).filter(
         WantedOffer.wanted_request_id == wanted.id,
-        WantedOffer.offerer_id == current_user.id,
-        WantedOffer.resource_id == resource.id
+        WantedOffer.offerer_id == current_user.id
     ).first()
     if existing_offer:
-        raise ForbiddenException("You have already offered this resource for this request")
+        raise ForbiddenException("You have already sent an offer for this request. One user can only offer once.")
 
     offer = WantedOffer(
         wanted_request_id=wanted.id,
@@ -147,7 +189,7 @@ def offer_wanted_request(
         notif_type=NotificationType.SYSTEM,
         title="Someone has the item you requested!",
         message=f"{current_user.full_name} has offered their item '{resource.title}' for your request '{wanted.title}'!",
-        link=f"/wanted"  # Link them back to wanted page to see offers
+        link=f"/my-needs?id={wanted.id}"  # Link them back to their needs page to see offers
     )
 
     return offer
@@ -173,6 +215,8 @@ def accept_wanted_offer(
     db: Session = Depends(get_db),
 ):
     from app.services.notification_service import create_notification
+    from app.services.availability import is_resource_available_for_dates
+    from datetime import date, timedelta
 
     offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
     if not offer:
@@ -185,8 +229,35 @@ def accept_wanted_offer(
     if wanted.is_fulfilled:
         raise ForbiddenException("This request has already been fulfilled")
 
+    # Lock resource to prevent concurrent borrows
+    resource = db.query(Resource).filter(Resource.id == offer.resource_id).with_for_update().first()
+    if not resource:
+        raise NotFoundException("Resource not found")
+        
+    start_date = date.today()
+    end_date = start_date + timedelta(days=resource.max_borrow_days)
+
+    if not is_resource_available_for_dates(db, resource.id, start_date, end_date, resource.quantity):
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+
     offer.status = "ACCEPTED"
     wanted.is_fulfilled = True
+    
+    # Auto-create BorrowRequest
+
+    
+    borrow_request = BorrowRequest(
+        resource_id=resource.id,
+        borrower_id=wanted.user_id,
+        lender_id=offer.offerer_id,
+        status=BorrowStatus.APPROVED,
+        requested_start_date=start_date,
+        requested_end_date=end_date,
+        purpose=f"Auto-generated for wanted request: {wanted.title}",
+        deposit_paid=0,
+        wanted_request_id=wanted.id
+    )
+    db.add(borrow_request)
     
     # Reject other offers & notify each offerer
     other_offers = db.query(WantedOffer).filter(
@@ -206,14 +277,24 @@ def accept_wanted_offer(
 
     db.commit()
     db.refresh(wanted)
+    db.refresh(borrow_request)
 
     create_notification(
         db,
         user_id=offer.offerer_id,
         notif_type=NotificationType.SYSTEM,
         title="Your offer was accepted!",
-        message=f"{current_user.full_name} has accepted your offer for '{offer.resource.title}'. They will create a borrow request soon.",
-        link=f"/resources/{offer.resource_id}"
+        message=f"{current_user.full_name} has accepted your offer for '{resource.title}'. A borrow request has been auto-created.",
+        link=f"/borrow-requests/{borrow_request.id}"
+    )
+    
+    create_notification(
+        db,
+        user_id=wanted.user_id,
+        notif_type=NotificationType.SYSTEM,
+        title="Borrow request created",
+        message=f"A borrow request for '{resource.title}' has been auto-created based on your accepted offer.",
+        link=f"/borrow-requests/{borrow_request.id}"
     )
 
     return wanted

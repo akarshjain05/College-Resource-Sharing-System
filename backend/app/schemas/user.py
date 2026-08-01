@@ -1,10 +1,15 @@
+import re
 import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator, field_validator
 
 from app.models.enums import UserRole, AuthProvider
+
+
+CAMPUS_EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(svnit\.ac\.in)$"
+
 
 
 class UserBase(BaseModel):
@@ -16,17 +21,59 @@ class UserBase(BaseModel):
     student_id: Optional[str] = None
     phone_number: Optional[str] = None
 
+    @model_validator(mode="before")
+    @classmethod
+    def empty_strings_to_none(cls, data: dict) -> dict:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str) and v.strip() == "":
+                    data[k] = None
+        return data
+
+
 
 class UserRegister(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
     confirm_password: str = Field(..., min_length=8, max_length=128)
     role: UserRole = UserRole.STUDENT
 
+    @field_validator("email")
+    @classmethod
+    def validate_campus_email(cls, v: str) -> str:
+        if v and not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
+            raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
+        return v
+
     @model_validator(mode="after")
     def passwords_match(self):
         if self.password != self.confirm_password:
             raise ValueError("password and confirm_password do not match")
         return self
+
+
+class SignupOtpResponse(BaseModel):
+    message: str = "Verification code sent"
+    requires_verification: bool = True
+    challenge_id: str
+    expires_in: int = 600
+
+
+class VerifySignupOtpRequest(BaseModel):
+    challenge_id: str
+    otp: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$")
+
+
+class ResendSignupOtpRequest(BaseModel):
+    challenge_id: Optional[str] = None
+    email: Optional[EmailStr] = None
+
+
+class ResendSignupOtpResponse(BaseModel):
+    message: str = "A new verification code has been sent"
+    challenge_id: str
+    expires_in: int = 600
+    resend_available_in: int = 60
+
 
 
 class GoogleAuthRequest(BaseModel):
@@ -88,8 +135,10 @@ class UserResponse(UserBase):
     profile_picture_url: Optional[str] = None
     is_verified: bool
     is_active: bool
+    is_suspended: bool
     trust_score: int
     sharing_score: int
+    avg_response_seconds: Optional[int] = None
     created_at: datetime
 
 

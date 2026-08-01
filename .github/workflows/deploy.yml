@@ -23,6 +23,7 @@ jobs:
             # 2. Pull the latest code from GitHub main branch
             git fetch origin
             git reset --hard origin/main
+            git clean -fdx -e .env
             
             # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
             if [ $(sudo swapon --show | wc -l) -eq 0 ]; then

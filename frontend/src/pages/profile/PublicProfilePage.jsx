@@ -44,6 +44,7 @@ export default function PublicProfilePage() {
   }
 
   if (!profile) return null;
+  const fullName = profile.full_name || "Unknown User";
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
@@ -53,10 +54,10 @@ export default function PublicProfilePage() {
         <div className="px-8 pb-8 relative">
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="-mt-12 h-24 w-24 rounded-full border-4 border-white bg-forest-100 flex items-center justify-center text-3xl font-bold text-forest-800 shadow-md">
-              {profile.full_name.charAt(0)}
+              {fullName.charAt(0)}
             </div>
             <div className="pt-2 flex-1">
-              <h1 className="font-display text-2xl font-bold text-ink-900">{profile.full_name}</h1>
+              <h1 className="font-display text-2xl font-bold text-ink-900">{fullName}</h1>
               {profile.department && (
                 <div className="mt-1 flex items-center gap-1 text-sm text-ink-500">
                   <MapPin className="h-3.5 w-3.5" />
@@ -110,7 +111,7 @@ export default function PublicProfilePage() {
         </div>
         {sharedResources.length === 0 ? (
           <div className="card p-10 text-center text-sm text-ink-500">
-            {profile.full_name.split(" ")[0]} is not currently sharing any resources.
+            {fullName.split(" ")[0]} is not currently sharing any resources.
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -134,9 +135,15 @@ export default function PublicProfilePage() {
               <div key={r.id + r.role} className="card p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-ink-900">{r.reviewer_name}</span>
+                    {r.reviewer_id ? (
+                      <Link to={`/users/${r.reviewer_id}`} className="font-semibold text-ink-900 hover:underline hover:text-brand-500 cursor-pointer">
+                        {r.reviewer_name}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-ink-900">{r.reviewer_name}</span>
+                    )}
                     <span className="text-xs px-2 py-0.5 rounded-full bg-ink-100 text-ink-600">
-                      To {profile.full_name.split(" ")[0]} as a {r.role}
+                      To {fullName.split(" ")[0]} as a {r.role}
                     </span>
                   </div>
                   <div className="flex text-amber-500">
@@ -147,7 +154,7 @@ export default function PublicProfilePage() {
                 </div>
                 <p className="text-sm text-ink-700 italic">"{r.review}"</p>
                 <p className="text-xs text-ink-400 mt-2">
-                  Regarding {r.resource_title} &bull; {r.date ? new Date(r.date).toLocaleDateString() : "Recently"}
+                  Regarding {r.resource_id ? <Link to={`/resources/${r.resource_id}`} className="hover:underline hover:text-brand-500 cursor-pointer text-ink-500">{r.resource_title}</Link> : r.resource_title} &bull; {r.date ? new Date(r.date).toLocaleDateString() : "Recently"}
                 </p>
               </div>
             ))}

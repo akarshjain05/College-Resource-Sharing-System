@@ -140,3 +140,10 @@ def mark_all_notifications_read(current_user: User = Depends(get_current_user), 
     )
     db.commit()
     return None
+
+
+@router.delete("/notifications/clear-all", status_code=status.HTTP_204_NO_CONTENT)
+def clear_all_notifications(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db.query(Notification).filter(Notification.user_id == current_user.id).delete()
+    db.commit()
+    return None

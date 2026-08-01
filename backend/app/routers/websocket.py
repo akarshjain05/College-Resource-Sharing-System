@@ -1,16 +1,17 @@
 """
 WebSocket endpoint for real-time notification delivery.
 
-Frontend connects with: ws://<host>/ws/notifications?token=<access_token>
-Since browsers can't set custom headers on a WebSocket handshake, the JWT is
-passed as a query parameter instead of the Authorization header used elsewhere.
+Frontend connects with: ws://<host>/api/v1/ws/notifications?token=<access_token>
+(main.py registers this router with prefix="/api/v1"). Since browsers can't set
+custom headers on a WebSocket handshake, the JWT is passed as a query parameter
+instead of the Authorization header used elsewhere.
 """
 import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
-from app.core.database import SessionLocal
+import app.core.database as core_db
 from app.core.security import decode_token
 from app.models.user import User
 from app.services.ws_manager import manager
@@ -31,14 +32,15 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 
 @router.websocket("/ws/notifications")
 async def notifications_websocket(websocket: WebSocket, token: str = Query(...)):
-    db = SessionLocal()
+    db = core_db.SessionLocal()
     try:
         user = _authenticate_ws_token(token, db)
-        if not user:
-            await websocket.close(code=4401)
-            return
     finally:
         db.close()
+
+    if not user:
+        await websocket.close(code=4401)
+        return
 
     await manager.connect(user.id, websocket)
     try:

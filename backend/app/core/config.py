@@ -3,7 +3,7 @@ Application configuration loaded from environment variables (.env).
 Uses pydantic-settings so every value is validated at startup.
 """
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api/v1"
+
+    # ---- Frontend ----
+    # Used to build absolute links (e.g. password reset) that get emailed out.
+    # MUST be set to your real deployed domain in production .env, e.g.
+    # FRONTEND_URL=https://13.48.123.128.sslip.io -- otherwise reset emails
+    # will link to localhost and be useless to the recipient.
+    FRONTEND_URL: str = "http://localhost:5173"
 
     # ---- Database ----
     DATABASE_URL: str = "postgresql://crss_user:crss_password@db:5432/crss_db"
@@ -59,5 +66,38 @@ class Settings(BaseSettings):
     # ---- Rate limiting ----
     RATE_LIMIT_PER_MINUTE: int = 60
 
+    # ---- Notification Microservice ----
+    NOTIFICATION_SERVICE_URL: str = "https://notification-olgf.onrender.com"
+    NOTIFICATION_SERVICE_API_KEY: str = "default-dev-key"
+
+    # ---- Brevo & OTP ----
+    BREVO_API_KEY: str = ""
+    BREVO_SENDER_EMAIL: str = "security@yourdomain.com"
+    BREVO_SENDER_NAME: str = "Campus Resources"
+    OTP_SECRET: str = "change-this-otp-secret-in-production"
+    OTP_PEPPER: str = ""
+    OTP_EXPIRY_SECONDS: int = 600
+    OTP_MAX_ATTEMPTS: int = 5
+    OTP_RESEND_COOLDOWN_SECONDS: int = 60
+
+
+    @model_validator(mode="after")
+    def validate_secrets_in_prod(self) -> 'Settings':
+        if self.ENVIRONMENT == "production":
+            import secrets
+            import logging
+            logger = logging.getLogger("crss")
+            
+            if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
+                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
+                self.SECRET_KEY = secrets.token_urlsafe(32)
+                
+            if self.OTP_SECRET == "change-this-otp-secret-in-production":
+                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
+                self.OTP_SECRET = secrets.token_urlsafe(32)
+                
+        return self
 
 settings = Settings()
+
+

@@ -30,11 +30,28 @@ def update_my_profile(
     return current_user
 
 
+@router.get("/directory/public", response_model=list[PublicUserResponse])
+def list_users_public(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(1000, ge=1, le=1000),
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_current_user),
+):
+    return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
+
+
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise NotFoundException("User not found")
+        
+    from app.models.enums import UserRole
+    from fastapi import HTTPException
+    
+    if current_user.id != user.id and current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Not authorized to view this full profile")
+        
     return user
 
 
@@ -101,10 +118,12 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
         recent_reviews.append({
             "id": str(br.id),
             "role": "borrower",
+            "reviewer_id": str(br.lender.id),
             "reviewer_name": br.lender.full_name,
             "rating": br.borrower_rating,
             "review": br.borrower_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_id": str(br.resource.id),
             "resource_title": br.resource.title
         })
 
@@ -118,10 +137,12 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
         recent_reviews.append({
             "id": str(br.id),
             "role": "lender",
+            "reviewer_id": str(br.borrower.id),
             "reviewer_name": br.borrower.full_name,
             "rating": br.lender_rating,
             "review": br.lender_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
+            "resource_id": str(br.resource.id),
             "resource_title": br.resource.title
         })
         
@@ -150,16 +171,6 @@ def list_users(
     _admin: User = Depends(require_admin),
 ):
     return db.query(User).offset(skip).limit(limit).all()
-
-
-@router.get("/directory/public", response_model=list[PublicUserResponse])
-def list_users_public(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(1000, ge=1, le=1000),
-    db: Session = Depends(get_db),
-    _user: User = Depends(get_current_user),
-):
-    return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
 
 
 @router.post("/{user_id}/suspend", response_model=UserResponse)

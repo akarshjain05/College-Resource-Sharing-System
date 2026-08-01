@@ -15,6 +15,12 @@ function ComplaintRow({ complaint, onUpdate }) {
   const [penalty, setPenalty] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    setStatus(complaint.status);
+    setResponse(complaint.admin_response || "");
+    setPenalty("");
+  }, [complaint]);
+
   const handleSave = async () => {
     setSaving(true);
     try {

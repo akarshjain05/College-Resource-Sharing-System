@@ -4,6 +4,10 @@ Shared pytest fixtures. Tests run against an isolated in-memory SQLite database
 clean schema. Postgres-only features (e.g. server-side defaults) are avoided
 in the models, so this is a faithful enough substitute for unit/API testing.
 """
+import os
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-0123456789"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -25,6 +29,9 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+import app.core.database as core_db
+core_db.SessionLocal = TestingSessionLocal
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +72,7 @@ def test_category(db_session):
 def test_user(db_session):
     user = User(
         full_name="Test Student",
-        email="student@crss.edu",
+        email="student@svnit.ac.in",
         hashed_password=hash_password("Password123!"),
         role=UserRole.STUDENT,
         is_verified=True,
@@ -80,7 +87,7 @@ def test_user(db_session):
 def second_user(db_session):
     user = User(
         full_name="Second Student",
-        email="second@crss.edu",
+        email="second@svnit.ac.in",
         hashed_password=hash_password("Password123!"),
         role=UserRole.STUDENT,
         is_verified=True,
@@ -95,7 +102,7 @@ def second_user(db_session):
 def admin_user(db_session):
     user = User(
         full_name="Admin",
-        email="admin@crss.edu",
+        email="admin@svnit.ac.in",
         hashed_password=hash_password("AdminPass123!"),
         role=UserRole.ADMIN,
         is_verified=True,
