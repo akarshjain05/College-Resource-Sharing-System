@@ -76,7 +76,7 @@ export const chatApi = {
 };
 
 export const notificationApi = {
-  list: () => api.get("/notifications"),
+  list: () => api.get(`/notifications?_t=${Date.now()}`),
   markRead: (id) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
   clearAll: () => api.delete("/notifications/clear-all"),

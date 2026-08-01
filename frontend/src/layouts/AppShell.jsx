@@ -72,7 +72,10 @@ export default function AppShell() {
     return () => window.removeEventListener("refreshUnreadCount", fetchUnreadCount);
   }, []);
 
-  useNotificationSocket(() => setUnreadCount((prev) => prev + 1), user);
+  useNotificationSocket(() => {
+    setUnreadCount((prev) => prev + 1);
+    window.dispatchEvent(new Event("refreshNotificationsList"));
+  }, user);
   usePushNotification(user);
 
   // Theme dark/light mode state and logic
