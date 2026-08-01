@@ -33,11 +33,11 @@ export default function AdminDashboardPage() {
       <h1 className="font-display text-2xl font-semibold text-ink-900">Admin overview</h1>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard label="Total Users" value={overview.total_users} icon={Users} accent="forest" />
-        <StatCard label="Total Resources" value={overview.total_resources} icon={Package} accent="brass" />
-        <StatCard label="Total Borrows" value={overview.total_borrows} icon={ArrowLeftRight} accent="ink" />
-        <StatCard label="Pending Requests" value={overview.pending_requests} icon={Clock} accent="brass" />
-        <StatCard label="Active Borrows" value={overview.active_borrows} icon={ArrowLeftRight} accent="forest" />
+        <StatCard label="Total Users" value={overview.total_users} icon={Users} accent="forest" to="/admin/users" />
+        <StatCard label="Total Resources" value={overview.total_resources} icon={Package} accent="brass" to="/admin/resources" />
+        <StatCard label="Total Borrows" value={overview.total_borrows} icon={ArrowLeftRight} accent="ink" to="/admin/borrows" />
+        <StatCard label="Pending Requests" value={overview.pending_requests} icon={Clock} accent="brass" to="/admin/borrows?status=pending_approval" />
+        <StatCard label="Active Borrows" value={overview.active_borrows} icon={ArrowLeftRight} accent="forest" to="/admin/borrows?status=active" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

@@ -6,32 +6,31 @@ import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
 function FulfilledToggleSwitch({ isFulfilled, onToggle, label = true }) {
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggle(e);
+  };
+
   return (
     <div
-      className="flex items-center gap-2"
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-      }}
+      className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-90 active:scale-95"
+      onClick={handleClick}
+      title={isFulfilled ? "Status: Fulfilled" : "Status: Active Need"}
     >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onToggle(e);
-        }}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+      <div
+        role="switch"
+        aria-checked={isFulfilled}
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           isFulfilled ? "bg-emerald-500" : "bg-amber-500"
         }`}
-        title={isFulfilled ? "Status: Fulfilled" : "Status: Active Need"}
       >
         <span
           className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
             isFulfilled ? "translate-x-5" : "translate-x-0"
           }`}
         />
-      </button>
+      </div>
       {label && (
         <span className={`text-[10px] font-extrabold uppercase tracking-wider ${isFulfilled ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
           {isFulfilled ? "Fulfilled" : "Active"}

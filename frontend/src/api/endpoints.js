@@ -109,6 +109,8 @@ export const adminApi = {
   mostBorrowedCategories: () => api.get("/admin/analytics/most-borrowed-categories"),
   topContributors: () => api.get("/admin/analytics/top-contributors"),
   departmentUsage: () => api.get("/admin/analytics/department-usage"),
+  listResources: (params) => api.get("/admin/management/resources", { params }),
+  listBorrows: (params) => api.get("/admin/management/borrows", { params }),
 };
 
 export const uploadApi = {

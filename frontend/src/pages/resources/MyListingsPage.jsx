@@ -57,10 +57,9 @@ function PublishToggleSwitch({ isAvailable, onToggle, disabled, label = true }) 
       }`}
       title={isAvailable ? "Item is Published (Visible to others)" : "Item is Unpublished (Hidden from search)"}
     >
-      <button
-        type="button"
-        disabled={disabled}
-        tabIndex={-1}
+      <div
+        role="switch"
+        aria-checked={isAvailable}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
           isAvailable ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
         }`}
@@ -70,7 +69,7 @@ function PublishToggleSwitch({ isAvailable, onToggle, disabled, label = true }) 
             isAvailable ? "translate-x-5" : "translate-x-0"
           }`}
         />
-      </button>
+      </div>
       {label && (
         <span className={`text-[11px] font-extrabold uppercase tracking-wider ${isAvailable ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
           {isAvailable ? "Published" : "Unpublished"}
@@ -354,6 +353,77 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
   );
 }
 
+function PublishDatesModal({ item, onClose, onConfirm }) {
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  
+  const todayDateString = new Date().toISOString().split("T")[0];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!fromDate || !toDate) {
+      toast.error("Please select both start and end dates.");
+      return;
+    }
+    if (fromDate > toDate) {
+      toast.error("End date cannot be before start date.");
+      return;
+    }
+    onConfirm(item.id, fromDate, toDate);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] p-4 animate-in fade-in duration-200" onClick={onClose}>
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white">Publish Visibility</h3>
+            <p className="text-xs text-slate-400 font-semibold mt-1">Set the dates this item will be available.</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Available From</label>
+            <input
+              type="date"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              min={todayDateString}
+              required
+            />
+          </div>
+          
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Available Until</label>
+            <input
+              type="date"
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-3.5 py-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              min={fromDate || todayDateString}
+              required
+            />
+          </div>
+
+          <div className="pt-3 flex gap-3">
+            <button type="button" onClick={onClose} className="flex-1 btn-secondary !py-2.5 !text-sm">
+              Cancel
+            </button>
+            <button type="submit" className="flex-1 btn-primary !py-2.5 !text-sm">
+              Confirm Publish
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function MyListingsPage() {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
@@ -371,6 +441,7 @@ export default function MyListingsPage() {
   const [sortDir, setSortDir] = useState("desc");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItemForModal, setSelectedItemForModal] = useState(null);
+  const [publishingItem, setPublishingItem] = useState(null);
 
   const pageSize = 12;
 
@@ -450,9 +521,15 @@ export default function MyListingsPage() {
       e.stopPropagation();
     }
 
-    const newStatus = currentStatus === "available" ? "unavailable" : "available";
+    if (currentStatus === "unavailable") {
+      const itemToPublish = items.find((item) => item.id === itemId);
+      setPublishingItem(itemToPublish);
+      return;
+    }
 
-    // Optimistic UI update so toggle flips immediately
+    // Unpublish path
+    const newStatus = "unavailable";
+
     setItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
     );
@@ -462,7 +539,7 @@ export default function MyListingsPage() {
 
     try {
       await resourceApi.update(itemId, { status: newStatus });
-      toast.success(newStatus === "available" ? "Item published to campus!" : "Item unpublished!");
+      toast.success("Item unpublished!");
     } catch (err) {
       // Rollback on failure
       setItems((prev) =>
@@ -471,7 +548,37 @@ export default function MyListingsPage() {
       if (selectedItemForModal?.id === itemId) {
         setSelectedItemForModal((prev) => ({ ...prev, status: currentStatus }));
       }
-      toast.error(err.response?.data?.detail || "Failed to update publish status");
+      toast.error(err.response?.data?.detail || "Failed to unpublish item");
+    }
+  };
+
+  const handleConfirmPublish = async (itemId, fromDate, toDate) => {
+    setPublishingItem(null);
+    
+    // Optimistic UI update
+    setItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, status: "available" } : item))
+    );
+    if (selectedItemForModal?.id === itemId) {
+      setSelectedItemForModal((prev) => ({ ...prev, status: "available" }));
+    }
+
+    try {
+      await resourceApi.update(itemId, { 
+        status: "available",
+        available_from: fromDate,
+        available_to: toDate 
+      });
+      toast.success("Item published to campus!");
+    } catch (err) {
+      // Rollback on failure
+      setItems((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, status: "unavailable" } : item))
+      );
+      if (selectedItemForModal?.id === itemId) {
+        setSelectedItemForModal((prev) => ({ ...prev, status: "unavailable" }));
+      }
+      toast.error(err.response?.data?.detail || "Failed to publish item");
     }
   };
 
@@ -722,6 +829,15 @@ export default function MyListingsPage() {
           onClose={() => setSelectedItemForModal(null)}
           onTogglePublish={handleTogglePublish}
           onAction={handleAction}
+        />
+      )}
+
+      {/* Publish Dates Modal */}
+      {publishingItem && (
+        <PublishDatesModal
+          item={publishingItem}
+          onClose={() => setPublishingItem(null)}
+          onConfirm={handleConfirmPublish}
         />
       )}
 
