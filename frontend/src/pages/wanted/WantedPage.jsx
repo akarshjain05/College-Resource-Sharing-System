@@ -78,10 +78,10 @@ export default function WantedPage() {
   const [categories, setCategories] = useState([]);
   const [myResources, setMyResources] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
-  
+
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [offerModalData, setOfferModalData] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState("");
@@ -97,7 +97,7 @@ export default function WantedPage() {
   const loadData = () => {
     setLoading(true);
     Promise.all([
-      wantedApi.list(), 
+      wantedApi.list(),
       categoryApi.list(),
       user ? resourceApi.list({ owner_id: user.id }) : Promise.resolve({ data: [] })
     ])
@@ -105,7 +105,7 @@ export default function WantedPage() {
         setRequests(reqRes.data || []);
         setCategories(catRes.data || []);
         if (user) {
-           setMyResources((resRes.data?.items || resRes.data || []).filter(r => r.owner_id === user.id));
+          setMyResources((resRes.data?.items || resRes.data || []).filter(r => r.owner_id === user.id));
         }
       })
       .finally(() => setLoading(false));
@@ -198,7 +198,7 @@ export default function WantedPage() {
         <div>
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Explore requests from students & offer solutions</p>
-        </div>  
+        </div>
         <button
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
@@ -219,65 +219,67 @@ export default function WantedPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
-          {requests.map((r) => {
-            return (
-              <div
-                key={r.id}
-                onClick={() => setSelectedNeedForModal(r)}
-                className="group cursor-pointer rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 transition-all hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex justify-between items-start gap-2">
-                    <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                      {r.title}
-                    </h3>
-                    <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {r.category?.name}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
-                    {r.description || "No description provided."}
-                  </p>
-                </div>
-                
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 flex items-center justify-center font-extrabold text-white text-xs">
-                        {r.user?.full_name?.charAt(0) || "U"}
-                      </div>
-                      <div>
-                        <Link
-                          to={`/users/${r.user?.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-xs font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600"
-                        >
-                          {r.user?.full_name}
-                        </Link>
-                      </div>
+          {requests
+            .filter((r) => !offeredWantedIds.has(r.id))
+            .map((r) => {
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => setSelectedNeedForModal(r)}
+                  className="group cursor-pointer rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 transition-all hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                        {r.title}
+                      </h3>
+                      <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {r.category?.name}
+                      </span>
                     </div>
-                    
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openOfferModal(r);
-                      }}
-                      className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
-                    >
-                      I Have This
-                    </button>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
+                      {r.description || "No description provided."}
+                    </p>
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-t border-slate-100 dark:border-slate-800 pt-2">
-                    <span>Click card for full details</span>
-                    <span className="text-primary-600 dark:text-primary-400 group-hover:underline flex items-center gap-0.5">
-                      Full Details <ArrowRight className="h-3 w-3" />
-                    </span>
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 flex items-center justify-center font-extrabold text-white text-xs">
+                          {r.user?.full_name?.charAt(0) || "U"}
+                        </div>
+                        <div>
+                          <Link
+                            to={`/users/${r.user?.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600"
+                          >
+                            {r.user?.full_name}
+                          </Link>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openOfferModal(r);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                      >
+                        I Have This
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-t border-slate-100 dark:border-slate-800 pt-2">
+                      <span>Click card for full details</span>
+                      <span className="text-primary-600 dark:text-primary-400 group-hover:underline flex items-center gap-0.5">
+                        Full Details <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
 
@@ -359,23 +361,21 @@ export default function WantedPage() {
             <div className="space-y-4 text-xs">
               <div className="flex rounded-xl bg-slate-100 dark:bg-slate-950 p-1">
                 <button
-                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-colors ${
-                    offerMode === "existing" ? "bg-white dark:bg-slate-900 shadow-xs text-slate-900 dark:text-white" : "text-slate-500"
-                  }`}
+                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-colors ${offerMode === "existing" ? "bg-white dark:bg-slate-900 shadow-xs text-slate-900 dark:text-white" : "text-slate-500"
+                    }`}
                   onClick={() => setOfferMode("existing")}
                 >
                   From Inventory
                 </button>
                 <button
-                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-colors ${
-                    offerMode === "new" ? "bg-white dark:bg-slate-900 shadow-xs text-slate-900 dark:text-white" : "text-slate-500"
-                  }`}
+                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-colors ${offerMode === "new" ? "bg-white dark:bg-slate-900 shadow-xs text-slate-900 dark:text-white" : "text-slate-500"
+                    }`}
                   onClick={() => setOfferMode("new")}
                 >
                   Offer New Item
                 </button>
               </div>
-              
+
               {offerMode === "existing" ? (
                 <>
                   {myResources.length === 0 ? (
@@ -439,10 +439,10 @@ export default function WantedPage() {
                   </div>
                 </div>
               )}
-              
+
               <div className="flex gap-3 pt-3">
-                <button 
-                  onClick={submitOffer} 
+                <button
+                  onClick={submitOffer}
                   disabled={submittingOffer || (offerMode === "existing" && !selectedResourceId)}
                   className="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white py-2.5 text-xs font-bold shadow-sm disabled:opacity-50"
                 >

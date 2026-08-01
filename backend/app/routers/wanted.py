@@ -40,10 +40,12 @@ def list_wanted_requests(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Sort by newest first and only unfulfilled, excluding current user's own requests
+    from app.models.wanted import WantedOffer
+    # Sort by newest first, only unfulfilled, excluding current user's own requests and requests already offered by current user
     return db.query(WantedRequest).filter(
         WantedRequest.is_fulfilled == False,
-        WantedRequest.user_id != current_user.id
+        WantedRequest.user_id != current_user.id,
+        ~WantedRequest.offers.any(WantedOffer.offerer_id == current_user.id)
     ).order_by(WantedRequest.created_at.desc()).all()
 
 
