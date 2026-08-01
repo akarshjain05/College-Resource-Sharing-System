@@ -109,6 +109,16 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
                       <Link to={`/resources/${offer.resource_id}`} className="text-primary-600 dark:text-primary-400 font-bold hover:underline">
                         Item Offered: {offer.resource?.title || "Resource"}
                       </Link>
+                      {offer.resource && (
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md">
+                            Deposit: ₹{offer.resource.deposit_amount}
+                          </span>
+                          <span className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md capitalize">
+                            Cond: {offer.resource.condition}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {isOfferAccepted ? (
@@ -172,7 +182,7 @@ export default function MyNeedsPage() {
   const [acceptingId, setAcceptingId] = useState(null);
   
   const [showModal, setShowModal] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "", category_id: "" });
+  const [formData, setFormData] = useState({ title: "", description: "", category_id: "", requested_days: 1 });
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
@@ -209,7 +219,7 @@ export default function MyNeedsPage() {
       await wantedApi.create(formData);
       toast.success("Wanted request posted!");
       setShowModal(false);
-      setFormData({ title: "", description: "", category_id: "" });
+      setFormData({ title: "", description: "", category_id: "", requested_days: 1 });
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
@@ -398,21 +408,35 @@ export default function MyNeedsPage() {
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
               </div>
-              <div>
-                <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
-                <select
-                  required
-                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
+                  <select
+                    required
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.category_id}
+                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">For how many days?</label>
+                  <input
+                    type="number"
+                    required
+                    min="1"
+                    max="30"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                    value={formData.requested_days}
+                    onChange={(e) => setFormData({ ...formData, requested_days: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
               </div>
               <div>
                 <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Description (Optional)</label>

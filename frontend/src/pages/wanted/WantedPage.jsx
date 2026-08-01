@@ -233,9 +233,14 @@ export default function WantedPage() {
                       <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {r.title}
                       </h3>
-                      <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {r.category?.name}
-                      </span>
+                      <div className="flex gap-1">
+                        <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {r.category?.name}
+                        </span>
+                        <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800">
+                          {r.requested_days} {r.requested_days === 1 ? 'Day' : 'Days'}
+                        </span>
+                      </div>
                     </div>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                       {r.description || "No description provided."}

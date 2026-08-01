@@ -28,6 +28,7 @@ def create_wanted_request(
         title=payload.title,
         description=payload.description,
         category_id=payload.category_id,
+        requested_days=payload.requested_days,
     )
     db.add(wanted)
     db.commit()
@@ -177,7 +178,7 @@ def offer_wanted_request(
         notif_type=NotificationType.SYSTEM,
         title="Someone has the item you requested!",
         message=f"{current_user.full_name} has offered their item '{resource.title}' for your request '{wanted.title}'!",
-        link=f"/wanted"  # Link them back to wanted page to see offers
+        link=f"/my-needs"  # Link them back to their needs page to see offers
     )
 
     return offer
