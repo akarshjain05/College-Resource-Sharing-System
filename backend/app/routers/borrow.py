@@ -275,12 +275,13 @@ def handover_resource(
     from app.models.payment import Payment
     from app.models.enums import PaymentStatus
     
-    payment = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
-    if not payment or payment.status != PaymentStatus.PAID:
-        raise AppException(
-            "Borrower must complete payment before handover",
-            status_code=status.HTTP_400_BAD_REQUEST, error_code="PAYMENT_REQUIRED",
-        )
+    if br.resource and getattr(br.resource, "deposit_amount", 0) and float(br.resource.deposit_amount) > 0:
+        payment = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+        if not payment or payment.status != PaymentStatus.PAID:
+            raise AppException(
+                "Borrower must complete payment before handover",
+                status_code=status.HTTP_400_BAD_REQUEST, error_code="PAYMENT_REQUIRED",
+            )
 
     br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()

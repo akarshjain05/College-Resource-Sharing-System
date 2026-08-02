@@ -13,6 +13,6 @@ is_testing = "pytest" in sys.modules
 limiter = Limiter(
     key_func=get_remote_address,
     storage_uri=settings.REDIS_URL,
-    default_limits=[f"{settings.RATE_LIMIT_PER_MINUTE}/minute"],
+    default_limits=["120/minute"],
     enabled=not is_testing,
 )

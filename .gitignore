@@ -13,6 +13,9 @@ dist/
 # Env
 .env
 .env.local
+backend/.env
+*.pem
+*.key
 
 # Docker
 *.log

@@ -236,6 +236,7 @@ def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
 def update_resource(
     resource_id: uuid.UUID,
     payload: ResourceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -245,10 +246,21 @@ def update_resource(
     if resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise ForbiddenException("You can only edit your own resources")
 
+    old_status = resource.status
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
     db.commit()
     db.refresh(resource)
+
+    if old_status != ResourceStatus.AVAILABLE and resource.status == ResourceStatus.AVAILABLE:
+        background_tasks.add_task(
+            notify_all_except_owner_bg,
+            current_user.id,
+            resource.id,
+            resource.title,
+            current_user.full_name,
+        )
+
     return resource
 
 
