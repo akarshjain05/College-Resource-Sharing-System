@@ -93,10 +93,10 @@ export default function BorrowRequestsPage() {
                     window.performance.getEntriesByType("navigation").length > 0 && 
                     window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && !autoOpenedRef.current) {
+    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
       if (foundBorrowing) {
-        autoOpenedRef.current = true;
+        autoOpenedRef.current = urlId;
         setTab("borrowing");
         setSelectedBookingForModal(foundBorrowing);
         const status = foundBorrowing.status.toLowerCase();
@@ -107,7 +107,7 @@ export default function BorrowRequestsPage() {
       } else if (bookings.lending.length > 0) {
         const foundLending = bookings.lending.find(b => b.id === urlId);
         if (foundLending) {
-          autoOpenedRef.current = true;
+          autoOpenedRef.current = urlId;
           setTab("lending");
           setSelectedBookingForModal(foundLending);
           const status = foundLending.status.toLowerCase();

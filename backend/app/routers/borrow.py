@@ -122,9 +122,11 @@ def incoming_borrow_requests(status: Optional[BorrowStatus] = None, current_user
 
 
 def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User, for_update: bool = False) -> BorrowRequest:
-    query = _borrow_query(db).filter(BorrowRequest.id == request_id)
     if for_update:
-        query = query.with_for_update()
+        query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).with_for_update()
+    else:
+        query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+        
     br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
