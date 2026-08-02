@@ -2,12 +2,13 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, ForbiddenException, AppException
+from app.core.rate_limit import limiter
 from app.models.borrow import BorrowRequest
 from app.models.resource import Resource
 from app.models.enums import BorrowStatus, ResourceStatus, NotificationType, UserRole
@@ -46,7 +47,9 @@ def _to_date(val) -> Optional[date]:
 
 
 @router.post("", response_model=BorrowRequestResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 def create_borrow_request(
+    request: Request,
     payload: BorrowRequestCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),

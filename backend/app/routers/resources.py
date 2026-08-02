@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, status, BackgroundTasks, Request
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceRespons
 from app.core.deps import get_current_user_optional
 from app.services.notification_service import notify_all_except_owner_bg
 from app.services.availability import get_blocked_dates
+from app.core.rate_limit import limiter
 from datetime import date
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -192,7 +193,9 @@ def get_resource(
 
 
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 def create_resource(
+    request: Request,
     payload: ResourceCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),

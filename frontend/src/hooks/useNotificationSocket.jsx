@@ -28,8 +28,12 @@ export function useNotificationSocket(onNotification, user) {
       if (cancelled) return;
       const token = localStorage.getItem("crss_access_token");
       if (!token) return;
-      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications?token=${token}`);
+      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications`);
       socketRef.current = socket;
+
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ token }));
+      };
 
       socket.onmessage = (event) => {
         try {

@@ -8,7 +8,7 @@ instead of the Authorization header used elsewhere.
 """
 import uuid
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
 import app.core.database as core_db
@@ -31,7 +31,18 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 
 
 @router.websocket("/ws/notifications")
-async def notifications_websocket(websocket: WebSocket, token: str = Query(...)):
+async def notifications_websocket(websocket: WebSocket):
+    await websocket.accept()
+    
+    try:
+        data = await websocket.receive_json()
+        token = data.get("token")
+        if not token:
+            await websocket.close(code=4401)
+            return
+    except Exception:
+        await websocket.close(code=4401)
+        return
     db = core_db.SessionLocal()
     try:
         user = _authenticate_ws_token(token, db)
