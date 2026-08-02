@@ -166,6 +166,7 @@ export default function ResourceCreatePage() {
       };
     }
 
+    const generatedId = "res-" + Date.now();
     const newItem = {
       id: generatedId,
       title: form.title,
