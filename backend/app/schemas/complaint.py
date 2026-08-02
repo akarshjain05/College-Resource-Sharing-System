@@ -1,8 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from app.models.enums import ComplaintStatus
 from app.schemas.user import UserResponse
@@ -34,8 +34,26 @@ class BorrowRequestMinResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     status: str
-    start_date: datetime
-    end_date: datetime
+    requested_start_date: Optional[datetime] = None
+    requested_end_date: Optional[datetime] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_start_end_dates(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "requested_start_date" not in data and "start_date" in data:
+                data["requested_start_date"] = data["start_date"]
+            if "requested_end_date" not in data and "end_date" in data:
+                data["requested_end_date"] = data["end_date"]
+        return data
+
+    @computed_field
+    def start_date(self) -> Optional[datetime]:
+        return self.requested_start_date
+
+    @computed_field
+    def end_date(self) -> Optional[datetime]:
+        return self.requested_end_date
 
 
 class ComplaintResponse(BaseModel):
