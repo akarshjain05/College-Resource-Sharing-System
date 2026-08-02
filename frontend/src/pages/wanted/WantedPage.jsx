@@ -23,10 +23,16 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
             <HelpCircle className="h-6 w-6" />
           </div>
           <div>
-            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {request.category?.name || "Campus Need"}
-            </span>
-            <h2 className="font-display text-lg font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5">{request.title}</h2>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {request.category?.name || "Campus Need"}
+              </span>
+              <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {new Date(request.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(request.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-extrabold text-slate-900 dark:text-white leading-tight mt-1">{request.title}</h2>
           </div>
         </div>
 

@@ -308,6 +308,33 @@ def confirm_handover_resource(
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
 
+@router.post("/{request_id}/reject-handover", response_model=BorrowRequestResponse)
+def reject_handover_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can reject receipt")
+    if br.status != BorrowStatus.HANDOVER_REQUESTED:
+        raise AppException("Only pending handovers can be rejected", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.APPROVED
+    db.commit()
+    db.refresh(br)
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "Handover Rejected",
+        f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name}. They reported not receiving it.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
+
+
 @router.post("/{request_id}/cancel", response_model=BorrowRequestResponse)
 def cancel_borrow_request(
     request_id: uuid.UUID,

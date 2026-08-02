@@ -204,6 +204,25 @@ export default function BorrowRequestsPage() {
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
+      if (newStatus === "reject_handover") {
+        setConfirmDialog({
+          title: "Not Received",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender and decline the handover.",
+          confirmText: "Mark Not Received",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.rejectHandover(bookingId);
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
+      }
       if (newStatus === "cancelled" || newStatus === "cancel") {
         setConfirmDialog({
           title: "Cancel Request",
@@ -445,12 +464,20 @@ export default function BorrowRequestsPage() {
                     )
                   )}
                   {tab === "borrowing" && book.status === "handover_requested" && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
-                      className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs font-bold"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                        className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs font-bold"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
+                        className="btn-secondary !py-2 text-xs font-bold !bg-red-50 !text-red-600 hover:!bg-red-100 !border-red-200"
+                      >
+                        <X className="h-3.5 w-3.5" /> Not Received
+                      </button>
+                    </div>
                   )}
                   {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
                     isStarted ? (
