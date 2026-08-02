@@ -46,19 +46,25 @@ def list_wanted_requests(
     db: Session = Depends(get_db)
 ):
     from app.models.wanted import WantedOffer
-    # Sort by newest first, only unfulfilled, excluding current user's own requests
-    requests = db.query(WantedRequest).filter(
+    from sqlalchemy.orm import joinedload
+
+    requests = db.query(WantedRequest).options(
+        joinedload(WantedRequest.user),
+        joinedload(WantedRequest.category)
+    ).filter(
         WantedRequest.is_fulfilled == False,
         WantedRequest.user_id != current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
 
-    for r in requests:
+    valid_requests = [r for r in requests if r.user is not None and r.category is not None]
+
+    for r in valid_requests:
         r.has_offered = db.query(WantedOffer).filter(
             WantedOffer.wanted_request_id == r.id,
             WantedOffer.offerer_id == current_user.id
         ).first() is not None
 
-    return requests
+    return valid_requests
 
 
 @router.get("/me", response_model=list[WantedResponse])
@@ -66,10 +72,16 @@ def my_wanted_requests(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Sort by newest first, include both unfulfilled and fulfilled for own requests
-    return db.query(WantedRequest).filter(
+    from sqlalchemy.orm import joinedload
+
+    requests = db.query(WantedRequest).options(
+        joinedload(WantedRequest.user),
+        joinedload(WantedRequest.category)
+    ).filter(
         WantedRequest.user_id == current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
+
+    return [r for r in requests if r.user is not None and r.category is not None]
 
 
 @router.post("/{wanted_id}/fulfill", response_model=WantedResponse)
