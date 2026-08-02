@@ -67,24 +67,16 @@ class ComplaintResponse(BaseModel):
 
     id: uuid.UUID
     category: Optional[str] = "general"
-<<<<<<< HEAD
     severity: Optional[str] = "medium"
-    subject: str
-    description: str
+    subject: Optional[str] = ""
+    description: Optional[str] = ""
     evidence_url: Optional[str] = None
-    status: ComplaintStatus
+    status: Optional[ComplaintStatus] = ComplaintStatus.OPEN
     assigned_to_id: Optional[uuid.UUID] = None
     assigned_to: Optional[UserResponse] = None
     admin_response: Optional[str] = None
     resolution_data: Optional[str] = None
-    filed_by: UserResponse
-=======
-    subject: Optional[str] = ""
-    description: Optional[str] = ""
-    status: Optional[ComplaintStatus] = ComplaintStatus.OPEN
-    admin_response: Optional[str] = None
     filed_by: Optional[UserResponse] = None
->>>>>>> 8bf135c853d93dcdafd059e93a67830b32fcb39e
     against_user_id: Optional[uuid.UUID] = None
     against_user: Optional[UserResponse] = None
     resource_id: Optional[uuid.UUID] = None
