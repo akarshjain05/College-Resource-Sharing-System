@@ -41,8 +41,16 @@ export default function BorrowRequestsPage() {
     return "borrowing";
   };
 
+  const getInitialSubTab = () => {
+    const pSubTab = searchParams.get("subTab") || searchParams.get("section");
+    if (pSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(pSubTab.toLowerCase())) {
+      return pSubTab.toLowerCase();
+    }
+    return "upcoming";
+  };
+
   const [tab, setTab] = useState(getInitialTab); // "borrowing" (my requests) or "lending" (incoming)
-  const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
+  const [subTab, setSubTab] = useState(getInitialSubTab); // "upcoming", "ongoing", "completed", "cancelled"
   const [bookings, setBookings] = useState({ borrowing: [], lending: [] });
   const [loading, setLoading] = useState(true);
 
@@ -207,8 +215,6 @@ export default function BorrowRequestsPage() {
   };
 
   useEffect(() => {
-    // Keep your friend's load function if they renamed it
-    // (If it says it's undefined later, change this back to load() )
     if (typeof loadBookingsList === 'function') {
       loadBookingsList();
     } else {
@@ -216,7 +222,6 @@ export default function BorrowRequestsPage() {
     }
   }, []);
 
-  // 1. Hook it up to the real database API
   const handleStatusChange = async (bookingId, newStatus) => {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
@@ -246,7 +251,7 @@ export default function BorrowRequestsPage() {
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
-      if (newStatus === "reject_handover") {
+      if (newStatus === "reject_handover" || newStatus === "not_received") {
         setConfirmDialog({
           title: "Not Received",
           message: "Are you sure you want to mark this item as not received? This will notify the lender and decline the handover.",
@@ -492,14 +497,22 @@ export default function BorrowRequestsPage() {
                       </button>
                     </>
                   )}
-                  {tab === "borrowing" && book.status === "approved" && (
+                  {tab === "borrowing" && (book.status === "approved" || book.status === "handover_requested") && (
                     isStarted ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                        className="btn-secondary flex items-center gap-1.5 !py-2 text-xs text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950/30 font-bold"
-                      >
-                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner for Handover
-                      </button>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
+                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                        >
+                          <X className="h-3.5 w-3.5" /> Not Received
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
@@ -856,15 +869,26 @@ export default function BorrowRequestsPage() {
 
                   {!isLenderModal && (selectedBookingForModal.status === "approved" || selectedBookingForModal.status === "handover_requested") && (
                     modalIsStarted ? (
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
-                        }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
+                            closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                          }}
+                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "reject_handover");
+                            closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                          }}
+                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                        >
+                          <X className="h-3.5 w-3.5" /> Not Received
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over

@@ -58,7 +58,7 @@ def forward_to_microservice(
     payload = {
         "user_id": str(user_id),
         "event_type": event_type,
-        "channels": channels or ["inapp", "push", "email"],
+        "channels": channels or ["inapp", "push"],
         "force_delivery": force_delivery,
         "payload": event_payload,
     }

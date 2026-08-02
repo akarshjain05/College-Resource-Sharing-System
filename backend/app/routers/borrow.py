@@ -312,6 +312,7 @@ def reject_handover_resource(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Borrower reports not receiving an item marked as handed over."""
     br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
     if not br:
         raise NotFoundException("Borrow request not found")
@@ -326,7 +327,7 @@ def reject_handover_resource(
 
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
-        "Handover Rejected",
+        "Handover Rejected / Not Received",
         f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name}. They reported not receiving it.",
         link=f"/borrow-requests/{br.id}",
     )
