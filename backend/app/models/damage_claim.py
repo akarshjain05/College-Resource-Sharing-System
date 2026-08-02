@@ -34,7 +34,7 @@ class DamageClaim(Base, UUIDMixin, TimestampMixin):
     dispute_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     status: Mapped[DamageClaimStatus] = mapped_column(
-        SAEnum(DamageClaimStatus), default=DamageClaimStatus.OPEN, index=True
+        SAEnum(DamageClaimStatus, values_callable=lambda obj: [e.value for e in obj]), default=DamageClaimStatus.OPEN, index=True
     )
 
     admin_resolution: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
