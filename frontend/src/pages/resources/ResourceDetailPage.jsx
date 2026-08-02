@@ -37,7 +37,7 @@ export default function ResourceDetailPage() {
   const [submittingBorrow, setSubmittingBorrow] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isWishlisted, setIsWishlisted] = useState(false);
-
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
 
   const load = () => {
@@ -170,10 +170,6 @@ export default function ResourceDetailPage() {
     if (seconds < 86400) return `Usually responds within ${Math.round(seconds / 3600)} hours`;
     return `Usually responds in ${Math.round(seconds / 86400)} days`;
   };
-
-
-
-  const [showAllReviews, setShowAllReviews] = useState(false);
 
   // Dynamic Rating calculations from real reviews
   const totalReviewsCount = reviews.length > 0 ? reviews.length : (resource.reviews_count || 0);

@@ -58,9 +58,9 @@ class ResourceResponse(ResourceBase):
     quantity_available: int
     barcode: Optional[str] = None
     qr_code_url: Optional[str] = None
-    average_rating: float
-    total_borrows: int
-    view_count: int
+    average_rating: float = 0.0
+    total_borrows: int = 0
+    view_count: int = 0
     owner: UserResponse
     category: CategoryResponse
     images: List[ResourceImageResponse] = []
