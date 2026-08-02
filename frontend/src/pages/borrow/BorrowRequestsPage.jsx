@@ -412,6 +412,14 @@ export default function BorrowRequestsPage() {
                       </span>
                     )
                   )}
+                  {tab === "borrowing" && book.status === "handover_requested" && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                      className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs font-bold"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                    </button>
+                  )}
                   {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
                     isStarted ? (
                       <button
