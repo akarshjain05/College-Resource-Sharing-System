@@ -24,13 +24,14 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
 
     # ---- Database ----
-    DATABASE_URL: str = "postgresql://crss_user:crss_password@db:5432/crss_db"
+    DATABASE_URL: str
 
     # ---- Redis ----
     REDIS_URL: str = "redis://redis:6379/0"
 
     # ---- JWT ----
-    SECRET_KEY: str = "change-this-super-secret-key-in-production-please"
+    SECRET_KEY: str
+    OLD_SECRET_KEY: Optional[str] = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -74,7 +75,7 @@ class Settings(BaseSettings):
     BREVO_API_KEY: str = ""
     BREVO_SENDER_EMAIL: str = "security@yourdomain.com"
     BREVO_SENDER_NAME: str = "Campus Resources"
-    OTP_SECRET: str = "change-this-otp-secret-in-production"
+    OTP_SECRET: str
     OTP_PEPPER: str = ""
     OTP_EXPIRY_SECONDS: int = 600
     OTP_MAX_ATTEMPTS: int = 5
@@ -90,12 +91,6 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_secrets_in_prod(self) -> 'Settings':
         if self.ENVIRONMENT == "production":
-            if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
-                raise ValueError("SECRET_KEY must be set to a secure random value in production.")
-                
-            if self.OTP_SECRET == "change-this-otp-secret-in-production":
-                raise ValueError("OTP_SECRET must be set to a secure random value in production.")
-
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
                 raise ValueError("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in production.")
                 

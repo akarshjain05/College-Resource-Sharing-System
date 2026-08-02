@@ -1,4 +1,5 @@
 import uuid
+from datetime import date, timedelta
 from unittest.mock import patch, MagicMock
 
 from app.models.enums import NotificationType
@@ -130,8 +131,8 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
         headers=borrower_headers,
         json={
             "resource_id": resource_id,
-            "requested_start_date": "2030-08-01",
-            "requested_end_date": "2030-08-03",
+            "requested_start_date": date.today().isoformat(),
+            "requested_end_date": (date.today() + timedelta(days=2)).isoformat(),
             "purpose": "Biology experiment",
         },
     )
@@ -301,3 +302,42 @@ def test_websocket_realtime_notifications(client, test_user, db_session):
         data = websocket.receive_json()
         assert data["title"] == "Realtime Test"
         assert data["message"] == "WebSocket push payload test"
+
+
+def test_publish_resource_from_my_listings_sends_notification(client, test_user, second_user, test_category):
+    """Test that publishing an item from My Listings (status update to AVAILABLE) sends notification to other users."""
+    owner_headers = auth_headers(client, test_user.email, "Password123!")
+    other_headers = auth_headers(client, second_user.email, "Password123!")
+
+    # 1. Create unpublished resource (UNAVAILABLE status)
+    res_resp = client.post(
+        "/api/v1/resources",
+        headers=owner_headers,
+        json={
+            "title": "Unpublished Drone",
+            "description": "Camera drone in draft mode",
+            "condition": "new",
+            "quantity": 1,
+            "category_id": str(test_category.id),
+            "max_borrow_days": 3,
+            "status": "unavailable",
+        },
+    )
+    assert res_resp.status_code == 201
+    resource_id = res_resp.json()["id"]
+
+    # Clear any existing notifications
+    client.get("/api/v1/notifications", headers=other_headers)
+
+    # 2. Publish item via PUT /api/v1/resources/{id} (like My Listings toggle switch)
+    pub_resp = client.put(
+        f"/api/v1/resources/{resource_id}",
+        headers=owner_headers,
+        json={"status": "available"},
+    )
+    assert pub_resp.status_code == 200
+    assert pub_resp.json()["status"] == "available"
+
+    # 3. Check that second_user received "New Resource Listed" notification
+    other_notifs = client.get("/api/v1/notifications", headers=other_headers).json()
+    assert any("listed a new resource" in n["message"] for n in other_notifs)
