@@ -13,7 +13,7 @@ const firebaseConfig = {
     measurementId: "G-2MPEQH3TTK"
 };
 
-const VAPID_KEY = "BA6CZ5D9U-OB9PAlrc7RjIkdDQHjWrype-_sAZUhBZK32lau5GA8LW_uKsKew3YMFLZlFCb5wBxqtzGcwaIzymY";
+const VAPID_KEY = "BOD9Oht76aIyaWRKaayCVZOEGpiq0YZkFSIMAoFCkNmnwTFrQSRMmOfkfEPiVdPBTAlgXrFhTBsqE7GajUbGhmk";
 
 const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || "https://notification-olgf.onrender.com";
 
