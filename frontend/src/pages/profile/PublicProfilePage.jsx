@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, TrendingUp, BookMarked, MapPin } from "lucide-react";
+import { Star, TrendingUp, BookMarked, MapPin, Edit3 } from "lucide-react";
 import { usersApi } from "../../api/endpoints";
 import ResourceCard from "../../components/ResourceCard";
 import StatCard from "../../components/StatCard";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PublicProfilePage() {
   const { userId } = useParams();
+  const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [sharedResources, setSharedResources] = useState([]);
   const [stats, setStats] = useState(null);
   const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const isOwnProfile = currentUser && (currentUser.id === userId || currentUser.id === profile?.id);
 
   useEffect(() => {
     setLoading(true);
@@ -57,15 +61,28 @@ export default function PublicProfilePage() {
               {fullName.charAt(0)}
             </div>
             <div className="pt-2 flex-1">
-              <h1 className="font-display text-2xl font-bold text-ink-900">{fullName}</h1>
-              {profile.department && (
-                <div className="mt-1 flex items-center gap-1 text-sm text-ink-500">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{profile.department} {profile.course && `• ${profile.course}`}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-white">{fullName}</h1>
+                  {profile.department && (
+                    <div className="mt-1 flex items-center gap-1 text-sm text-ink-500">
+                      <MapPin className="h-3.5 w-3.5" />
+                      <span>{profile.department} {profile.course && `• ${profile.course}`}</span>
+                    </div>
+                  )}
                 </div>
-              )}
+                {isOwnProfile && (
+                  <Link
+                    to="/profile"
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 w-fit"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </Link>
+                )}
+              </div>
               {profile.bio && (
-                <p className="mt-4 text-sm text-ink-700 max-w-2xl leading-relaxed">{profile.bio}</p>
+                <p className="mt-4 text-sm text-ink-700 dark:text-slate-300 max-w-2xl leading-relaxed">{profile.bio}</p>
               )}
             </div>
           </div>
