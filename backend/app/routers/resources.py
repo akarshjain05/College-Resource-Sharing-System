@@ -53,22 +53,6 @@ def list_resources(
         query = query.filter(Resource.status == status_filter)
     elif not owner_id:
         # Default to available for public explore page
-        # A resource is available today if current active bookings for today are less than its total quantity
-        from sqlalchemy import func
-        today = date.today()
-        blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED, BorrowStatus.LATE]
-        
-        subq = (
-            db.query(BorrowRequest.resource_id, func.count(BorrowRequest.id).label('booked_count'))
-            .filter(BorrowRequest.status.in_(blocking_statuses))
-            .filter(BorrowRequest.requested_start_date <= today)
-            .filter(BorrowRequest.requested_end_date >= today)
-            .group_by(BorrowRequest.resource_id)
-            .subquery()
-        )
-        
-        query = query.outerjoin(subq, Resource.id == subq.c.resource_id)
-        query = query.filter(or_(subq.c.booked_count == None, subq.c.booked_count < Resource.quantity_available))
         query = query.filter(Resource.status != ResourceStatus.UNAVAILABLE)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
