@@ -44,4 +44,9 @@ def decode_token(token: str) -> Optional[dict]:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
+        if settings.OLD_SECRET_KEY:
+            try:
+                return jwt.decode(token, settings.OLD_SECRET_KEY, algorithms=[settings.ALGORITHM])
+            except JWTError:
+                pass
         return None
