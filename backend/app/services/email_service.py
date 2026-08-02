@@ -366,5 +366,35 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
         return False
 
 
+async def send_complaint_update_email(
+    to_email: str,
+    full_name: str,
+    subject_title: str,
+    status: str,
+    update_text: str,
+) -> bool:
+    subject = f"Complaint Update [{status.upper()}]: {subject_title}"
+    body = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #2563eb;">Complaint Triage & Resolution Update</h2>
+        <p>Hello <strong>{full_name}</strong>,</p>
+        <p>Your complaint <strong>"{subject_title}"</strong> has been updated.</p>
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 15px 0;">
+            <p><strong>Status:</strong> {status.upper()}</p>
+            <p><strong>Details:</strong> {update_text}</p>
+        </div>
+        <p>Log in to your account dashboard to view the full resolution & chat updates.</p>
+    </div>
+    """
+    html = _wrap_template(f"Complaint Update: {status.upper()}", body)
+    try:
+        await send_email(to_email, subject, html)
+        return True
+    except Exception:
+        logger.exception("Failed to send complaint update email to %s", to_email)
+        return False
+
+
+
 
 

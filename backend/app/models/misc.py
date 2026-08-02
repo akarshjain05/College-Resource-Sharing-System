@@ -62,11 +62,18 @@ class Complaint(Base, UUIDMixin, TimestampMixin):
     borrow_request_id: Mapped[Optional[UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=True
     )
+    category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, default="general")
+    severity: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, default="medium")
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    evidence_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     status: Mapped[ComplaintStatus] = mapped_column(SAEnum(ComplaintStatus, values_callable=lambda obj: [e.value for e in obj]), default=ComplaintStatus.OPEN)
+    assigned_to_id: Mapped[Optional[UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     admin_response: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolution_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     filed_by: Mapped["User"] = relationship("User", foreign_keys=[filed_by_id])
     against_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[against_user_id])
+    assigned_to: Mapped[Optional["User"]] = relationship("User", foreign_keys=[assigned_to_id])
+    resource: Mapped[Optional["Resource"]] = relationship("Resource")
     borrow_request: Mapped[Optional["BorrowRequest"]] = relationship("BorrowRequest")

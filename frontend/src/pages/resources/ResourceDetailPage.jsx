@@ -277,12 +277,21 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
             </div>
-            <Link
-              to={`/users/${resource.owner?.id}`}
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all shadow-sm active:scale-95"
-            >
-              View Profile
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/users/${resource.owner?.id}`}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all shadow-sm active:scale-95"
+              >
+                View Profile
+              </Link>
+              <Link
+                to={`/complaints?resource_id=${resource.id}&against_user_id=${resource.owner?.id}&category=resource_report&subject=${encodeURIComponent(`Report Listing: ${resource.title}`)}`}
+                className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/60 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-400 transition-all shadow-xs active:scale-95 flex items-center gap-1"
+                title="Report this listing to platform admin"
+              >
+                <Shield className="h-3.5 w-3.5" /> Report
+              </Link>
+            </div>
           </div>
 
           {/* Description */}
