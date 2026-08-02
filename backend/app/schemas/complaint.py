@@ -6,14 +6,15 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validat
 
 from app.models.enums import ComplaintStatus
 from app.schemas.user import UserResponse
+from app.utils.validation import SafeStr
 
 
 class ComplaintCreate(BaseModel):
-    category: Optional[str] = Field(default="general", max_length=50)
-    severity: Optional[str] = Field(default="medium", max_length=20)
-    subject: str = Field(..., min_length=3, max_length=200)
-    description: str = Field(..., min_length=10)
-    evidence_url: Optional[str] = None
+    category: Optional[SafeStr] = Field(default="general", max_length=50)
+    severity: Optional[SafeStr] = Field(default="medium", max_length=20)
+    subject: SafeStr = Field(..., min_length=3, max_length=200)
+    description: SafeStr = Field(..., min_length=10, max_length=5000)
+    evidence_url: Optional[str] = Field(None, max_length=500)
     against_user_id: Optional[uuid.UUID] = None
     resource_id: Optional[uuid.UUID] = None
     borrow_request_id: Optional[uuid.UUID] = None
@@ -23,10 +24,10 @@ class ComplaintAdminUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     status: Optional[ComplaintStatus] = None
     assigned_to_id: Optional[uuid.UUID] = None
-    admin_response: Optional[str] = None
-    resolution_action: Optional[str] = Field(None, description="refund_issued, replacement_provided, warning_issued, dismissed")
+    admin_response: Optional[SafeStr] = Field(None, max_length=5000)
+    resolution_action: Optional[SafeStr] = Field(None, max_length=100, description="refund_issued, replacement_provided, warning_issued, dismissed")
     resolution_amount: Optional[float] = None
-    resolution_notes: Optional[str] = None
+    resolution_notes: Optional[SafeStr] = Field(None, max_length=5000)
     trust_score_penalty: Optional[int] = Field(None, description="Amount to deduct from the against_user's trust score")
 
 
