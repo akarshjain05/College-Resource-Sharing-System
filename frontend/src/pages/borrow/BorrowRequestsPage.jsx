@@ -88,12 +88,8 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
-    const isReload = window.performance && 
-                    window.performance.getEntriesByType && 
-                    window.performance.getEntriesByType("navigation").length > 0 && 
-                    window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
+    if (urlId && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
       if (foundBorrowing) {
         autoOpenedRef.current = urlId;
@@ -101,9 +97,12 @@ export default function BorrowRequestsPage() {
         setSelectedBookingForModal(foundBorrowing);
         const status = foundBorrowing.status.toLowerCase();
         if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+        else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
         else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
         else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        
+        searchParams.delete("id");
+        setSearchParams(searchParams);
       } else if (bookings.lending.length > 0) {
         const foundLending = bookings.lending.find(b => b.id === urlId);
         if (foundLending) {
@@ -112,9 +111,12 @@ export default function BorrowRequestsPage() {
           setSelectedBookingForModal(foundLending);
           const status = foundLending.status.toLowerCase();
           if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-          else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+          else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
           else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
           else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+          
+          searchParams.delete("id");
+          setSearchParams(searchParams);
         }
       }
     }
@@ -183,7 +185,7 @@ export default function BorrowRequestsPage() {
             setTab(newTab);
             const status = foundBooking.status.toLowerCase();
             if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-            else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+            else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
             else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
             else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
             
