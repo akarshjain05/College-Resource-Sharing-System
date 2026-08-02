@@ -195,7 +195,7 @@ def approve_borrow_request(
             db, resource.id, other_br.requested_start_date, other_br.requested_end_date, resource.quantity
         ):
             other_br.status = BorrowStatus.REJECTED
-            other_br.rejection_reason = "Resource is no longer available for requested dates."
+            other_br.rejection_reason = "Resource is no longer available (approved for another borrower)."
             create_notification(
                 db,
                 other_br.borrower_id,
