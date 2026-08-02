@@ -36,6 +36,7 @@ from app.routers import (
     payments,
 )
 from app.middleware.csrf import CSRFMiddleware
+from app.middleware.limit_body_size import ContentSizeLimitMiddleware
 from app.services.ws_manager import manager
 
 configure_logging(debug=settings.DEBUG)
@@ -51,6 +52,8 @@ app = FastAPI(
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+app.add_middleware(ContentSizeLimitMiddleware, max_content_size=2 * 1024 * 1024) # 2MB limit for JSON bodies
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,25 +1,27 @@
 import re
 import uuid
+import unicodedata
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator, field_validator
 
 from app.models.enums import UserRole, AuthProvider
+from app.utils.validation import SafeStr
 
 
-CAMPUS_EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9.-]+\.)?(svnit\.ac\.in)$"
+CAMPUS_EMAIL_REGEX = r"^[a-zA-Z0-9._%+-]+@(?:[a-zA-Z0-9-]+\.)*svnit\.ac\.in$"
 
 
 
 class UserBase(BaseModel):
-    full_name: str = Field(..., min_length=2, max_length=150)
+    full_name: SafeStr = Field(..., min_length=2, max_length=150)
     email: EmailStr
-    department: Optional[str] = None
-    course: Optional[str] = None
+    department: Optional[SafeStr] = Field(None, max_length=100)
+    course: Optional[SafeStr] = Field(None, max_length=100)
     year_of_study: Optional[int] = Field(None, ge=1, le=6)
-    student_id: Optional[str] = None
-    phone_number: Optional[str] = None
+    student_id: Optional[SafeStr] = Field(None, max_length=50)
+    phone_number: Optional[SafeStr] = Field(None, max_length=20)
 
     @model_validator(mode="before")
     @classmethod
@@ -40,8 +42,10 @@ class UserRegister(UserBase):
     @field_validator("email")
     @classmethod
     def validate_campus_email(cls, v: str) -> str:
-        if v and not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
-            raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
+        if v:
+            v = unicodedata.normalize("NFKC", v).strip().lower()
+            if not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
+                raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
         return v
 
     @model_validator(mode="after")
@@ -102,10 +106,10 @@ class GoogleAuthResponse(BaseModel):
 class GoogleProfileCompletion(BaseModel):
     registration_token: str
     role: UserRole = UserRole.STUDENT
-    department: Optional[str] = None
-    course: Optional[str] = None
+    department: Optional[SafeStr] = Field(None, max_length=100)
+    course: Optional[SafeStr] = Field(None, max_length=100)
     year_of_study: Optional[int] = Field(None, ge=1, le=6)
-    student_id: Optional[str] = None
+    student_id: Optional[SafeStr] = Field(None, max_length=50)
 
 
 class UserLogin(BaseModel):
@@ -115,14 +119,14 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    full_name: Optional[str] = None
-    department: Optional[str] = None
-    course: Optional[str] = None
+    full_name: Optional[SafeStr] = Field(None, max_length=150)
+    department: Optional[SafeStr] = Field(None, max_length=100)
+    course: Optional[SafeStr] = Field(None, max_length=100)
     year_of_study: Optional[int] = None
-    bio: Optional[str] = None
-    skills: Optional[str] = None
-    phone_number: Optional[str] = None
-    profile_picture_url: Optional[str] = None
+    bio: Optional[SafeStr] = Field(None, max_length=1000)
+    skills: Optional[SafeStr] = Field(None, max_length=500)
+    phone_number: Optional[SafeStr] = Field(None, max_length=20)
+    profile_picture_url: Optional[str] = Field(None, max_length=500)
 
 
 class UserResponse(UserBase):

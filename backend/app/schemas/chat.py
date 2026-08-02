@@ -3,10 +3,11 @@ import uuid
 from typing import Optional
 
 from pydantic import BaseModel, Field
+from app.utils.validation import SafeStr
 
 
 class ChatMessageBase(BaseModel):
-    body: str = Field(..., max_length=1000)
+    body: SafeStr = Field(..., max_length=1000)
 
 
 class ChatMessageCreate(ChatMessageBase):
