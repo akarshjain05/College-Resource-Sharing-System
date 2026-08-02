@@ -52,6 +52,7 @@ export default function BorrowRequestsPage() {
   const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
+  const [damageReportInput, setDamageReportInput] = useState("");
   const [openChatId, setOpenChatId] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
@@ -299,7 +300,7 @@ export default function BorrowRequestsPage() {
 
     try {
       if (reviewAction === "return") {
-        await borrowApi.returnItem(reviewingId, null, ratingInput, commentInput);
+        await borrowApi.returnItem(reviewingId, damageReportInput || null, ratingInput, commentInput);
       } else if (reviewAction === "confirm_return") {
         await borrowApi.confirmReturn(reviewingId, ratingInput, commentInput);
       }
@@ -307,6 +308,7 @@ export default function BorrowRequestsPage() {
       setReviewingId(null);
       setReviewAction(null);
       setCommentInput("");
+      setDamageReportInput("");
       setRatingInput(5);
       if (typeof loadBookingsList === 'function') loadBookingsList();
       else load();
@@ -655,6 +657,22 @@ export default function BorrowRequestsPage() {
                   className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
+
+              {reviewAction === "return" && (
+                <div>
+                  <label className="label">Report Damage (Optional)</label>
+                  <textarea
+                    placeholder="If the item was damaged, please describe it here..."
+                    value={damageReportInput}
+                    onChange={(e) => setDamageReportInput(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Reporting damage will automatically open a claim for the owner to review.
+                  </p>
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <button
