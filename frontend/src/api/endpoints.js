@@ -18,6 +18,12 @@ export const authApi = {
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   resetPassword: (payload) => api.post("/auth/reset-password", payload),
+  logout: () => api.post("/auth/logout"),
+};
+
+export const paymentApi = {
+  createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
+  verify: (payload) => api.post("/payments/verify", payload),
 };
 
 
@@ -29,6 +35,7 @@ export const userApi = {
   listPublicDirectory: () => api.get("/users/directory/public"),
   suspendUser: (id) => api.post(`/users/${id}/suspend`),
   unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
+  makeAdmin: (id) => api.post(`/users/${id}/make-admin`),
 };
 
 export const categoryApi = {

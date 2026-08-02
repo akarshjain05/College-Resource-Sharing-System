@@ -33,8 +33,8 @@ class UserBase(BaseModel):
 
 
 class UserRegister(UserBase):
-    password: str = Field(..., min_length=8, max_length=128)
-    confirm_password: str = Field(..., min_length=8, max_length=128)
+    password: str = Field(..., min_length=12, max_length=128)
+    confirm_password: str = Field(..., min_length=12, max_length=128)
     role: UserRole = UserRole.STUDENT
 
     @field_validator("email")
@@ -114,6 +114,7 @@ class UserLogin(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     full_name: Optional[str] = None
     department: Optional[str] = None
     course: Optional[str] = None
@@ -148,12 +149,12 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordResetConfirm(BaseModel):
     token: str
-    new_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=12, max_length=128)
 
 
 class ChangePassword(BaseModel):
     current_password: str
-    new_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=12, max_length=128)
 
 
 class PublicUserResponse(BaseModel):

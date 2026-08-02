@@ -52,7 +52,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
       DEBUG: "false"
-      BACKEND_CORS_ORIGINS: '["*"]'
+      BACKEND_CORS_ORIGINS: '["https://${DOMAIN}"]'
     ports:
       - "8000:8000"
     volumes:

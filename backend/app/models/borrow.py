@@ -47,6 +47,9 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
         "User", back_populates="borrow_requests", foreign_keys=[borrower_id]
     )
     lender: Mapped["User"] = relationship("User", foreign_keys=[lender_id])
+    payment: Mapped[Optional["Payment"]] = relationship(
+        "Payment", back_populates="borrow_request", uselist=False
+    )
 
     def __repr__(self) -> str:
         return f"<BorrowRequest {self.id} status={self.status}>"

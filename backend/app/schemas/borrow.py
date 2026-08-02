@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.models.enums import BorrowStatus
 from app.schemas.user import UserResponse
 from app.schemas.resource import ResourceResponse
+from app.schemas.payment import PaymentResponse
 
 
 class BorrowRequestCreate(BaseModel):
@@ -56,4 +57,5 @@ class BorrowRequestResponse(BaseModel):
     resource: Optional[ResourceResponse] = None
     borrower: Optional[UserResponse] = None
     lender: Optional[UserResponse] = None
+    payment: Optional[PaymentResponse] = None
     created_at: datetime

@@ -203,6 +203,22 @@ def unsuspend_user(
     return user
 
 
+@router.post("/{user_id}/make-admin", response_model=UserResponse)
+def make_user_admin(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    from app.models.enums import UserRole
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundException("User not found")
+    user.role = UserRole.ADMIN
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 @router.get("/{user_id}/presence")
 def get_user_presence_endpoint(
     user_id: uuid.UUID,

@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # ---- JWT ----
     SECRET_KEY: str = "change-this-super-secret-key-in-production-please"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # ---- Google Sign-In ----
@@ -81,20 +81,26 @@ class Settings(BaseSettings):
     OTP_RESEND_COOLDOWN_SECONDS: int = 60
 
 
+    # ---- Razorpay ----
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
+    RAZORPAY_CURRENCY: str = "INR"
+
     @model_validator(mode="after")
     def validate_secrets_in_prod(self) -> 'Settings':
         if self.ENVIRONMENT == "production":
-            import secrets
-            import logging
-            logger = logging.getLogger("crss")
-            
             if self.SECRET_KEY == "change-this-super-secret-key-in-production-please":
-                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
-                self.SECRET_KEY = secrets.token_urlsafe(32)
+                raise ValueError("SECRET_KEY must be set to a secure random value in production.")
                 
             if self.OTP_SECRET == "change-this-otp-secret-in-production":
-                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
-                self.OTP_SECRET = secrets.token_urlsafe(32)
+                raise ValueError("OTP_SECRET must be set to a secure random value in production.")
+
+            if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
+                raise ValueError("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in production.")
+                
+            if not self.GOOGLE_CLIENT_ID:
+                raise ValueError("GOOGLE_CLIENT_ID must be set in production.")
                 
         return self
 

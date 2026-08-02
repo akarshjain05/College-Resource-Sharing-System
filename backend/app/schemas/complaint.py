@@ -17,6 +17,7 @@ class ComplaintCreate(BaseModel):
 
 
 class ComplaintAdminUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     status: ComplaintStatus
     admin_response: Optional[str] = None
     trust_score_penalty: Optional[int] = Field(None, description="Amount to deduct from the against_user's trust score")

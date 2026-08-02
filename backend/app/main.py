@@ -33,6 +33,7 @@ from app.routers import (
     websocket,
     chat,
     health,
+    payments,
 )
 from app.middleware.csrf import CSRFMiddleware
 from app.services.ws_manager import manager
@@ -82,6 +83,7 @@ app.include_router(wanted.router, prefix="/api/v1")
 app.include_router(wishlist.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")
+app.include_router(payments.router, prefix=API_PREFIX)
 
 
 @app.on_event("startup")
