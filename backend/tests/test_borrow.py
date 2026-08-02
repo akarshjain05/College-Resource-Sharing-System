@@ -58,7 +58,12 @@ def test_full_borrow_lifecycle(client, test_user, second_user, test_category):
     # Owner hands over the item
     handover_resp = client.post(f"/api/v1/borrow-requests/{request_id}/handover", headers=owner_headers)
     assert handover_resp.status_code == 200
-    assert handover_resp.json()["status"] == "active"
+    assert handover_resp.json()["status"] == "handover_requested"
+
+    # Borrower confirms handover
+    confirm_ho_resp = client.post(f"/api/v1/borrow-requests/{request_id}/confirm-handover", headers=borrower_headers)
+    assert confirm_ho_resp.status_code == 200
+    assert confirm_ho_resp.json()["status"] == "active"
 
     # Borrower returns the item
     return_resp = client.post(f"/api/v1/borrow-requests/{request_id}/return", headers=borrower_headers, json={})

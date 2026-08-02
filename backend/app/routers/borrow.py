@@ -90,14 +90,6 @@ def create_borrow_request(
         f"{current_user.full_name} wants to borrow '{resource_title}'.",
         link=f"/borrow-requests/{borrow_request.id}",
     )
-    if owner_email:
-        background_tasks.add_task(
-            send_borrow_request_email,
-            owner_email,
-            owner_name,
-            current_user.full_name,
-            resource_title,
-        )
     return _borrow_query(db).filter(BorrowRequest.id == borrow_request.id).first()
 
 

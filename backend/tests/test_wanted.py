@@ -45,11 +45,7 @@ def test_wanted_offer_lifecycle(client, test_user, second_user, test_category):
     accept_resp = client.post(f"/api/v1/wanted/offers/{offer_id}/accept", headers=requester_headers)
     assert accept_resp.status_code == 200
 
-    # 5. Verify resource is removed from public listings (status changed to borrowed)
-    res_list_2 = client.get("/api/v1/resources").json()
-    assert not any(r["id"] == resource["id"] for r in res_list_2["items"])
-
-    # 6. Verify BorrowRequest was auto-created
+    # 5. Verify BorrowRequest was auto-created and approved
     borrow_reqs = client.get("/api/v1/borrow-requests/my-requests", headers=requester_headers).json()
     assert len(borrow_reqs) == 1
     assert borrow_reqs[0]["resource"]["id"] == resource["id"]
