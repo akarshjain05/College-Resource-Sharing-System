@@ -143,14 +143,31 @@ def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signatur
     db.commit()
 
     br = payment.borrow_request
+    import json
     create_notification(
         db, br.lender_id, NotificationType.PAYMENT_SUCCESS,
-        "Payment received", f"{payment.payer.full_name} has paid for '{br.resource.title}'. You can proceed with handover.",
+        "Payment received",
+        json.dumps({
+            "action": "received",
+            "amount": payment.total_amount / 100,
+            "item_title": br.resource.title,
+            "payer_name": payment.payer.full_name,
+            "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }),
         link=f"/borrow-requests/{br.id}",
     )
     create_notification(
         db, br.borrower_id, NotificationType.PAYMENT_SUCCESS,
-        "Payment successful", f"Your payment for '{br.resource.title}' was successful.",
+        "Payment successful",
+        json.dumps({
+            "action": "paid",
+            "amount": payment.total_amount / 100,
+            "item_title": br.resource.title,
+            "payer_name": payment.payer.full_name,
+            "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }),
         link=f"/borrow-requests/{br.id}",
     )
     if payment.payer.email:
