@@ -90,3 +90,42 @@ def mark_overdue_borrows_late():
         return {"borrows_marked_late": marked}
     finally:
         db.close()
+
+
+@celery_app.task(name="app.tasks.reminders.check_overdue_complaints")
+def check_overdue_complaints():
+    """Find complaints sitting unresolved for > 48 hours and send reminder nudges."""
+    db = SessionLocal()
+    nudged = 0
+    try:
+        from datetime import datetime, timedelta
+        from app.models.misc import Complaint
+        from app.models.enums import ComplaintStatus
+
+        cutoff = datetime.utcnow() - timedelta(hours=48)
+        overdue_complaints = (
+            db.query(Complaint)
+            .filter(
+                Complaint.status.in_([ComplaintStatus.OPEN, ComplaintStatus.ASSIGNED]),
+                Complaint.created_at <= cutoff
+            )
+            .all()
+        )
+        for comp in overdue_complaints:
+            target_user_id = comp.assigned_to_id or comp.against_user_id
+            if target_user_id:
+                create_notification(
+                    db,
+                    target_user_id,
+                    NotificationType.COMPLAINT_UPDATE,
+                    "Unresolved Complaint Reminder",
+                    f"Complaint '{comp.subject}' has been unresolved for > 48 hours. Please triage or resolve it.",
+                    link="/complaints",
+                )
+                nudged += 1
+        db.commit()
+        logger.info("Nudged %d overdue complaints", nudged)
+        return {"complaints_nudged": nudged}
+    finally:
+        db.close()
+
