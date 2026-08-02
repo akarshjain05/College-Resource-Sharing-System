@@ -29,7 +29,7 @@ class Notification(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "notifications"
 
     user_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    type: Mapped[NotificationType] = mapped_column(SAEnum(NotificationType), nullable=False)
+    type: Mapped[NotificationType] = mapped_column(SAEnum(NotificationType, values_callable=lambda obj: [e.value for e in obj]), nullable=False)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -64,7 +64,7 @@ class Complaint(Base, UUIDMixin, TimestampMixin):
     )
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[ComplaintStatus] = mapped_column(SAEnum(ComplaintStatus), default=ComplaintStatus.OPEN)
+    status: Mapped[ComplaintStatus] = mapped_column(SAEnum(ComplaintStatus, values_callable=lambda obj: [e.value for e in obj]), default=ComplaintStatus.OPEN)
     admin_response: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     filed_by: Mapped["User"] = relationship("User", foreign_keys=[filed_by_id])

@@ -16,10 +16,10 @@ class Resource(Base, UUIDMixin, TimestampMixin):
     title: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     condition: Mapped[ResourceCondition] = mapped_column(
-        SAEnum(ResourceCondition), default=ResourceCondition.GOOD
+        SAEnum(ResourceCondition, values_callable=lambda obj: [e.value for e in obj]), default=ResourceCondition.GOOD
     )
     status: Mapped[ResourceStatus] = mapped_column(
-        SAEnum(ResourceStatus), default=ResourceStatus.AVAILABLE, index=True
+        SAEnum(ResourceStatus, values_callable=lambda obj: [e.value for e in obj]), default=ResourceStatus.AVAILABLE, index=True
     )
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     quantity_available: Mapped[int] = mapped_column(Integer, default=1)

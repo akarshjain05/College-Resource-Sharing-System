@@ -36,7 +36,7 @@ export default function AdminDashboardPage() {
         <StatCard label="Total Users" value={overview.total_users} icon={Users} accent="forest" to="/admin/users" />
         <StatCard label="Total Resources" value={overview.total_resources} icon={Package} accent="brass" to="/admin/resources" />
         <StatCard label="Total Borrows" value={overview.total_borrows} icon={ArrowLeftRight} accent="ink" to="/admin/borrows" />
-        <StatCard label="Pending Requests" value={overview.pending_requests} icon={Clock} accent="brass" to="/admin/borrows?status=pending_approval" />
+        <StatCard label="Pending Requests" value={overview.pending_requests} icon={Clock} accent="brass" to="/admin/borrows?status=requested" />
         <StatCard label="Active Borrows" value={overview.active_borrows} icon={ArrowLeftRight} accent="forest" to="/admin/borrows?status=active" />
       </div>
 
