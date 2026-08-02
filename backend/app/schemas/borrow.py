@@ -53,7 +53,7 @@ class BorrowRequestResponse(BaseModel):
     borrower_review: Optional[str] = None
     lender_rating: Optional[int] = None
     lender_review: Optional[str] = None
-    resource: ResourceResponse
-    borrower: UserResponse
-    lender: UserResponse
+    resource: Optional[ResourceResponse] = None
+    borrower: Optional[UserResponse] = None
+    lender: Optional[UserResponse] = None
     created_at: datetime

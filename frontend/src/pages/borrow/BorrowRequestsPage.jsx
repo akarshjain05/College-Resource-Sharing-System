@@ -57,6 +57,34 @@ export default function BorrowRequestsPage() {
 
   const autoOpenedRef = useRef(false);
 
+  const closeBookingModal = (updatedBooking) => {
+    const booking = updatedBooking || selectedBookingForModal;
+    if (booking) {
+      const status = (booking.status || "").toLowerCase();
+      let targetSubTab = "upcoming";
+      if (["requested", "pending", "approved"].includes(status)) {
+        targetSubTab = "upcoming";
+      } else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) {
+        targetSubTab = "ongoing";
+      } else if (["returned", "confirmed_return", "damaged"].includes(status)) {
+        targetSubTab = "completed";
+      } else if (["cancelled", "rejected"].includes(status)) {
+        targetSubTab = "cancelled";
+      }
+
+      setSubTab(targetSubTab);
+
+      const isLending = bookings.lending?.some(b => b.id === booking.id) || booking.lender?.full_name === "You";
+      const isBorrowing = bookings.borrowing?.some(b => b.id === booking.id) || booking.borrower?.full_name === "You";
+      if (isLending && tab !== "lending") {
+        setTab("lending");
+      } else if (isBorrowing && !isLending && tab !== "borrowing") {
+        setTab("borrowing");
+      }
+    }
+    setSelectedBookingForModal(null);
+  };
+
   useEffect(() => {
     const urlId = searchParams.get("id");
     const isReload = window.performance && 
@@ -649,64 +677,218 @@ export default function BorrowRequestsPage() {
       )}
 
       {/* Booking Details Modal */}
-      {selectedBookingForModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
-            <button
-              onClick={() => setSelectedBookingForModal(null)}
-              className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
+      {selectedBookingForModal && (() => {
+        const modalIsStarted = new Date(selectedBookingForModal.requested_start_date) <= new Date();
+        const modalIsExpired = new Date(selectedBookingForModal.requested_end_date) < new Date();
+        const isLenderModal = tab === "lending" || bookings.lending?.some(b => b.id === selectedBookingForModal.id) || selectedBookingForModal.lender?.full_name === "You";
 
-            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8">
-              <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
-                {selectedBookingForModal.resource?.image_placeholder || "🪜"}
-              </div>
-              <div>
-                <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white leading-tight">
-                  <Link to={`/resources/${selectedBookingForModal.resource?.id}`} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
-                    {selectedBookingForModal.resource?.title}
-                  </Link>
-                </h2>
-                <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5">
-                  {tab === "borrowing" ? `Lender: ${selectedBookingForModal.lender?.full_name}` : `Borrower: ${selectedBookingForModal.borrower?.full_name}`}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                <span className="text-[9px] font-bold uppercase text-slate-400 block">Lending Window</span>
-                <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs">
-                  {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} →{" "}
-                  {new Date(selectedBookingForModal.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                </span>
-              </div>
-              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Amount</span>
-                <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
-              </div>
-            </div>
-
-            <div className="text-xs mb-6">
-              <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
-              <div className="inline-flex">
-                {getStatusBadge(selectedBookingForModal.status || "")}
-              </div>
-            </div>
-
-            <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4">
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
               <button
-                onClick={() => setSelectedBookingForModal(null)}
-                className="btn-secondary !py-2 !px-4 text-xs"
+                onClick={() => closeBookingModal()}
+                className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                Close Details
+                <X className="h-5 w-5" />
               </button>
+
+              <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8">
+                <div className="h-14 w-14 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-3xl flex-shrink-0">
+                  {selectedBookingForModal.resource?.image_placeholder || "🪜"}
+                </div>
+                <div>
+                  <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                    <Link to={`/resources/${selectedBookingForModal.resource?.id}`} className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline">
+                      {selectedBookingForModal.resource?.title}
+                    </Link>
+                  </h2>
+                  <p className="text-xs text-slate-400 font-semibold uppercase mt-0.5">
+                    {isLenderModal ? `Borrower: ${selectedBookingForModal.borrower?.full_name}` : `Lender: ${selectedBookingForModal.lender?.full_name}`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">Lending Window</span>
+                  <span className="font-extrabold text-slate-800 dark:text-slate-100 text-xs">
+                    {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} →{" "}
+                    {new Date(selectedBookingForModal.requested_end_date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  </span>
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Amount</span>
+                  <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
+                {getStatusBadge(selectedBookingForModal.status)}
+              </div>
+
+              <div className="text-xs mb-6">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
+                <div className="inline-flex">
+                  {getStatusBadge(selectedBookingForModal.status || "")}
+                </div>
+              </div>
+
+              {/* Action Buttons row */}
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      const bId = selectedBookingForModal.id;
+                      closeBookingModal();
+                      setOpenChatId(bId);
+                    }}
+                    className="btn-secondary !py-2 !px-3 text-xs flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Message
+                  </button>
+                  {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
+                    <a
+                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}`}
+                      className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5"
+                    >
+                      <AlertCircle className="h-3.5 w-3.5" /> Report Issue
+                    </a>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Lender Actions */}
+                  {isLenderModal && selectedBookingForModal.status === "requested" && (
+                    <>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "approved");
+                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                        }}
+                        className="btn-primary !py-2 text-xs flex items-center gap-1"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "rejected");
+                          closeBookingModal({ ...selectedBookingForModal, status: "rejected" });
+                        }}
+                        className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs flex items-center gap-1"
+                      >
+                        <X className="h-3.5 w-3.5" /> Decline
+                      </button>
+                    </>
+                  )}
+
+                  {isLenderModal && selectedBookingForModal.status === "approved" && (
+                    modalIsExpired ? (
+                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                      </span>
+                    ) : modalIsStarted ? (
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "active");
+                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                        }}
+                        className="btn-primary !py-2 text-xs flex items-center gap-1"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+
+                  {isLenderModal && selectedBookingForModal.status === "return_requested" && (
+                    <button
+                      onClick={() => {
+                        const bId = selectedBookingForModal.id;
+                        setSelectedBookingForModal(null);
+                        setReviewingId(bId);
+                        setReviewAction("confirm_return");
+                      }}
+                      className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs flex items-center gap-1"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Confirm Return
+                    </button>
+                  )}
+
+                  {/* Borrower Actions */}
+                  {!isLenderModal && selectedBookingForModal.status === "requested" && (
+                    <>
+                      <button
+                        onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
+                        className="btn-secondary !py-2 text-xs flex items-center gap-1"
+                      >
+                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                          closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+                        }}
+                        className="btn-secondary !py-2 text-xs flex items-center gap-1"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Request
+                      </button>
+                    </>
+                  )}
+
+                  {!isLenderModal && (selectedBookingForModal.status === "approved" || selectedBookingForModal.status === "handover_requested") && (
+                    modalIsStarted ? (
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
+                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                        }}
+                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
+                      </span>
+                    )
+                  )}
+
+                  {!isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
+                    modalIsStarted ? (
+                      <button
+                        onClick={() => {
+                          const bId = selectedBookingForModal.id;
+                          setSelectedBookingForModal(null);
+                          setReviewingId(bId);
+                          setReviewAction("return");
+                        }}
+                        className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs flex items-center gap-1"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Return Item
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}
+                      </span>
+                    )
+                  )}
+
+                  <button
+                    onClick={() => closeBookingModal()}
+                    className="btn-secondary !py-2 !px-4 text-xs"
+                  >
+                    Close Details
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Chat Popup Modal */}
       {openChatId && (() => {

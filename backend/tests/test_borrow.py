@@ -213,7 +213,7 @@ def test_non_owner_cannot_approve(client, test_user, second_user, test_category)
 def test_auto_decline_other_requests_on_approval(client, test_user, second_user, admin_user, test_category):
     owner_headers = auth_headers(client, test_user.email, "Password123!")
     borrower1_headers = auth_headers(client, second_user.email, "Password123!")
-    borrower2_headers = auth_headers(client, admin_user.email, "Password123!")
+    borrower2_headers = auth_headers(client, admin_user.email, "AdminPass123!")
 
     # Single quantity item
     resource = create_resource(client, owner_headers, str(test_category.id))
