@@ -142,6 +142,17 @@ def cancel_wanted_offer(
     if offer.status == "ACCEPTED":
         raise ForbiddenException("Accepted offers cannot be deleted. Manage the active borrow request instead.")
 
+    if wanted.user_id == current_user.id:
+        from app.services.notification_service import create_notification
+        create_notification(
+            db,
+            user_id=offer.offerer_id,
+            notif_type=NotificationType.SYSTEM,
+            title="Offer Declined",
+            message=f"Your offer for '{wanted.title}' was declined by the requester.",
+            link=f"/wanted"
+        )
+
     db.delete(offer)
     db.commit()
 
