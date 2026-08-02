@@ -207,13 +207,14 @@ def create_resource(
     db.commit()
     db.refresh(resource)
 
-    background_tasks.add_task(
-        notify_all_except_owner_bg,
-        current_user.id,
-        resource.id,
-        resource.title,
-        current_user.full_name,
-    )
+    if resource.status == ResourceStatus.AVAILABLE:
+        background_tasks.add_task(
+            notify_all_except_owner_bg,
+            current_user.id,
+            resource.id,
+            resource.title,
+            current_user.full_name,
+        )
 
     return resource
 
