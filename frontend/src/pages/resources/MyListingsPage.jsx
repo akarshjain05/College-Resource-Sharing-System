@@ -28,6 +28,7 @@ import {
 import { resourceApi, categoryApi, borrowApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const STATUS_BADGES = {
   requested: { label: "Requested", style: "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" },
@@ -373,11 +374,7 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
           </div>
           <div className="flex gap-2">
             <button
-              onClick={(e) => {
-                if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-                  onDelete(item.id, e);
-                }
-              }}
+              onClick={(e) => onDelete(item.id, e)}
               className="btn-secondary !py-2 !px-4 text-xs !bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100 dark:!bg-red-950/40 dark:!text-red-400 dark:!border-red-800"
             >
               Delete Listing
@@ -484,6 +481,7 @@ export default function MyListingsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItemForModal, setSelectedItemForModal] = useState(null);
   const [publishingItem, setPublishingItem] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const pageSize = 12;
 
@@ -630,23 +628,45 @@ export default function MyListingsPage() {
       e.stopPropagation();
     }
     
-    try {
-      await resourceApi.remove(itemId);
-      toast.success("Listing deleted successfully");
-      setItems((prev) => prev.filter((item) => item.id !== itemId));
-      setTotal((prev) => prev - 1);
-      setSelectedItemForModal(null);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to delete listing");
-    }
+    setConfirmDialog({
+      title: "Delete Listing",
+      message: "Are you sure you want to delete this listing? This action cannot be undone.",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await resourceApi.remove(itemId);
+          toast.success("Listing deleted successfully");
+          setItems((prev) => prev.filter((item) => item.id !== itemId));
+          setTotal((prev) => prev - 1);
+          setSelectedItemForModal(null);
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Failed to delete listing");
+        }
+      }
+    });
   };
 
   const handleAction = async (action, requestId) => {
     try {
       if (action === "approve") await borrowApi.approve(requestId);
       if (action === "reject") {
-        if (!window.confirm("Are you sure you want to reject this request?")) return;
-        await borrowApi.reject(requestId, "Unavailable right now");
+        setConfirmDialog({
+          title: "Reject Request",
+          message: "Are you sure you want to reject this request?",
+          confirmText: "Reject",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.reject(requestId, "Unavailable right now");
+              toast.success("Borrow request updated!");
+              fetchData();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (action === "handover") await borrowApi.handover(requestId);
       if (action === "confirm_return") await borrowApi.confirmReturn(requestId, 5, "");
@@ -922,6 +942,12 @@ export default function MyListingsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }

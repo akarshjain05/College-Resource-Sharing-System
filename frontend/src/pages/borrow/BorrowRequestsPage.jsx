@@ -5,6 +5,7 @@ import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban,
 import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
+import ConfirmModal from "../../components/ConfirmModal";
 import { chatEventBus } from "../../utils/chatEventBus";
 
 const STATUS_STYLE = {
@@ -52,6 +53,7 @@ export default function BorrowRequestsPage() {
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
   const [openChatId, setOpenChatId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const autoOpenedRef = useRef(false);
 
@@ -177,8 +179,23 @@ export default function BorrowRequestsPage() {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
       if (newStatus === "rejected" || newStatus === "reject") {
-        if (!window.confirm("Are you sure you want to reject this request?")) return;
-        await borrowApi.reject(bookingId, "Not available right now");
+        setConfirmDialog({
+          title: "Decline Request",
+          message: "Are you sure you want to decline this request?",
+          confirmText: "Decline",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.reject(bookingId, "Not available right now");
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (newStatus === "nudge") {
         await borrowApi.nudge(bookingId);
@@ -188,8 +205,23 @@ export default function BorrowRequestsPage() {
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
       if (newStatus === "cancelled" || newStatus === "cancel") {
-        if (!window.confirm("Are you sure you want to cancel this request?")) return;
-        await borrowApi.cancel(bookingId);
+        setConfirmDialog({
+          title: "Cancel Request",
+          message: "Are you sure you want to cancel this request?",
+          confirmText: "Cancel Request",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.cancel(bookingId);
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
@@ -683,6 +715,12 @@ export default function BorrowRequestsPage() {
           </div>
         );
       })()}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }
