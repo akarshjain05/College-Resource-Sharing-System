@@ -87,7 +87,12 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
-    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+    const isReload = window.performance && 
+                    window.performance.getEntriesByType && 
+                    window.performance.getEntriesByType("navigation").length > 0 && 
+                    window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+    if (urlId && !isReload && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
       if (foundBorrowing) {
         autoOpenedRef.current = true;
@@ -159,7 +164,13 @@ export default function BorrowRequestsPage() {
         });
 
         const targetId = searchParams.get("id");
-        if (targetId) {
+        // Don't auto-open on page refresh (user hit F5/Cmd+R)
+        const isReload = window.performance && 
+                        window.performance.getEntriesByType && 
+                        window.performance.getEntriesByType("navigation").length > 0 && 
+                        window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+        if (targetId && !isReload) {
           let foundBooking = dbMyReqs.find(b => b.id === targetId);
           let newTab = "borrowing";
           if (!foundBooking) {
@@ -716,6 +727,13 @@ export default function BorrowRequestsPage() {
                 {getStatusBadge(selectedBookingForModal.status)}
               </div>
 
+              <div className="text-xs mb-6">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
+                <div className="inline-flex">
+                  {getStatusBadge(selectedBookingForModal.status || "")}
+                </div>
+              </div>
+
               {/* Action Buttons row */}
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
                 <div className="flex flex-wrap gap-2">
@@ -729,7 +747,6 @@ export default function BorrowRequestsPage() {
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> Message
                   </button>
-
                   {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
                     <a
                       href={`/complaints?borrow_request_id=${selectedBookingForModal.id}`}
