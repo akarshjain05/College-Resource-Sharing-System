@@ -408,18 +408,38 @@ export default function WantedPage() {
                       </button>
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-2">
                       <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Select Item to Offer</label>
-                      <select
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                        value={selectedResourceId}
-                        onChange={(e) => setSelectedResourceId(e.target.value)}
-                      >
-                        <option value="">-- Choose an item --</option>
+                      <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                         {myResources.map(r => (
-                          <option key={r.id} value={r.id}>{r.title}</option>
+                          <div 
+                            key={r.id} 
+                            onClick={() => setSelectedResourceId(r.id)}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${selectedResourceId === r.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-300 dark:hover:border-slate-700'}`}
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                              {r.images?.length > 0 ? (
+                                <img src={r.images.find(img => img.is_primary)?.image_url || r.images[0].image_url} alt={r.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-lg">📦</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`text-xs font-bold truncate ${selectedResourceId === r.id ? 'text-primary-700 dark:text-primary-400' : 'text-slate-800 dark:text-slate-200'}`}>{r.title}</h4>
+                              <div className="flex items-center gap-2 mt-0.5 text-[10px] font-bold text-slate-500">
+                                <span className="text-slate-600 dark:text-slate-400">Deposit: ₹{r.deposit_amount}</span>
+                                <span>•</span>
+                                <span className="uppercase">{r.condition}</span>
+                              </div>
+                            </div>
+                            {selectedResourceId === r.id && (
+                              <div className="flex-shrink-0 text-primary-600 dark:text-primary-400">
+                                <Check className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
                 </>
