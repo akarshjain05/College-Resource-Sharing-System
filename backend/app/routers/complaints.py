@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_admin
@@ -22,18 +22,48 @@ def file_complaint(
     complaint = Complaint(**payload.model_dump(), filed_by_id=current_user.id)
     db.add(complaint)
     db.commit()
-    db.refresh(complaint)
-    return complaint
+    return (
+        db.query(Complaint)
+        .options(
+            joinedload(Complaint.filed_by),
+            joinedload(Complaint.against_user),
+            joinedload(Complaint.resource),
+            joinedload(Complaint.borrow_request),
+        )
+        .filter(Complaint.id == complaint.id)
+        .first()
+    )
 
 
 @router.get("/my-complaints", response_model=list[ComplaintResponse])
 def my_complaints(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Complaint).filter(Complaint.filed_by_id == current_user.id).all()
+    return (
+        db.query(Complaint)
+        .options(
+            joinedload(Complaint.filed_by),
+            joinedload(Complaint.against_user),
+            joinedload(Complaint.resource),
+            joinedload(Complaint.borrow_request),
+        )
+        .filter(Complaint.filed_by_id == current_user.id)
+        .order_by(Complaint.created_at.desc())
+        .all()
+    )
 
 
 @router.get("", response_model=list[ComplaintResponse])
 def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
-    return db.query(Complaint).order_by(Complaint.created_at.desc()).all()
+    return (
+        db.query(Complaint)
+        .options(
+            joinedload(Complaint.filed_by),
+            joinedload(Complaint.against_user),
+            joinedload(Complaint.resource),
+            joinedload(Complaint.borrow_request),
+        )
+        .order_by(Complaint.created_at.desc())
+        .all()
+    )
 
 
 from app.models.enums import NotificationType
@@ -73,5 +103,14 @@ def update_complaint(
             offending_user.trust_score -= payload.trust_score_penalty
 
     db.commit()
-    db.refresh(complaint)
-    return complaint
+    return (
+        db.query(Complaint)
+        .options(
+            joinedload(Complaint.filed_by),
+            joinedload(Complaint.against_user),
+            joinedload(Complaint.resource),
+            joinedload(Complaint.borrow_request),
+        )
+        .filter(Complaint.id == complaint.id)
+        .first()
+    )

@@ -7,6 +7,7 @@ import {
   MapPin,
   Edit3,
   ShieldCheck,
+  ShieldAlert,
   Award,
   MessageSquare,
 } from "lucide-react";
@@ -111,13 +112,22 @@ export default function PublicProfilePage() {
                   )}
                 </div>
 
-                {isOwnProfile && (
+                {isOwnProfile ? (
                   <Link
                     to="/profile"
                     className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
                   >
                     <Edit3 className="h-4 w-4" />
                     <span>Edit Profile & Password</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to={`/complaints?against_user_id=${profile.id}&category=user_behavior&subject=${encodeURIComponent(`Report User: ${fullName}`)}`}
+                    className="inline-flex items-center gap-1.5 rounded-2xl border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-600 dark:text-red-400 px-4 py-2 text-xs font-bold transition-all shadow-xs active:scale-95 shrink-0"
+                    title="Report user to platform admin"
+                  >
+                    <ShieldAlert className="h-4 w-4" />
+                    <span>Report User</span>
                   </Link>
                 )}
               </div>
