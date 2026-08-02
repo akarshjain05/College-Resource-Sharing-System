@@ -79,11 +79,13 @@ class NotificationType(str, enum.Enum):
     PAYMENT_SUCCESS = "payment_success"
     PAYMENT_FAILED = "payment_failed"
     REFUND_ISSUED = "refund_issued"
+    COMPLAINT_UPDATE = "complaint_update"
     SYSTEM = "system"
 
 
 class ComplaintStatus(str, enum.Enum):
     OPEN = "open"
+    ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     CLOSED = "closed"

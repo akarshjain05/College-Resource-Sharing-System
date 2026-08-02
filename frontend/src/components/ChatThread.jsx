@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
 
+import ResolutionCard from "./ResolutionCard";
+
 export default function ChatThread({ request, onReportIssue }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -18,7 +20,6 @@ export default function ChatThread({ request, onReportIssue }) {
     try {
       const resp = await chatApi.list(request.id);
       setMessages(resp.data);
-      // Mark as read when opened
       if (resp.data.some(m => !m.read_at && m.sender_id !== user.id)) {
         await chatApi.markRead(request.id);
       }
@@ -34,7 +35,6 @@ export default function ChatThread({ request, onReportIssue }) {
 
     const unsubscribe = chatEventBus.subscribe(request.id, (newMsg) => {
       setMessages(prev => [...prev, newMsg]);
-      // Mark as read since thread is open
       chatApi.markRead(request.id).catch(() => {});
     });
 
@@ -61,6 +61,38 @@ export default function ChatThread({ request, onReportIssue }) {
     } finally {
       setSending(false);
     }
+  };
+
+  const renderMessageContent = (msg) => {
+    const isComplaintUpdate = msg.body?.includes("[COMPLAINT_UPDATE]");
+    const isComplaintFiled = msg.body?.includes("[COMPLAINT_FILED]");
+
+    if (isComplaintUpdate && msg.body.includes("Resolution Data:")) {
+      try {
+        const jsonPart = msg.body.split("Resolution Data:")[1].trim();
+        return (
+          <div className="space-y-2">
+            <p className="font-extrabold text-xs tracking-wider uppercase text-indigo-600 dark:text-indigo-400">
+              {msg.body.split("\n")[0]}
+            </p>
+            <ResolutionCard resolutionData={jsonPart} />
+          </div>
+        );
+      } catch (e) {
+        // fallback
+      }
+    }
+
+    if (isComplaintFiled) {
+      return (
+        <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-red-900 dark:text-red-200 text-xs space-y-1">
+          <p className="font-bold">{msg.body.split("\n\n")[0]}</p>
+          <p className="text-[11px] opacity-90">{msg.body.split("\n\n")[1] || msg.body}</p>
+        </div>
+      );
+    }
+
+    return <p>{msg.body}</p>;
   };
 
   if (loading) {
@@ -92,6 +124,21 @@ export default function ChatThread({ request, onReportIssue }) {
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender_id === user.id;
+            const isSystemMsg = msg.body?.includes("[COMPLAINT_UPDATE]") || msg.body?.includes("[COMPLAINT_FILED]");
+
+            if (isSystemMsg) {
+              return (
+                <div key={msg.id} className="flex justify-center my-2">
+                  <div className="w-full max-w-md">
+                    {renderMessageContent(msg)}
+                    <p className="text-[9px] mt-1 text-center text-slate-400">
+                      System Notification • {format(new Date(msg.created_at), "h:mm a")}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div 
@@ -101,7 +148,7 @@ export default function ChatThread({ request, onReportIssue }) {
                       : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm"
                   }`}
                 >
-                  <p>{msg.body}</p>
+                  {renderMessageContent(msg)}
                   <p className={`text-[9px] mt-1 text-right ${isMe ? "text-primary-200" : "text-slate-400"}`}>
                     {format(new Date(msg.created_at), "h:mm a")}
                   </p>

@@ -23,6 +23,8 @@ import {
 import api from "../api/client";
 import { userApi, resourceApi, borrowApi } from "../api/endpoints";
 
+import ResolutionCard from "../components/ResolutionCard";
+
 const complaintApi = {
   create: (payload) => api.post("/complaints", payload),
   myComplaints: () => api.get("/complaints/my-complaints"),
@@ -38,9 +40,17 @@ const CATEGORIES = [
 
 const STATUS_STYLE = {
   open: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  assigned: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
   in_progress: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   resolved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
   closed: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+};
+
+const SEVERITY_STYLE = {
+  low: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  medium: "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  high: "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300",
+  critical: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 animate-pulse",
 };
 
 function ComplaintDetailsModal({ complaint, onClose }) {
@@ -61,9 +71,14 @@ function ComplaintDetailsModal({ complaint, onClose }) {
             <ShieldAlert className="h-6 w-6" />
           </div>
           <div>
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 mb-1">
-              {complaint.category || "General"}
-            </span>
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20">
+                {complaint.category || "General"}
+              </span>
+              <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${SEVERITY_STYLE[complaint.severity] || SEVERITY_STYLE.medium}`}>
+                Severity: {complaint.severity || "medium"}
+              </span>
+            </div>
             <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white leading-tight">
               {complaint.subject}
             </h2>
@@ -79,7 +94,7 @@ function ComplaintDetailsModal({ complaint, onClose }) {
           </div>
         </div>
 
-        {/* Context metadata (Against User, Resource, Borrow Request) */}
+        {/* Context metadata (Against User, Resource, Borrow Request, Assigned Handler) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           {complaint.against_user && (
             <div className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center gap-3">
@@ -87,6 +102,16 @@ function ComplaintDetailsModal({ complaint, onClose }) {
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Filed Against User</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">{complaint.against_user.full_name}</span>
+              </div>
+            </div>
+          )}
+
+          {complaint.assigned_to && (
+            <div className="p-3 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center gap-3">
+              <ShieldCheck className="h-4 w-4 text-indigo-500 flex-shrink-0" />
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Assigned Handler / Triage</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{complaint.assigned_to.full_name}</span>
               </div>
             </div>
           )}
@@ -107,26 +132,49 @@ function ComplaintDetailsModal({ complaint, onClose }) {
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Linked Borrow Request</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">
-                  Status: {complaint.borrow_request.status} ({new Date(complaint.borrow_request.start_date).toLocaleDateString()} - {new Date(complaint.borrow_request.end_date).toLocaleDateString()})
+                  Status: {complaint.borrow_request.status}
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Complaint Description */}
-        <div className="space-y-2 text-xs">
-          <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px]">Complaint Details</h4>
-          <p className="text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 leading-relaxed whitespace-pre-wrap">
-            {complaint.description}
-          </p>
+        {/* Complaint Description & Evidence */}
+        <div className="space-y-3 text-xs">
+          <div>
+            <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] mb-1">Complaint Statement</h4>
+            <p className="text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 leading-relaxed whitespace-pre-wrap">
+              {complaint.description}
+            </p>
+          </div>
+
+          {complaint.evidence_url && (
+            <div>
+              <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-[11px] mb-1">Evidence / Attachment URL</h4>
+              <a 
+                href={complaint.evidence_url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-primary-600 dark:text-primary-400 hover:underline bg-primary-50 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800 px-3 py-1.5 rounded-xl font-semibold text-xs"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> View Evidence Attachment
+              </a>
+            </div>
+          )}
         </div>
 
-        {/* Admin Resolution Section */}
-        {complaint.admin_response ? (
+        {/* Structured Resolution Card */}
+        {complaint.resolution_data ? (
           <div className="space-y-2 text-xs">
             <h4 className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-              <CheckCircle className="h-4 w-4" /> Admin Resolution & Official Response
+              <ShieldCheck className="h-4 w-4" /> Structured Resolution Template
+            </h4>
+            <ResolutionCard resolutionData={complaint.resolution_data} />
+          </div>
+        ) : complaint.admin_response ? (
+          <div className="space-y-2 text-xs">
+            <h4 className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+              <CheckCircle className="h-4 w-4" /> Official Response
             </h4>
             <div className="rounded-2xl bg-emerald-500/10 border border-emerald-500/20 p-4 text-emerald-900 dark:text-emerald-200 leading-relaxed font-medium">
               {complaint.admin_response}
@@ -136,8 +184,8 @@ function ComplaintDetailsModal({ complaint, onClose }) {
           <div className="rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-3">
             <Clock className="h-5 w-5 flex-shrink-0 text-amber-500 animate-pulse" />
             <div>
-              <p className="font-bold">Under Admin Investigation</p>
-              <p className="text-[11px] opacity-80">Our platform resolution team is reviewing your report. Updates will be posted here and notified to your account.</p>
+              <p className="font-bold">Under Investigation & Triage</p>
+              <p className="text-[11px] opacity-80">Our platform resolution team is triaging your report. Updates will be posted here and automatically synced with your chat thread.</p>
             </div>
           </div>
         )}
@@ -170,6 +218,8 @@ export default function ComplaintsPage() {
   const [form, setForm] = useState({
     subject: initialSubject,
     description: "",
+    severity: "medium",
+    evidence_url: "",
     borrow_request_id: initialBorrowRequestId,
     against_user_id: initialAgainstUserId,
     resource_id: initialResourceId,
@@ -242,18 +292,22 @@ export default function ComplaintsPage() {
     try {
       const payload = {
         category,
+        severity: form.severity || "medium",
         subject: form.subject,
         description: form.description,
       };
+      if (form.evidence_url) payload.evidence_url = form.evidence_url;
       if (form.borrow_request_id) payload.borrow_request_id = form.borrow_request_id;
       if (form.against_user_id) payload.against_user_id = form.against_user_id;
       if (form.resource_id) payload.resource_id = form.resource_id;
 
       await complaintApi.create(payload);
-      toast.success("Complaint filed successfully. Our admin team will investigate.");
+      toast.success("Complaint filed successfully. Our resolution team will triage it.");
       setForm({
         subject: "",
         description: "",
+        severity: "medium",
+        evidence_url: "",
         borrow_request_id: "",
         against_user_id: "",
         resource_id: "",
@@ -448,6 +502,38 @@ export default function ComplaintsPage() {
               value={form.subject}
               onChange={(e) => setForm({ ...form, subject: e.target.value })}
             />
+          </div>
+
+          {/* Severity and Evidence Link */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Severity Level
+              </label>
+              <select
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                value={form.severity}
+                onChange={(e) => setForm({ ...form, severity: e.target.value })}
+              >
+                <option value="low">Low (Minor inconvenience / Inquiry)</option>
+                <option value="medium">Medium (Standard dispute / Delay)</option>
+                <option value="high">High (Damaged item / Policy violation)</option>
+                <option value="critical">Critical (Scam / Unreturned high-value item)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Evidence / Image Attachment URL (Optional)
+              </label>
+              <input
+                type="url"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="https://example.com/photo-proof.jpg"
+                value={form.evidence_url}
+                onChange={(e) => setForm({ ...form, evidence_url: e.target.value })}
+              />
+            </div>
           </div>
 
           {/* Detailed Description */}
