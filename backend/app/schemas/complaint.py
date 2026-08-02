@@ -32,7 +32,7 @@ class ResourceMinResponse(BaseModel):
 class BorrowRequestMinResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    status: str
+    status: Optional[str] = "requested"
     requested_start_date: Optional[datetime] = None
     requested_end_date: Optional[datetime] = None
 
@@ -60,15 +60,15 @@ class ComplaintResponse(BaseModel):
 
     id: uuid.UUID
     category: Optional[str] = "general"
-    subject: str
-    description: str
-    status: ComplaintStatus
+    subject: Optional[str] = ""
+    description: Optional[str] = ""
+    status: Optional[ComplaintStatus] = ComplaintStatus.OPEN
     admin_response: Optional[str] = None
-    filed_by: UserResponse
+    filed_by: Optional[UserResponse] = None
     against_user_id: Optional[uuid.UUID] = None
     against_user: Optional[UserResponse] = None
     resource_id: Optional[uuid.UUID] = None
     resource: Optional[ResourceMinResponse] = None
     borrow_request_id: Optional[uuid.UUID] = None
     borrow_request: Optional[BorrowRequestMinResponse] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
