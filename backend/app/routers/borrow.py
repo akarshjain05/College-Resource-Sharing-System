@@ -194,7 +194,7 @@ def approve_borrow_request(
                 NotificationType.BORROW_REJECTED,
                 "Borrow Request Auto-Declined",
                 f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
-                link=f"/borrow-requests/{other_br.id}",
+                link=f"/borrow-requests/{other_br.id}?tab=lending&subTab=cancelled",
             )
 
     db.commit()
@@ -244,7 +244,7 @@ def reject_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_REJECTED,
         "Borrow request rejected",
         f"Your request to borrow '{resource_title}' was rejected.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/borrow-requests/{br.id}?tab=lending&subTab=cancelled",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -300,6 +300,36 @@ def confirm_handover_resource(
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
 
+@router.post("/{request_id}/decline-handover", response_model=BorrowRequestResponse)
+def decline_handover_resource(
+    request_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Borrower reports not receiving an item marked as handed over."""
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can decline handover")
+    if br.status not in (BorrowStatus.HANDOVER_REQUESTED, BorrowStatus.APPROVED):
+        raise AppException("Cannot decline handover for current status", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    br.status = BorrowStatus.APPROVED
+    db.commit()
+    db.refresh(br)
+
+    resource_title = br.resource.title if br.resource else "item"
+
+    create_notification(
+        db, br.lender_id, NotificationType.SYSTEM,
+        "Handover Declined / Not Received",
+        f"{current_user.full_name} reported they have NOT received '{resource_title}' yet.",
+        link=f"/borrow-requests/{br.id}?tab=lending&subTab=upcoming",
+    )
+    return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
+
+
 @router.post("/{request_id}/cancel", response_model=BorrowRequestResponse)
 def cancel_borrow_request(
     request_id: uuid.UUID,
@@ -329,7 +359,7 @@ def cancel_borrow_request(
         NotificationType.SYSTEM,
         "Borrow request cancelled",
         f"{current_user.full_name} cancelled their {status_text} for '{resource_title}'.",
-        link=f"/borrow-requests/{req_id}",
+        link=f"/borrow-requests/{req_id}?tab=lending&subTab=cancelled",
     )
 
     return _borrow_query(db).filter(BorrowRequest.id == req_id).first()

@@ -44,29 +44,71 @@ async def send_email(to_email: str, subject: str, html_body: str) -> None:
         logger.exception("Failed to send email to %s", to_email)
 
 
-def _wrap_template(title: str, body_html: str) -> str:
-    return f"""
-    <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-      <h2 style="color:#1F4B3F;">{title}</h2>
-      <div style="color:#101828; font-size: 14px; line-height: 1.6;">{body_html}</div>
-      <p style="margin-top: 32px; font-size: 12px; color: #9AA2B2;">
-        Campus Resource Sharing System — this is an automated message.
-      </p>
-    </div>
-    """
+def _wrap_template(title: str, body_html: str, subtitle: str = "Automated Security & Transaction Notification") -> str:
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{title}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #F8FAFC; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #F8FAFC; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 520px; background-color: #FFFFFF; border-radius: 20px; border: 1px solid #E2E8F0; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.05); overflow: hidden;">
+          
+          <!-- Top Header Bar -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1F4B3F 0%, #0D2820 100%); padding: 32px 28px; text-align: center;">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center">
+                    <div style="display: inline-block; background: rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 8px 16px; margin-bottom: 12px;">
+                      <span style="color: #FFFFFF; font-weight: 800; font-size: 16px; letter-spacing: 0.5px;">🤝 ShareNeighbour</span>
+                    </div>
+                    <h1 style="color: #FFFFFF; margin: 0; font-size: 22px; font-weight: 700; line-height: 1.3;">{title}</h1>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Email Content Body -->
+          <tr>
+            <td style="padding: 36px 32px; color: #334155; font-size: 14px; line-height: 1.6;">
+              {body_html}
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #F8FAFC; padding: 24px 32px; border-top: 1px solid #F1F5F9; text-align: center;">
+              <p style="margin: 0; font-weight: 700; color: #475569; font-size: 13px;">{settings.PROJECT_NAME}</p>
+              <p style="margin: 4px 0 0 0; color: #94A3B8; font-size: 11px;">{subtitle}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
 
 
 async def send_verification_email(to_email: str, full_name: str, verify_link: str) -> None:
-    html = _wrap_template(
-        "Verify your campus account",
-        f"Hi {full_name},<br><br>Welcome to CRSS. Please confirm your email to start borrowing "
-        f"and lending resources on campus.<br><br>"
-        f'<a href="{verify_link}" style="background:#1F4B3F;color:#fff;padding:10px 16px;'
-        f'border-radius:6px;text-decoration:none;">Verify my email</a>',
-    )
+    body = f"""
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="color:#475569;">Welcome to {settings.PROJECT_NAME}! Please verify your email address to start sharing and borrowing items on campus.</p>
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{verify_link}" style="background-color: #1F4B3F; color: #FFFFFF; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 12px rgba(31,75,63,0.25);">Verify My Account</a>
+      </div>
+      <p style="color: #94A3B8; font-size: 12px; margin-top: 24px;">If the button above does not work, copy and paste this link into your browser:<br><span style="color: #64748B; word-break: break-all;">{verify_link}</span></p>
+    """
+    html = _wrap_template("Verify Your Campus Account", body, "Official Account Verification")
     await send_email(to_email, "Verify your CRSS account", html)
 
-    # Forward event to notification microservice
     try:
         from app.services.notification_service import forward_to_microservice
         forward_to_microservice(
@@ -84,14 +126,16 @@ async def send_verification_email(to_email: str, full_name: str, verify_link: st
 
 
 async def send_password_reset_email(to_email: str, full_name: str, reset_link: str) -> None:
-    html = _wrap_template(
-        "Reset your password",
-        f"Hi {full_name},<br><br>We received a request to reset your password. "
-        f"If this wasn't you, you can ignore this email.<br><br>"
-        f'<a href="{reset_link}" style="background:#C08A2E;color:#fff;padding:10px 16px;'
-        f'border-radius:6px;text-decoration:none;">Reset password</a>',
-    )
-    
+    body = f"""
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="color:#475569;">We received a request to reset your password. If this wasn't you, you can safely ignore this email.</p>
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="{reset_link}" style="background-color: #1F4B3F; color: #FFFFFF; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 12px rgba(31,75,63,0.25);">Reset Password</a>
+      </div>
+      <p style="color: #94A3B8; font-size: 12px; margin-top: 24px;">If the button above does not work, copy and paste this link into your browser:<br><span style="color: #64748B; word-break: break-all;">{reset_link}</span></p>
+    """
+    html = _wrap_template("Reset Your Password", body, "Security Account Recovery")
+
     api_key = settings.BREVO_API_KEY.strip() if settings.BREVO_API_KEY else None
     if api_key and not ("pytest" in sys.modules):
         url = "https://api.brevo.com/v3/smtp/email"
@@ -123,7 +167,6 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
     else:
         await send_email(to_email, "Reset your CRSS password", html)
 
-    # Forward event to notification microservice
     try:
         from app.services.notification_service import forward_to_microservice
         forward_to_microservice(
@@ -141,46 +184,80 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
 
 
 async def send_payment_receipt_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
-    """Critical event: Send payment / deposit confirmation email."""
-    html = _wrap_template(
-        "Payment Receipt — Deposit Confirmed",
-        f"Hi {user_name},<br><br>"
-        f"Your security deposit / payment of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> "
-        f"has been received successfully.<br><br>"
-        f"Transaction ID: <code>{transaction_id}</code><br>"
-        f"Status: <strong>Confirmed</strong>",
-    )
+    body = f"""
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {user_name},</p>
+      <p style="color:#475569;">Your security deposit / payment has been received successfully.</p>
+
+      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
+            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{item_title}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Amount Paid:</td>
+            <td align="right" style="color: #15803D; font-size: 16px; font-weight: 800; padding-bottom: 8px;">₹{amount:.2f}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Transaction ID:</td>
+            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{transaction_id}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px;">Status:</td>
+            <td align="right">
+              <span style="background: #DCFCE7; color: #15803D; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase;">CONFIRMED</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    """
+    html = _wrap_template("Payment Receipt — Deposit Confirmed", body, "Official Transaction Receipt")
     await send_email(to_email, f"Payment Receipt: ₹{amount:.2f} for {item_title}", html)
 
 
 async def send_payment_refund_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
-    """Critical event: Send payment refund / deposit release email."""
-    html = _wrap_template(
-        "Payment Refund — Security Deposit Released",
-        f"Hi {user_name},<br><br>"
-        f"Your security deposit of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> "
-        f"has been released and refunded.<br><br>"
-        f"Transaction ID: <code>{transaction_id}</code><br>"
-        f"Status: <strong>Refunded / Released</strong>",
-    )
+    body = f"""
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {user_name},</p>
+      <p style="color:#475569;">Your security deposit of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> has been released and refunded.</p>
+
+      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
+            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{item_title}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Refund Amount:</td>
+            <td align="right" style="color: #2563EB; font-size: 16px; font-weight: 800; padding-bottom: 8px;">₹{amount:.2f}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Transaction ID:</td>
+            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{transaction_id}</td>
+          </tr>
+          <tr>
+            <td style="color: #64748B; font-size: 13px;">Status:</td>
+            <td align="right">
+              <span style="background: #DBEAFE; color: #1E40AF; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase;">REFUNDED</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    """
+    html = _wrap_template("Payment Refund — Deposit Released", body, "Official Refund Notice")
     await send_email(to_email, f"Deposit Released: ₹{amount:.2f} for {item_title}", html)
 
 
 async def send_borrow_request_email(to_email: str, owner_name: str, borrower_name: str, resource_title: str) -> None:
-    """Note: Non-critical routine borrow requests rely on in-app / WebSocket notifications."""
+    """Note: Routine borrow requests use in-app / push notifications."""
     pass
 
 
 async def send_return_reminder_email(to_email: str, borrower_name: str, resource_title: str, due_date: str) -> None:
-    """Note: Routine return reminders rely on in-app / push notifications."""
+    """Note: Routine return reminders use in-app / push notifications."""
     pass
 
 
 async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
-    """
-    Sends a 6-digit OTP verification code using the Brevo Transactional Email API.
-    Never logs or exposes the raw OTP code or API Key.
-    """
     is_testing = "pytest" in sys.modules
     api_key = settings.BREVO_API_KEY.strip()
 
@@ -201,23 +278,22 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
         f"This code expires in 10 minutes. Do not share this code with anyone.\n\n"
         f"{settings.PROJECT_NAME}"
     )
-    html_content = f"""
-    <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; border: 1px solid #E2E8F0; border-radius: 8px; background-color: #FFFFFF;">
-      <h2 style="color:#1F4B3F; margin-top: 0;">Verify your account</h2>
-      <p style="color:#334155; font-size: 14px;">Hi {full_name},</p>
-      <p style="color:#334155; font-size: 14px;">Your verification code for {settings.PROJECT_NAME} is:</p>
-      <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #1F4B3F; background: #F0F4F2; padding: 16px; text-align: center; border-radius: 8px; margin: 20px 0;">
-        {otp}
+
+    body = f"""
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="color:#475569;">Welcome to {settings.PROJECT_NAME}. Use the verification code below to confirm your account:</p>
+      <div style="text-align: center; margin: 28px 0;">
+        <div style="display: inline-block; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #166534; background: #F0FDF4; border: 1.5px solid #BBF7D0; padding: 18px 32px; border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+          {otp}
+        </div>
       </div>
-      <p style="color:#64748B; font-size: 13px; line-height: 1.5;">
-        This code expires in <strong>10 minutes</strong>. Do not share this code with anyone.
-      </p>
-      <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0;" />
-      <p style="font-size: 11px; color: #94A3B8; text-align: center; margin: 0;">
-        {settings.PROJECT_NAME} — Automated Security Notification
-      </p>
-    </div>
+      <div style="background-color: #F8FAFC; border-left: 4px solid #10B981; padding: 14px 18px; border-radius: 0 12px 12px 0; margin-bottom: 20px;">
+        <p style="margin: 0; font-size: 12px; color: #475569; line-height: 1.5;">
+          <strong>Security Notice:</strong> This code expires in <strong>10 minutes</strong>. Do not share this code with anyone.
+        </p>
+      </div>
     """
+    html_content = _wrap_template("Account Verification Code", body, "Official Security Notification")
 
     payload = {
         "sender": {
@@ -238,35 +314,16 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
                 return True
             else:
                 logger.error("Brevo API request failed with status code %s: %s", response.status_code, response.text)
-                # Try fallback via standard SMTP if configured
                 if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                    logger.info("Attempting fallback OTP email dispatch via configured SMTP for %s", to_email)
                     try:
                         await send_email(to_email, subject, html_content)
                         return True
                     except Exception:
-                        logger.exception("SMTP fallback dispatch failed for %s", to_email)
-
-                logger.warning(
-                    "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
-                    to_email,
-                    otp,
-                )
+                        pass
                 return False
-    except Exception as exc:
+    except Exception:
         logger.exception("Failed to dispatch Brevo OTP email to %s", to_email)
-        if settings.SMTP_USER and settings.SMTP_PASSWORD:
-            try:
-                await send_email(to_email, subject, html_content)
-                return True
-            except Exception:
-                pass
-            logger.warning(
-                "OTP delivery failed via Brevo and SMTP fallback for %s (debug otp=%s)",
-                to_email,
-                otp,
-            )
-            return False
+        return False
 
 
 

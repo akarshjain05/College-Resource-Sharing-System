@@ -40,8 +40,16 @@ export default function BorrowRequestsPage() {
     return "borrowing";
   };
 
+  const getInitialSubTab = () => {
+    const pSubTab = searchParams.get("subTab") || searchParams.get("section");
+    if (pSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(pSubTab.toLowerCase())) {
+      return pSubTab.toLowerCase();
+    }
+    return "upcoming";
+  };
+
   const [tab, setTab] = useState(getInitialTab); // "borrowing" (my requests) or "lending" (incoming)
-  const [subTab, setSubTab] = useState("upcoming"); // "upcoming", "ongoing", "completed", "cancelled"
+  const [subTab, setSubTab] = useState(getInitialSubTab); // "upcoming", "ongoing", "completed", "cancelled"
   const [bookings, setBookings] = useState({ borrowing: [], lending: [] });
   const [loading, setLoading] = useState(true);
 
@@ -85,24 +93,50 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
-    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+    const preferredTab = searchParams.get("tab");
+    const preferredSubTab = searchParams.get("subTab") || searchParams.get("section");
+
+    if (preferredTab === "lending" || preferredTab === "incoming") {
+      setTab("lending");
+    } else if (preferredTab === "borrowing") {
+      setTab("borrowing");
+    }
+
+    if (preferredSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(preferredSubTab.toLowerCase())) {
+      setSubTab(preferredSubTab.toLowerCase());
+    }
+
+    if (urlId && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+
+      const foundLending = bookings.lending.find(b => b.id === urlId);
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
-      if (foundBorrowing) {
-        autoOpenedRef.current = true;
-        setTab("borrowing");
-        setSelectedBookingForModal(foundBorrowing);
-        const status = foundBorrowing.status.toLowerCase();
-        if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
-        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
-        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
-      } else if (bookings.lending.length > 0) {
-        const foundLending = bookings.lending.find(b => b.id === urlId);
-        if (foundLending) {
-          autoOpenedRef.current = true;
-          setTab("lending");
-          setSelectedBookingForModal(foundLending);
-          const status = foundLending.status.toLowerCase();
+
+      let foundBooking = null;
+      let targetTab = "borrowing";
+
+      if (preferredTab === "lending" && foundLending) {
+        foundBooking = foundLending;
+        targetTab = "lending";
+      } else if (preferredTab === "borrowing" && foundBorrowing) {
+        foundBooking = foundBorrowing;
+        targetTab = "borrowing";
+      } else if (foundLending) {
+        foundBooking = foundLending;
+        targetTab = "lending";
+      } else if (foundBorrowing) {
+        foundBooking = foundBorrowing;
+        targetTab = "borrowing";
+      }
+
+      if (foundBooking) {
+        setTab(targetTab);
+        setSelectedBookingForModal(foundBooking);
+
+        if (preferredSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(preferredSubTab.toLowerCase())) {
+          setSubTab(preferredSubTab.toLowerCase());
+        } else {
+          const status = (foundBooking.status || "").toLowerCase();
           if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
           else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
           else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
@@ -215,6 +249,10 @@ export default function BorrowRequestsPage() {
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
+      if (newStatus === "decline_handover" || newStatus === "not_received") {
+        if (!window.confirm("Report that you have not received this item from the lender?")) return;
+        await borrowApi.declineHandover(bookingId);
+      }
       if (newStatus === "cancelled" || newStatus === "cancel") {
         if (!window.confirm("Are you sure you want to cancel this request?")) return;
         await borrowApi.cancel(bookingId);
@@ -426,14 +464,22 @@ export default function BorrowRequestsPage() {
                       </button>
                     </>
                   )}
-                  {tab === "borrowing" && book.status === "approved" && (
+                  {tab === "borrowing" && (book.status === "approved" || book.status === "handover_requested") && (
                     isStarted ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                        className="btn-secondary flex items-center gap-1.5 !py-2 text-xs text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-800 hover:bg-primary-50 dark:hover:bg-primary-950/30 font-bold"
-                      >
-                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner for Handover
-                      </button>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "decline_handover"); }}
+                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                        >
+                          <X className="h-3.5 w-3.5" /> Not Received
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
@@ -757,15 +803,26 @@ export default function BorrowRequestsPage() {
 
                   {!isLenderModal && (selectedBookingForModal.status === "approved" || selectedBookingForModal.status === "handover_requested") && (
                     modalIsStarted ? (
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
-                        }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
+                            closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                          }}
+                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                        </button>
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "decline_handover");
+                            closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                          }}
+                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                        >
+                          <X className="h-3.5 w-3.5" /> Not Received
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
