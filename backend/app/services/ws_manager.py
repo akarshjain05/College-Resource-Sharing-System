@@ -27,7 +27,6 @@ class ConnectionManager:
         self.main_loop = loop
 
     async def connect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
-        await websocket.accept()
         key = str(user_id)
         self._connections.setdefault(key, set()).add(websocket)
         from app.services.presence_service import set_user_presence

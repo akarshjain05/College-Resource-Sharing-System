@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { ShieldOff, ShieldCheck, UserPlus } from "lucide-react";
-import { userApi } from "../../api/endpoints";
+import { userApi, adminApi } from "../../api/endpoints";
 import ConfirmModal from "../../components/ConfirmModal";
 
 export default function AdminUsersPage() {
@@ -33,12 +33,17 @@ export default function AdminUsersPage() {
   const handleMakeAdmin = (user) => {
     setConfirmDialog({
       title: "Promote to Admin",
-      message: `Are you sure you want to promote ${user.full_name} to an Admin? They will have full system access.`,
+      message: `Are you sure you want to promote ${user.full_name} to an Admin? They will be granted all administrative permissions.`,
       confirmText: "Make Admin",
       isDanger: false,
       onConfirm: async () => {
         try {
-          await userApi.makeAdmin(user.id);
+          await adminApi.updateUserRole(user.id, {
+            role: "admin",
+            can_moderate_complaints: true,
+            can_manage_users: true,
+            can_resolve_damage_claims: true
+          });
           toast.success(`${user.full_name} is now an Admin`);
           load();
         } catch (err) {

@@ -17,6 +17,9 @@ class User(Base, UUIDMixin, TimestampMixin):
     # Nullable because Google-authenticated accounts never set a local password.
     hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, values_callable=lambda obj: [e.value for e in obj]), default=UserRole.STUDENT, nullable=False)
+    can_moderate_complaints: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_manage_users: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_resolve_damage_claims: Mapped[bool] = mapped_column(Boolean, default=False)
 
     auth_provider: Mapped[AuthProvider] = mapped_column(
         SAEnum(AuthProvider, values_callable=lambda enum_cls: [e.value for e in enum_cls]),

@@ -35,7 +35,7 @@ export const userApi = {
   listPublicDirectory: () => api.get("/users/directory/public"),
   suspendUser: (id) => api.post(`/users/${id}/suspend`),
   unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
-  makeAdmin: (id) => api.post(`/users/${id}/make-admin`),
+
 };
 
 export const categoryApi = {
@@ -120,6 +120,7 @@ export const adminApi = {
   departmentUsage: () => api.get("/admin/analytics/department-usage"),
   listResources: (params) => api.get("/admin/management/resources", { params }),
   listBorrows: (params) => api.get("/admin/management/borrows", { params }),
+  updateUserRole: (id, payload) => api.patch(`/admin/management/users/${id}/role`, payload),
 };
 
 export const uploadApi = {

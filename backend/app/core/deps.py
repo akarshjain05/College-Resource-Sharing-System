@@ -74,3 +74,20 @@ def require_roles(*roles: UserRole):
 
 
 require_admin = require_roles(UserRole.ADMIN)
+
+
+def require_permissions(*permissions: str):
+    def permission_checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role != UserRole.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required"
+            )
+        for perm in permissions:
+            if not getattr(current_user, perm, False):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Missing required admin permission: {perm}"
+                )
+        return current_user
+    return permission_checker
