@@ -326,12 +326,12 @@ export default function BorrowRequestsPage() {
       </div>
 
       {/* Main role tabs */}
-      <div className="flex rounded-2xl bg-slate-100 p-1.5 w-fit border border-slate-200/40">
+      <div className="flex rounded-2xl bg-slate-100 dark:bg-slate-900 p-1.5 w-fit border border-slate-200/40 dark:border-slate-800">
         <button
           onClick={() => { setTab("borrowing"); setSubTab("upcoming"); }}
           className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "borrowing"
-            ? "bg-white text-primary-600 shadow-sm"
-            : "text-slate-500 hover:text-slate-900"
+            ? "bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm"
+            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
         >
           Items I'm Borrowing
@@ -339,8 +339,8 @@ export default function BorrowRequestsPage() {
         <button
           onClick={() => { setTab("lending"); setSubTab("upcoming"); }}
           className={`rounded-xl px-5 py-2.5 text-xs font-bold transition-all ${tab === "lending"
-            ? "bg-white text-primary-600 shadow-sm"
-            : "text-slate-500 hover:text-slate-900"
+            ? "bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm"
+            : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
         >
           Items I'm Lending
@@ -348,7 +348,7 @@ export default function BorrowRequestsPage() {
       </div>
 
       {/* Status sub-tabs matching mockup (Upcoming, Ongoing, Completed, Cancelled) */}
-      <div className="flex border-b border-slate-200 gap-1.5">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 gap-1.5">
         {[
           { key: "upcoming", label: "Upcoming" },
           { key: "ongoing", label: "Ongoing" },
@@ -359,8 +359,8 @@ export default function BorrowRequestsPage() {
             key={st.key}
             onClick={() => setSubTab(st.key)}
             className={`px-4 py-3 text-xs font-bold border-b-2 transition-all capitalize -mb-px ${subTab === st.key
-              ? "border-primary-600 text-primary-600 font-extrabold"
-              : "border-transparent text-slate-500 hover:text-slate-900"
+              ? "border-primary-600 text-primary-600 dark:text-primary-400 font-extrabold"
+              : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
           >
             {st.label}
@@ -372,14 +372,14 @@ export default function BorrowRequestsPage() {
       {loading ? (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60" />
+            <div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-800/60" />
           ))}
         </div>
       ) : activeList.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center">
-          <Calendar className="mx-auto mb-3 h-8 w-8 text-slate-300" />
-          <p className="text-sm font-bold text-slate-700">No bookings in this tab</p>
-          <p className="mt-1 text-xs text-slate-400">Borrow something or list an item to get started!</p>
+        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center">
+          <Calendar className="mx-auto mb-3 h-8 w-8 text-slate-300 dark:text-slate-600" />
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-200">No bookings in this tab</p>
+          <p className="mt-1 text-xs text-slate-400 dark:text-slate-400">Borrow something or list an item to get started!</p>
           <Link
             to="/resources"
             className="mt-4 inline-flex items-center justify-center rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold shadow-sm transition-all active:scale-95"
@@ -403,12 +403,12 @@ export default function BorrowRequestsPage() {
               <div
                 key={book.id}
                 onClick={() => setSelectedBookingForModal(book)}
-                className="cursor-pointer rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 transition-colors"
+                className="cursor-pointer rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm space-y-4 hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
               >
                 {/* Card Header (Item and Status Badge) */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl flex-shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center text-2xl flex-shrink-0">
                       {book.resource.image_placeholder || "🪜"}
                     </div>
                     <div>
@@ -441,12 +441,12 @@ export default function BorrowRequestsPage() {
                   </div>
                   <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3.5">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
-                    <p className="text-primary-600 font-extrabold">₹{book.total_amount}</p>
+                    <p className="text-primary-600 dark:text-primary-400 font-extrabold">₹{book.total_amount}</p>
                   </div>
                 </div>
 
                 {/* Actions row */}
-                <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 pt-3">
+                <div className="flex flex-wrap gap-2 justify-end border-t border-slate-100 dark:border-slate-800 pt-3">
                   {/* Borrower Actions */}
                   {tab === "borrowing" && book.status === "requested" && (
                     <>
@@ -584,10 +584,10 @@ export default function BorrowRequestsPage() {
 
       {/* Review Dialog Box Popup */}
       {reviewingId && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div>
-              <h3 className="font-display text-base font-extrabold text-slate-900">
+              <h3 className="font-display text-base font-extrabold text-slate-900 dark:text-white">
                 {reviewAction === "confirm_return" ? "Confirm Return & Rate" : "Return & Rate Item"}
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">
@@ -606,7 +606,7 @@ export default function BorrowRequestsPage() {
                       onClick={() => setRatingInput(star)}
                       className="p-1 transition-transform active:scale-90"
                     >
-                      <Star className={`h-8 w-8 ${star <= ratingInput ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
+                      <Star className={`h-8 w-8 ${star <= ratingInput ? "fill-amber-400 text-amber-400" : "text-slate-200 dark:text-slate-700"}`} />
                     </button>
                   ))}
                 </div>
@@ -620,7 +620,7 @@ export default function BorrowRequestsPage() {
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
                   rows={3}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                 />
               </div>
 
