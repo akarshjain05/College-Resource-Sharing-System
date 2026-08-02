@@ -40,7 +40,7 @@ export default function AdminBorrowsPage() {
           <option value="approved">Approved</option>
           <option value="active">Active</option>
           <option value="return_requested">Return Requested</option>
-          <option value="completed">Completed</option>
+          <option value="returned">Completed / Returned</option>
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
         </select>
