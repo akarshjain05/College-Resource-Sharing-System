@@ -236,3 +236,15 @@ def get_all_presences_endpoint(
     from app.services.presence_service import get_all_presences
     return {"presence": get_all_presences()}
 
+
+@router.post("/me/fcm-token", status_code=status.HTTP_204_NO_CONTENT)
+def save_fcm_token(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Store a Firebase Cloud Messaging token for the authenticated user."""
+    token = payload.get("fcm_token")
+    if token:
+        current_user.fcm_token = token
+        db.commit()
