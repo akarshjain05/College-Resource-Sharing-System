@@ -171,14 +171,23 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
         )}
 
         {/* Price / Deposit Footer */}
-        <div className="flex items-baseline justify-between border-t border-slate-100 dark:border-slate-800 pt-2.5 mt-2 text-xs">
+        <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-2.5 mt-2 text-xs">
+          {/* Rent/day Display */}
+          <div className="flex items-baseline gap-1">
+            <span className="text-sm font-extrabold text-primary-600 dark:text-primary-400">
+              ₹{resource.daily_price ?? resource.daily_rate ?? Math.floor((resource.deposit_amount || 0) * 0.05)}
+            </span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">/ day</span>
+          </div>
+
+          {/* Deposit Display */}
           {resource.deposit_amount > 0 ? (
             <div className="flex items-baseline gap-1">
-              <span className="text-sm font-extrabold text-slate-900 dark:text-white">₹{resource.deposit_amount}</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">deposit</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">₹{resource.deposit_amount}</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">deposit</span>
             </div>
           ) : (
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">No deposit required</span>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">No deposit</span>
           )}
         </div>
       </div>
