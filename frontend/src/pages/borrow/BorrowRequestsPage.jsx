@@ -689,11 +689,11 @@ export default function BorrowRequestsPage() {
               </div>
             </div>
 
-            <div className="space-y-2 text-xs">
-              <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
-              <span className="inline-block rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 px-3 py-1 text-xs font-bold uppercase border border-emerald-200 dark:border-emerald-800">
-                {selectedBookingForModal.status?.replace("_", " ")}
-              </span>
+            <div className="text-xs mb-6">
+              <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
+              <div className="inline-flex">
+                {getStatusBadge(selectedBookingForModal.status || "")}
+              </div>
             </div>
 
             <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4">
