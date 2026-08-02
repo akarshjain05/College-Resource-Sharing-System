@@ -93,7 +93,7 @@ export default function BorrowRequestsPage() {
                     window.performance.getEntriesByType("navigation").length > 0 && 
                     window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (urlId && !isReload && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && !autoOpenedRef.current) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
       if (foundBorrowing) {
         autoOpenedRef.current = true;
