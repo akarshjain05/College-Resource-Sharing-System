@@ -59,7 +59,12 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
-    if (urlId && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
+    const isReload = window.performance && 
+                    window.performance.getEntriesByType && 
+                    window.performance.getEntriesByType("navigation").length > 0 && 
+                    window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+    if (urlId && !isReload && bookings.borrowing.length > 0 && !autoOpenedRef.current) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
       if (foundBorrowing) {
         autoOpenedRef.current = true;
@@ -131,7 +136,13 @@ export default function BorrowRequestsPage() {
         });
 
         const targetId = searchParams.get("id");
-        if (targetId) {
+        // Don't auto-open on page refresh (user hit F5/Cmd+R)
+        const isReload = window.performance && 
+                        window.performance.getEntriesByType && 
+                        window.performance.getEntriesByType("navigation").length > 0 && 
+                        window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+        if (targetId && !isReload) {
           let foundBooking = dbMyReqs.find(b => b.id === targetId);
           let newTab = "borrowing";
           if (!foundBooking) {
