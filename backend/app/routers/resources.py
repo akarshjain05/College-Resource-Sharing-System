@@ -146,7 +146,7 @@ def get_my_listings_with_borrowers(
                 "full_name": borrower.full_name,
                 "email": borrower.email,
                 "trust_score": borrower.trust_score,
-                "college_domain": borrower.college_domain,
+                "college_domain": borrower.email.split("@")[1] if borrower.email and "@" in borrower.email else None,
             } if borrower else None,
             "created_at": br.created_at.isoformat() if br.created_at else None,
         })
