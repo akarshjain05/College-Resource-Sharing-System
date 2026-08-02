@@ -232,7 +232,7 @@ export default function ComplaintsPage() {
 
   const loadData = () => {
     setLoading(true);
-    Promise.all([
+    Promise.allSettled([
       complaintApi.myComplaints(),
       userApi.listPublicDirectory(),
       resourceApi.list({ limit: 1000 }),
@@ -240,13 +240,23 @@ export default function ComplaintsPage() {
       borrowApi.incoming()
     ])
       .then(([compRes, userRes, resRes, myReqRes, incReqRes]) => {
-        setComplaints(compRes.data || []);
-        setUsers(userRes.data || []);
-        setResources(resRes.data?.items || resRes.data || []);
+        if (compRes.status === "fulfilled") {
+          setComplaints(compRes.value.data || []);
+        } else {
+          toast.error("Failed to load your complaints.");
+        }
+
+        if (userRes.status === "fulfilled") {
+          setUsers(userRes.value.data || []);
+        }
+
+        if (resRes.status === "fulfilled") {
+          setResources(resRes.value.data?.items || resRes.value.data || []);
+        }
         
         // Combine outgoing & incoming borrow requests
-        const myReqs = myReqRes.data || [];
-        const incReqs = incReqRes.data || [];
+        const myReqs = myReqRes.status === "fulfilled" ? (myReqRes.value.data || []) : [];
+        const incReqs = incReqRes.status === "fulfilled" ? (incReqRes.value.data || []) : [];
         const combined = [...myReqs, ...incReqs];
         setUserBorrows(combined);
 
@@ -261,9 +271,6 @@ export default function ComplaintsPage() {
             }));
           }
         }
-      })
-      .catch((err) => {
-        toast.error("Failed to load complaints & support data.");
       })
       .finally(() => setLoading(false));
   };

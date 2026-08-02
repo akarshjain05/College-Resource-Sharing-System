@@ -257,7 +257,7 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
 
 @router.post("/google", response_model=GoogleAuthResponse)
 @limiter.limit("10/minute")
-def google_login(request: Request, payload: GoogleAuthRequest, db: Session = Depends(get_db)):
+def google_login(request: Request, response: Response, payload: GoogleAuthRequest, db: Session = Depends(get_db)):
     if not settings.GOOGLE_CLIENT_ID:
         raise AppException(
             "Google Sign-In is not configured on this server (missing GOOGLE_CLIENT_ID).",

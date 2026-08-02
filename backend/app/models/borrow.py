@@ -51,5 +51,13 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
         "Payment", back_populates="borrow_request", uselist=False
     )
 
+    @property
+    def start_date(self) -> datetime:
+        return self.requested_start_date
+
+    @property
+    def end_date(self) -> datetime:
+        return self.requested_end_date
+
     def __repr__(self) -> str:
         return f"<BorrowRequest {self.id} status={self.status}>"
