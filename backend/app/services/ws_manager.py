@@ -30,6 +30,8 @@ class ConnectionManager:
         await websocket.accept()
         key = str(user_id)
         self._connections.setdefault(key, set()).add(websocket)
+        from app.services.presence_service import set_user_presence
+        set_user_presence(key, "online")
 
     def disconnect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
         key = str(user_id)
@@ -37,6 +39,8 @@ class ConnectionManager:
             self._connections[key].discard(websocket)
             if not self._connections[key]:
                 del self._connections[key]
+                from app.services.presence_service import set_user_presence
+                set_user_presence(key, "offline")
 
     async def _send_to_user(self, user_id: uuid.UUID, payload: dict) -> None:
         key = str(user_id)
