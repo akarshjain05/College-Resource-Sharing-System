@@ -156,7 +156,7 @@ def approve_borrow_request(
         resource.id, 
         br.requested_start_date, 
         br.requested_end_date, 
-        resource.quantity_available
+        resource.quantity
     ):
         raise AppException("This resource is no longer available for the requested dates", status_code=status.HTTP_409_CONFLICT, error_code="DATE_CONFLICT")
 
@@ -164,6 +164,7 @@ def approve_borrow_request(
 
     br.status = BorrowStatus.APPROVED
     br.decided_at = datetime.now(timezone.utc)
+    db.flush()
 
     decided = br.decided_at.replace(tzinfo=None) if br.decided_at and br.decided_at.tzinfo else br.decided_at
     created = br.created_at.replace(tzinfo=None) if br.created_at and br.created_at.tzinfo else br.created_at
@@ -178,22 +179,21 @@ def approve_borrow_request(
         )
     lender.response_count += 1
 
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
-
-        # Auto-decline any remaining pending requests for this resource
-        other_pending_requests = (
-            db.query(BorrowRequest)
-            .filter(
-                BorrowRequest.resource_id == resource.id,
-                BorrowRequest.id != br.id,
-                BorrowRequest.status == BorrowStatus.REQUESTED,
-            )
-            .all()
+    # Auto-decline any remaining pending requests for this resource that overlap
+    other_pending_requests = (
+        db.query(BorrowRequest)
+        .filter(
+            BorrowRequest.resource_id == resource.id,
+            BorrowRequest.id != br.id,
+            BorrowRequest.status == BorrowStatus.REQUESTED,
         )
+        .all()
+    )
 
-        for other_br in other_pending_requests:
+    for other_br in other_pending_requests:
+        if not is_resource_available_for_dates(
+            db, resource.id, other_br.requested_start_date, other_br.requested_end_date, resource.quantity
+        ):
             other_br.status = BorrowStatus.REJECTED
             other_br.rejection_reason = "Resource is no longer available (approved for another borrower)."
             create_notification(
@@ -297,10 +297,12 @@ def confirm_handover_resource(
     db.commit()
     db.refresh(br)
 
+    resource_title = br.resource.title if br.resource else "item"
+
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Confirmed",
-        f"'{br.resource.title if br.resource else 'item'}' handover was confirmed by {current_user.full_name}.",
+        f"'{resource_title}' handover was confirmed by {current_user.full_name}.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
