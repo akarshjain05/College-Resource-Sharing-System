@@ -1,6 +1,7 @@
 import uuid
 import threading
 import requests
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -87,17 +88,30 @@ def create_notification(
     db.commit()
     db.refresh(notification)
 
-    manager.notify_user(
-        user_id,
-        {
-            "id": str(notification.id),
-            "type": notification.type.value,
-            "title": notification.title,
-            "message": notification.message,
-            "link": notification.link,
-            "created_at": notification.created_at.isoformat(),
-        },
-    )
+    try:
+        created_at_val = (
+            notification.created_at.isoformat()
+            if getattr(notification, "created_at", None)
+            else datetime.now(timezone.utc).isoformat()
+        )
+        notif_type_val = (
+            notification.type.value
+            if hasattr(notification.type, "value")
+            else str(notification.type)
+        )
+        manager.notify_user(
+            user_id,
+            {
+                "id": str(notification.id),
+                "type": notif_type_val,
+                "title": notification.title,
+                "message": notification.message,
+                "link": notification.link,
+                "created_at": created_at_val,
+            },
+        )
+    except Exception as exc:
+        logger.warning("Failed to send WebSocket notification to user %s: %s", user_id, exc)
 
     try:
         from app.models.user import User
