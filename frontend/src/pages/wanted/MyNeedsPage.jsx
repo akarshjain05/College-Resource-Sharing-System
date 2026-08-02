@@ -4,6 +4,7 @@ import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight,
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 
 
@@ -156,6 +157,7 @@ export default function MyNeedsPage() {
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const loadData = () => {
     setLoading(true);
@@ -243,15 +245,22 @@ export default function MyNeedsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this request?")) return;
-    try {
-      await wantedApi.delete(id);
-      toast.success("Request deleted");
-      if (selectedNeedForModal?.id === id) setSelectedNeedForModal(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Action failed");
-    }
+    setConfirmDialog({
+      title: "Delete Request",
+      message: "Are you sure you want to delete this request?",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await wantedApi.delete(id);
+          toast.success("Request deleted");
+          if (selectedNeedForModal?.id === id) setSelectedNeedForModal(null);
+          loadData();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Action failed");
+        }
+      }
+    });
   };
 
   const openDetailsModal = async (request) => {
@@ -287,14 +296,21 @@ export default function MyNeedsPage() {
   };
 
   const handleCancelOffer = async (offerId) => {
-    if (!window.confirm("Are you sure you want to decline this offer?")) return;
-    try {
-      await wantedApi.cancelOffer(offerId);
-      toast.success("Offer declined");
-      setModalOffers((prev) => prev.filter((o) => o.id !== offerId));
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to decline offer");
-    }
+    setConfirmDialog({
+      title: "Decline Offer",
+      message: "Are you sure you want to decline this offer?",
+      confirmText: "Decline",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await wantedApi.cancelOffer(offerId);
+          toast.success("Offer declined");
+          setModalOffers((prev) => prev.filter((o) => o.id !== offerId));
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Failed to decline offer");
+        }
+      }
+    });
   };
 
   return (
@@ -462,6 +478,12 @@ export default function MyNeedsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }
