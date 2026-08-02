@@ -201,3 +201,22 @@ def unsuspend_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.get("/{user_id}/presence")
+def get_user_presence_endpoint(
+    user_id: uuid.UUID,
+    _current_user: User = Depends(get_current_user),
+):
+    from app.services.presence_service import get_user_presence
+    status_str = get_user_presence(str(user_id))
+    return {"user_id": str(user_id), "status": status_str}
+
+
+@router.get("/presence/all")
+def get_all_presences_endpoint(
+    _current_user: User = Depends(get_current_user),
+):
+    from app.services.presence_service import get_all_presences
+    return {"presence": get_all_presences()}
+

@@ -140,22 +140,40 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
         pass
 
 
-async def send_borrow_request_email(to_email: str, owner_name: str, borrower_name: str, resource_title: str) -> None:
+async def send_payment_receipt_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
+    """Critical event: Send payment / deposit confirmation email."""
     html = _wrap_template(
-        "New borrow request",
-        f"Hi {owner_name},<br><br>{borrower_name} has requested to borrow "
-        f"<strong>{resource_title}</strong>. Log in to approve or reject the request.",
+        "Payment Receipt — Deposit Confirmed",
+        f"Hi {user_name},<br><br>"
+        f"Your security deposit / payment of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> "
+        f"has been received successfully.<br><br>"
+        f"Transaction ID: <code>{transaction_id}</code><br>"
+        f"Status: <strong>Confirmed</strong>",
     )
-    await send_email(to_email, f"New borrow request for {resource_title}", html)
+    await send_email(to_email, f"Payment Receipt: ₹{amount:.2f} for {item_title}", html)
+
+
+async def send_payment_refund_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
+    """Critical event: Send payment refund / deposit release email."""
+    html = _wrap_template(
+        "Payment Refund — Security Deposit Released",
+        f"Hi {user_name},<br><br>"
+        f"Your security deposit of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> "
+        f"has been released and refunded.<br><br>"
+        f"Transaction ID: <code>{transaction_id}</code><br>"
+        f"Status: <strong>Refunded / Released</strong>",
+    )
+    await send_email(to_email, f"Deposit Released: ₹{amount:.2f} for {item_title}", html)
+
+
+async def send_borrow_request_email(to_email: str, owner_name: str, borrower_name: str, resource_title: str) -> None:
+    """Note: Non-critical routine borrow requests rely on in-app / WebSocket notifications."""
+    pass
 
 
 async def send_return_reminder_email(to_email: str, borrower_name: str, resource_title: str, due_date: str) -> None:
-    html = _wrap_template(
-        "Return reminder",
-        f"Hi {borrower_name},<br><br><strong>{resource_title}</strong> is due back on "
-        f"<strong>{due_date}</strong>. Please return it on time to keep your trust score high.",
-    )
-    await send_email(to_email, f"Reminder: return {resource_title} soon", html)
+    """Note: Routine return reminders rely on in-app / push notifications."""
+    pass
 
 
 async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:

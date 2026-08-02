@@ -149,8 +149,9 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     borrower_notifs = client.get("/api/v1/notifications", headers=borrower_headers).json()
     assert any(n["type"] == NotificationType.BORROW_APPROVED.value for n in borrower_notifs)
 
-    # 4. Owner hands over resource (transition to ACTIVE)
+    # 4. Owner hands over resource (transition to HANDOVER_REQUESTED)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
 
     # 5. Borrower requests return
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
