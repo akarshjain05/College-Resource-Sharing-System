@@ -5,6 +5,7 @@ so requests don't block on network I/O to the mail server.
 import sys
 import logging
 import httpx
+import html
 from email.message import EmailMessage
 
 import aiosmtplib
@@ -98,8 +99,9 @@ def _wrap_template(title: str, body_html: str, subtitle: str = "Automated Securi
 
 
 async def send_verification_email(to_email: str, full_name: str, verify_link: str) -> None:
+    safe_name = html.escape(full_name)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
       <p style="color:#475569;">Welcome to {settings.PROJECT_NAME}! Please verify your email address to start sharing and borrowing items on campus.</p>
       <div style="text-align: center; margin: 32px 0;">
         <a href="{verify_link}" style="background-color: #1F4B3F; color: #FFFFFF; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 12px rgba(31,75,63,0.25);">Verify My Account</a>
@@ -126,8 +128,9 @@ async def send_verification_email(to_email: str, full_name: str, verify_link: st
 
 
 async def send_password_reset_email(to_email: str, full_name: str, reset_link: str) -> None:
+    safe_name = html.escape(full_name)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
       <p style="color:#475569;">We received a request to reset your password. If this wasn't you, you can safely ignore this email.</p>
       <div style="text-align: center; margin: 32px 0;">
         <a href="{reset_link}" style="background-color: #1F4B3F; color: #FFFFFF; padding: 14px 28px; border-radius: 12px; font-weight: 700; text-decoration: none; display: inline-block; font-size: 14px; box-shadow: 0 4px 12px rgba(31,75,63,0.25);">Reset Password</a>
@@ -184,15 +187,18 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
 
 
 async def send_payment_receipt_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
+    safe_name = html.escape(user_name)
+    safe_title = html.escape(item_title)
+    safe_tx = html.escape(transaction_id)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {user_name},</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
       <p style="color:#475569;">Your security deposit / payment has been received successfully.</p>
 
       <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
         <table width="100%" border="0" cellspacing="0" cellpadding="0">
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
-            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{item_title}</td>
+            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{safe_title}</td>
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Amount Paid:</td>
@@ -200,7 +206,7 @@ async def send_payment_receipt_email(to_email: str, user_name: str, amount: floa
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Transaction ID:</td>
-            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{transaction_id}</td>
+            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{safe_tx}</td>
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px;">Status:</td>
@@ -216,15 +222,18 @@ async def send_payment_receipt_email(to_email: str, user_name: str, amount: floa
 
 
 async def send_payment_refund_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
+    safe_name = html.escape(user_name)
+    safe_title = html.escape(item_title)
+    safe_tx = html.escape(transaction_id)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {user_name},</p>
-      <p style="color:#475569;">Your security deposit of <strong>₹{amount:.2f}</strong> for <strong>{item_title}</strong> has been released and refunded.</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
+      <p style="color:#475569;">Your security deposit of <strong>₹{amount:.2f}</strong> for <strong>{safe_title}</strong> has been released and refunded.</p>
 
       <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
         <table width="100%" border="0" cellspacing="0" cellpadding="0">
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
-            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{item_title}</td>
+            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{safe_title}</td>
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Refund Amount:</td>
@@ -232,7 +241,7 @@ async def send_payment_refund_email(to_email: str, user_name: str, amount: float
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Transaction ID:</td>
-            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{transaction_id}</td>
+            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{safe_tx}</td>
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px;">Status:</td>
@@ -248,15 +257,17 @@ async def send_payment_refund_email(to_email: str, user_name: str, amount: float
 
 
 async def send_payment_confirmation_email(to_email: str, full_name: str, resource_title: str, amount: float) -> None:
+    safe_name = html.escape(full_name)
+    safe_title = html.escape(resource_title)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
       <p style="color:#475569;">Your payment has been received successfully.</p>
 
       <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
         <table width="100%" border="0" cellspacing="0" cellpadding="0">
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
-            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{resource_title}</td>
+            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{safe_title}</td>
           </tr>
           <tr>
             <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Amount Paid:</td>
@@ -307,8 +318,9 @@ async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
         f"{settings.PROJECT_NAME}"
     )
 
+    safe_name = html.escape(full_name)
     body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {full_name},</p>
+      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
       <p style="color:#475569;">Welcome to {settings.PROJECT_NAME}. Use the verification code below to confirm your account:</p>
       <div style="text-align: center; margin: 28px 0;">
         <div style="display: inline-block; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #166534; background: #F0FDF4; border: 1.5px solid #BBF7D0; padding: 18px 32px; border-radius: 16px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
