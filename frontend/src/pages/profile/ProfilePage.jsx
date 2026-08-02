@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { userApi, authApi } from "../../api/endpoints";
 import PasswordInput from "../../components/PasswordInput";
+import { User, Lock, ArrowLeft, Save, ShieldCheck, Mail } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -30,7 +32,7 @@ export default function ProfilePage() {
     try {
       await userApi.updateMyProfile(form);
       await refreshUser();
-      toast.success("Profile updated");
+      toast.success("Profile updated successfully!");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Could not update profile.");
     } finally {
@@ -52,7 +54,7 @@ export default function ProfilePage() {
         current_password: passwords.current_password,
         new_password: passwords.new_password,
       });
-      toast.success("Password changed");
+      toast.success("Password updated successfully!");
       setPasswords({ current_password: "", new_password: "", confirm_new_password: "" });
     } catch (err) {
       toast.error(err.response?.data?.detail || "Could not change password.");
@@ -62,67 +64,164 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="font-display text-2xl font-semibold text-ink-900">My profile</h1>
+    <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in duration-300">
+      {/* Back Link & Header */}
+      <div className="flex items-center justify-between">
+        <Link
+          to={user?.id ? `/users/${user.id}` : "/resources"}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Public Profile
+        </Link>
+      </div>
 
-      <form onSubmit={handleSave} className="card space-y-4 p-6">
-        <h2 className="font-display text-base font-semibold text-ink-900">Basic information</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Full name</label>
-            <input className="input" value={form.full_name} onChange={update("full_name")} />
-          </div>
-          <div>
-            <label className="label">Email address</label>
-            <input className="input bg-gray-50 text-gray-500 cursor-not-allowed" value={user?.email || ""} disabled readOnly title="Email cannot be changed" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Department</label>
-            <input className="input" value={form.department} onChange={update("department")} />
-          </div>
-          <div>
-            <label className="label">Course</label>
-            <input className="input" value={form.course} onChange={update("course")} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label">Year of study</label>
-            <input type="number" min={1} max={6} className="input" value={form.year_of_study} onChange={update("year_of_study")} />
-          </div>
-          <div>
-            <label className="label">Phone number</label>
-            <input className="input" value={form.phone_number} onChange={update("phone_number")} />
-          </div>
-        </div>
+      <div className="flex items-center justify-between">
         <div>
-          <label className="label">Bio</label>
-          <textarea rows={3} className="input" value={form.bio} onChange={update("bio")} />
+          <h1 className="font-display text-2.5xl font-black text-slate-900 dark:text-white tracking-tight">
+            Account & Profile Settings
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
+            Update your public profile details, campus info, and login security.
+          </p>
         </div>
+      </div>
+
+      {/* Form Card 1: Basic Information */}
+      <form onSubmit={handleSave} className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 md:p-8 space-y-5 shadow-sm">
+        <div className="border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center gap-2">
+          <User className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+          <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Basic Information</h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Full Name</label>
+            <input
+              type="text"
+              required
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              value={form.full_name}
+              onChange={update("full_name")}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Email Address</label>
+            <div className="relative">
+              <input
+                type="email"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-sm font-semibold cursor-not-allowed outline-none"
+                value={user?.email || ""}
+                disabled
+                readOnly
+                title="Email address cannot be modified"
+              />
+              <Mail className="absolute right-3.5 top-3.5 h-4 w-4 text-slate-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Department</label>
+            <input
+              type="text"
+              placeholder="e.g. Computer Science"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              value={form.department}
+              onChange={update("department")}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Course / Degree</label>
+            <input
+              type="text"
+              placeholder="e.g. B.Tech / M.Tech"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              value={form.course}
+              onChange={update("course")}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Year of Study</label>
+            <input
+              type="number"
+              min={1}
+              max={6}
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              value={form.year_of_study}
+              onChange={update("year_of_study")}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Phone Number</label>
+            <input
+              type="tel"
+              placeholder="+91 9876543210"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+              value={form.phone_number}
+              onChange={update("phone_number")}
+            />
+          </div>
+        </div>
+
         <div>
-          <label className="label">Skills (comma-separated)</label>
-          <input className="input" value={form.skills} onChange={update("skills")} />
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Bio / Introduction</label>
+          <textarea
+            rows={3}
+            placeholder="Tell neighbors what resources you often lend or borrow..."
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all resize-none"
+            value={form.bio}
+            onChange={update("bio")}
+          />
         </div>
-        <button type="submit" disabled={saving} className="btn-primary w-full">
-          {saving ? "Saving..." : "Save changes"}
+
+        <div>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Skills & Interests (comma-separated)</label>
+          <input
+            type="text"
+            placeholder="e.g. Photography, Robotics, Gaming, Coding"
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm font-semibold outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all"
+            value={form.skills}
+            onChange={update("skills")}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full py-3.5 px-4 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          <span>{saving ? "Saving Changes..." : "Save Profile Changes"}</span>
         </button>
       </form>
 
+      {/* Form Card 2: Security & Password */}
       {isGoogleAccount ? (
-        <div className="card p-6">
-          <h2 className="font-display text-base font-semibold text-ink-900">Sign-in method</h2>
-          <p className="mt-2 text-sm text-ink-500">
-            This account signs in with Google — there's no separate CRSS password to manage. Manage your
-            Google account's security directly through Google.
+        <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Sign-in Security</h2>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+            This account signs in securely using Google OAuth — there is no separate password stored in our system. Manage your security directly from your Google Account settings.
           </p>
         </div>
       ) : (
-        <form onSubmit={handlePasswordChange} className="card space-y-4 p-6">
-          <h2 className="font-display text-base font-semibold text-ink-900">Change password</h2>
+        <form onSubmit={handlePasswordChange} className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 md:p-8 space-y-5 shadow-sm">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center gap-2">
+            <Lock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Update Password</h2>
+          </div>
+
           <div>
-            <label className="label">Current password</label>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Current Password</label>
             <PasswordInput
               required
               value={passwords.current_password}
@@ -130,31 +229,40 @@ export default function ProfilePage() {
               autoComplete="current-password"
             />
           </div>
-          <div>
-            <label className="label">New password</label>
-            <PasswordInput
-              required
-              minLength={8}
-              value={passwords.new_password}
-              onChange={updatePw("new_password")}
-              autoComplete="new-password"
-            />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">New Password</label>
+              <PasswordInput
+                required
+                minLength={8}
+                value={passwords.new_password}
+                onChange={updatePw("new_password")}
+                autoComplete="new-password"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Confirm New Password</label>
+              <PasswordInput
+                required
+                minLength={8}
+                value={passwords.confirm_new_password}
+                onChange={updatePw("confirm_new_password")}
+                autoComplete="new-password"
+              />
+              {passwords.confirm_new_password.length > 0 && passwords.confirm_new_password !== passwords.new_password && (
+                <p className="mt-1.5 text-xs text-rose-500 font-bold">Passwords do not match.</p>
+              )}
+            </div>
           </div>
-          <div>
-            <label className="label">Confirm new password</label>
-            <PasswordInput
-              required
-              minLength={8}
-              value={passwords.confirm_new_password}
-              onChange={updatePw("confirm_new_password")}
-              autoComplete="new-password"
-            />
-            {passwords.confirm_new_password.length > 0 && passwords.confirm_new_password !== passwords.new_password && (
-              <p className="mt-1 text-xs text-red-600">Passwords don't match.</p>
-            )}
-          </div>
-          <button type="submit" disabled={changingPw} className="btn-secondary w-full">
-            {changingPw ? "Updating..." : "Update password"}
+
+          <button
+            type="submit"
+            disabled={changingPw}
+            className="w-full py-3.5 px-4 rounded-2xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-extrabold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2"
+          >
+            <Lock className="h-4 w-4" />
+            <span>{changingPw ? "Updating Password..." : "Update Password"}</span>
           </button>
         </form>
       )}
