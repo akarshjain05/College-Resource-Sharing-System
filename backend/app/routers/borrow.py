@@ -171,13 +171,15 @@ def approve_borrow_request(
     elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
 
     lender = current_user
-    if lender.response_count == 0:
+    rc = lender.response_count or 0
+    avg_sec = lender.avg_response_seconds or 0
+    if rc == 0:
         lender.avg_response_seconds = int(elapsed)
     else:
         lender.avg_response_seconds = int(
-            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+            (avg_sec * rc + elapsed) / (rc + 1)
         )
-    lender.response_count += 1
+    lender.response_count = rc + 1
 
     # Auto-decline any remaining pending requests for this resource that overlap
     other_pending_requests = (
@@ -238,13 +240,15 @@ def reject_borrow_request(
     elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
 
     lender = current_user
-    if lender.response_count == 0:
+    rc = lender.response_count or 0
+    avg_sec = lender.avg_response_seconds or 0
+    if rc == 0:
         lender.avg_response_seconds = int(elapsed)
     else:
         lender.avg_response_seconds = int(
-            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+            (avg_sec * rc + elapsed) / (rc + 1)
         )
-    lender.response_count += 1
+    lender.response_count = rc + 1
 
     db.commit()
 
