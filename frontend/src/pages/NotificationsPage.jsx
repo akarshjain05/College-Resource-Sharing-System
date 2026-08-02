@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { usePushNotification } from "../hooks/usePushNotification";
 import { resolveNotificationLink } from "../utils/routeResolver";
+import PaymentCard from "../components/PaymentCard";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -121,7 +122,7 @@ export default function NotificationsPage() {
   // Helper to render notification category icons matching designs (from feature branch)
   const getNotificationIcon = (type) => {
     const tp = type?.toLowerCase() || "";
-    if (["borrow_approved", "borrow_rejected", "return_confirmed", "damage_claim_resolved"].includes(tp) || tp === "check") {
+    if (["borrow_approved", "borrow_rejected", "return_confirmed", "damage_claim_resolved", "payment_success"].includes(tp) || tp === "check") {
       return (
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex-shrink-0 shadow-sm">
           <CheckCircle className="h-5 w-5" />
@@ -174,6 +175,27 @@ export default function NotificationsPage() {
     if (mins < 60) return `${mins} min${mins > 1 ? "s" : ""} ago`;
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
+  const renderNotificationMessage = (n) => {
+    if (n.type === "payment_success") {
+      try {
+        const paymentData = JSON.parse(n.message);
+        return <PaymentCard paymentData={paymentData} />;
+      } catch (e) {
+        // Fallback if not valid JSON
+        return (
+          <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
+            {n.message}
+          </p>
+        );
+      }
+    }
+    return (
+      <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
+        {n.message}
+      </p>
+    );
   };
 
   return (
@@ -253,9 +275,7 @@ export default function NotificationsPage() {
                     {getRelativeTimeLabel(n.created_at)}
                   </span>
                 </div>
-                <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
-                  {n.message}
-                </p>
+                {renderNotificationMessage(n)}
               </div>
             </button>
           ))}

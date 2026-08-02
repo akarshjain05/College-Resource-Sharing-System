@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, status, BackgroundTasks, Request
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceRespons
 from app.core.deps import get_current_user_optional
 from app.services.notification_service import notify_all_except_owner_bg
 from app.services.availability import get_blocked_dates
+from app.core.rate_limit import limiter
 from datetime import date
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -146,7 +147,7 @@ def get_my_listings_with_borrowers(
                 "full_name": borrower.full_name,
                 "email": borrower.email,
                 "trust_score": borrower.trust_score,
-                "college_domain": borrower.college_domain,
+                "college_domain": borrower.email.split("@")[1] if borrower.email and "@" in borrower.email else None,
             } if borrower else None,
             "created_at": br.created_at.isoformat() if br.created_at else None,
         })
@@ -192,7 +193,9 @@ def get_resource(
 
 
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 def create_resource(
+    request: Request,
     payload: ResourceCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
@@ -233,6 +236,7 @@ def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
 def update_resource(
     resource_id: uuid.UUID,
     payload: ResourceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -242,10 +246,21 @@ def update_resource(
     if resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise ForbiddenException("You can only edit your own resources")
 
+    old_status = resource.status
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
     db.commit()
     db.refresh(resource)
+
+    if old_status != ResourceStatus.AVAILABLE and resource.status == ResourceStatus.AVAILABLE:
+        background_tasks.add_task(
+            notify_all_except_owner_bg,
+            current_user.id,
+            resource.id,
+            resource.title,
+            current_user.full_name,
+        )
+
     return resource
 
 

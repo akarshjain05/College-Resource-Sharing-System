@@ -14,13 +14,13 @@ services:
     container_name: crss_db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-crss_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crss_password}
-      POSTGRES_DB: ${POSTGRES_DB:-crss_db}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - crss_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crss_user} -d ${POSTGRES_DB:-crss_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -32,8 +32,9 @@ services:
     image: redis:7-alpine
     container_name: crss_redis
     restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -44,17 +45,15 @@ services:
       dockerfile: Dockerfile
     container_name: crss_backend
     restart: unless-stopped
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --timeout-keep-alive 65"
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       ENVIRONMENT: production
       DEBUG: "false"
-      BACKEND_CORS_ORIGINS: '["*"]'
-    ports:
-      - "8000:8000"
+      BACKEND_CORS_ORIGINS: '["https://${DOMAIN}"]'
     volumes:
       - crss_uploads:/app/uploads
     depends_on:
@@ -73,8 +72,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       ENVIRONMENT: production
     volumes:
       - crss_uploads:/app/uploads
@@ -94,8 +93,8 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-crss_user}:${POSTGRES_PASSWORD:-crss_password}@db:5432/${POSTGRES_DB:-crss_db}
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       ENVIRONMENT: production
     depends_on:
       db:

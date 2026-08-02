@@ -6,12 +6,13 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import NotificationType
 from app.schemas.user import UserResponse
+from app.utils.validation import SafeStr
 
 
 class ReviewCreate(BaseModel):
     resource_id: uuid.UUID
     rating: int = Field(..., ge=1, le=5)
-    comment: Optional[str] = None
+    comment: Optional[SafeStr] = Field(None, max_length=1000)
 
 
 class ReviewResponse(BaseModel):

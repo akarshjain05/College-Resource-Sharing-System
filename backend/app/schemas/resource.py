@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.models.enums import ResourceCondition, ResourceStatus
 from app.schemas.user import UserResponse
 from app.schemas.category import CategoryResponse
+from app.utils.validation import SafeStr
 
 
 class ResourceImageResponse(BaseModel):
@@ -18,12 +19,12 @@ class ResourceImageResponse(BaseModel):
 
 
 class ResourceBase(BaseModel):
-    title: str = Field(..., min_length=3, max_length=200)
-    description: str = Field(..., min_length=10)
+    title: SafeStr = Field(..., min_length=3, max_length=200)
+    description: SafeStr = Field(..., min_length=10, max_length=5000)
     condition: ResourceCondition = ResourceCondition.GOOD
     quantity: int = Field(1, ge=1)
-    pickup_location: Optional[str] = None
-    tags: Optional[str] = None
+    pickup_location: Optional[SafeStr] = Field(None, max_length=200)
+    tags: Optional[SafeStr] = Field(None, max_length=200)
     deposit_amount: Optional[float] = Field(0, ge=0)
     max_borrow_days: int = Field(7, ge=1, le=90)
     available_from: Optional[date] = None
@@ -36,13 +37,14 @@ class ResourceCreate(ResourceBase):
 
 
 class ResourceUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+    title: Optional[SafeStr] = Field(None, min_length=3, max_length=200)
+    description: Optional[SafeStr] = Field(None, min_length=10, max_length=5000)
     condition: Optional[ResourceCondition] = None
     status: Optional[ResourceStatus] = None
     quantity: Optional[int] = None
-    pickup_location: Optional[str] = None
-    tags: Optional[str] = None
+    pickup_location: Optional[SafeStr] = Field(None, max_length=200)
+    tags: Optional[SafeStr] = Field(None, max_length=200)
     deposit_amount: Optional[float] = None
     max_borrow_days: Optional[int] = None
     available_from: Optional[date] = None

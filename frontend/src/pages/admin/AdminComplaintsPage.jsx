@@ -15,30 +15,35 @@ import {
 } from "lucide-react";
 import api from "../../api/client";
 
+import ResolutionCard from "../../components/ResolutionCard";
+
 const adminComplaintApi = {
   list: () => api.get("/complaints"),
   update: (id, payload) => api.put(`/complaints/${id}`, payload),
 };
 
-const STATUS_OPTIONS = ["open", "in_progress", "resolved", "closed"];
+const STATUS_OPTIONS = ["open", "assigned", "in_progress", "resolved", "closed"];
 
 const STATUS_BADGE = {
   open: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  assigned: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
   in_progress: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
   resolved: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
   closed: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
 };
 
 const PRESET_RESPONSES = [
-  { label: "Warning Issued", response: "An official warning has been issued to the reported user regarding platform policies.", penalty: 5 },
-  { label: "Trust Penalty (-10)", response: "After investigation, a trust score deduction has been applied to the offending account.", penalty: 10 },
-  { label: "Resolved - Agreed Refund", response: "Dispute resolved between both parties. Transaction completed and closed.", penalty: 0 },
-  { label: "Dismissed - No Violation", response: "Review complete. No platform policy violation was found for this case.", penalty: 0 },
+  { label: "Full Refund (₹200)", action: "refund_issued", amount: 200, response: "Refund issued for rental fee & deposit.", penalty: 0 },
+  { label: "Item Replacement", action: "replacement_provided", amount: 0, response: "Replacement item provided to borrower.", penalty: 0 },
+  { label: "Official Warning (-5)", action: "warning_issued", amount: 0, response: "Official warning issued for policy violation.", penalty: 5 },
+  { label: "Dismissed Complaint", action: "dismissed", amount: 0, response: "Complaint dismissed following investigation.", penalty: 0 },
 ];
 
 function ComplaintRow({ complaint, onUpdate }) {
   const [status, setStatus] = useState(complaint.status);
   const [response, setResponse] = useState(complaint.admin_response || "");
+  const [resolutionAction, setResolutionAction] = useState("");
+  const [resolutionAmount, setResolutionAmount] = useState("");
   const [penalty, setPenalty] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -46,6 +51,13 @@ function ComplaintRow({ complaint, onUpdate }) {
     setStatus(complaint.status);
     setResponse(complaint.admin_response || "");
     setPenalty("");
+    if (complaint.resolution_data) {
+      try {
+        const parsed = JSON.parse(complaint.resolution_data);
+        setResolutionAction(parsed.action_taken || "");
+        setResolutionAmount(parsed.amount ? parsed.amount.toString() : "");
+      } catch (e) {}
+    }
   }, [complaint]);
 
   const handleSave = async () => {
@@ -54,6 +66,9 @@ function ComplaintRow({ complaint, onUpdate }) {
       await onUpdate(complaint.id, { 
         status, 
         admin_response: response,
+        resolution_action: resolutionAction || undefined,
+        resolution_amount: resolutionAmount ? parseFloat(resolutionAmount) : undefined,
+        resolution_notes: response,
         trust_score_penalty: penalty ? parseInt(penalty, 10) : undefined 
       });
     } finally {
@@ -62,6 +77,8 @@ function ComplaintRow({ complaint, onUpdate }) {
   };
 
   const applyPreset = (preset) => {
+    setResolutionAction(preset.action);
+    setResolutionAmount(preset.amount ? preset.amount.toString() : "");
     setResponse(preset.response);
     if (preset.penalty > 0) {
       setPenalty(preset.penalty.toString());
@@ -78,6 +95,11 @@ function ComplaintRow({ complaint, onUpdate }) {
             <span className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
               {complaint.category || "General"}
             </span>
+            {complaint.severity && (
+              <span className="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300">
+                {complaint.severity}
+              </span>
+            )}
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
               {complaint.subject}
             </h3>
@@ -133,7 +155,7 @@ function ComplaintRow({ complaint, onUpdate }) {
             <Calendar className="h-4 w-4 text-emerald-500 flex-shrink-0" />
             <div>
               <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block">Borrow Request</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">#{complaint.borrow_request.id.slice(0, 8)} ({complaint.borrow_request.status})</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">#{complaint.borrow_request.id.slice(0, 8)}</span>
             </div>
           </div>
         )}
@@ -147,30 +169,77 @@ function ComplaintRow({ complaint, onUpdate }) {
         </p>
       </div>
 
-      {/* Preset Action Buttons */}
-      <div className="space-y-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-          <Sparkles className="h-3 w-3 text-primary-500" /> Quick Resolution Templates
-        </span>
-        <div className="flex flex-wrap gap-2">
-          {PRESET_RESPONSES.map((preset, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => applyPreset(preset)}
-              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 hover:bg-primary-500/10 hover:border-primary-500/30 px-3 py-1.5 text-[11px] font-bold text-slate-700 dark:text-slate-300 transition-colors"
-            >
-              {preset.label}
-            </button>
-          ))}
+      {/* Structured Resolution Action Selector */}
+      <div className="space-y-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-primary-600 dark:text-primary-400 flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4" /> Structured Resolution Template Generator
+          </span>
+          <div className="flex gap-2">
+            {PRESET_RESPONSES.map((preset, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => applyPreset(preset)}
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div>
+            <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Resolution Action Type</label>
+            <select
+              value={resolutionAction}
+              onChange={(e) => setResolutionAction(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 font-bold outline-none text-xs"
+            >
+              <option value="">-- Manual Text Only --</option>
+              <option value="refund_issued">Refund Issued (Emerald Card)</option>
+              <option value="replacement_provided">Replacement Provided (Indigo Card)</option>
+              <option value="warning_issued">Warning Issued (Amber Card)</option>
+              <option value="dismissed">Dismissed (Slate Card)</option>
+            </select>
+          </div>
+
+          {resolutionAction === "refund_issued" && (
+            <div>
+              <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Refund Amount (₹)</label>
+              <input
+                type="number"
+                value={resolutionAmount}
+                onChange={(e) => setResolutionAmount(e.target.value)}
+                placeholder="200"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 font-bold outline-none text-xs"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Live Preview of Resolution Card */}
+        {resolutionAction && (
+          <div className="pt-2">
+            <span className="text-[10px] font-bold text-slate-400 block mb-1 uppercase tracking-wider">Live Template Card Preview:</span>
+            <ResolutionCard
+              resolutionData={{
+                action_taken: resolutionAction,
+                amount: parseFloat(resolutionAmount || 0),
+                notes: response || "Official resolution notes",
+                resolved_at: new Date().toISOString()
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Admin Official Response & Trust Score Penalty Form */}
       <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
         <div>
           <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-slate-300">
-            Admin Official Response (Visible to the filing user)
+            Admin Official Response (Visible to user and synced to Chat)
           </label>
           <textarea
             className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 min-h-[70px]"
@@ -206,7 +275,7 @@ function ComplaintRow({ complaint, onUpdate }) {
             disabled={saving}
             className="rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 text-xs font-bold shadow-md transition-all disabled:opacity-50"
           >
-            {saving ? "Saving Resolution..." : "Save Resolution Update"}
+            {saving ? "Saving Resolution..." : "Save Resolution & Sync Chat"}
           </button>
         </div>
       </div>

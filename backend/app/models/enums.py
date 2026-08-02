@@ -4,6 +4,21 @@ Shared Python enums, mapped to Postgres via SQLAlchemy's Enum type.
 import enum
 
 
+class PaymentStatus(str, enum.Enum):
+    CREATED = "created"
+    ATTEMPTED = "attempted"
+    PAID = "paid"
+    FAILED = "failed"
+    REFUND_INITIATED = "refund_initiated"
+    REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
+
+
+class PaymentPurpose(str, enum.Enum):
+    RENT = "rent"
+    SECURITY_DEPOSIT = "security_deposit"
+
+
 class UserRole(str, enum.Enum):
     STUDENT = "student"
     FACULTY = "faculty"
@@ -61,11 +76,16 @@ class NotificationType(str, enum.Enum):
     DAMAGE_CLAIM_FILED = "damage_claim_filed"
     DAMAGE_CLAIM_DISPUTED = "damage_claim_disputed"
     DAMAGE_CLAIM_RESOLVED = "damage_claim_resolved"
+    PAYMENT_SUCCESS = "payment_success"
+    PAYMENT_FAILED = "payment_failed"
+    REFUND_ISSUED = "refund_issued"
+    COMPLAINT_UPDATE = "complaint_update"
     SYSTEM = "system"
 
 
 class ComplaintStatus(str, enum.Enum):
     OPEN = "open"
+    ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
     RESOLVED = "resolved"
     CLOSED = "closed"

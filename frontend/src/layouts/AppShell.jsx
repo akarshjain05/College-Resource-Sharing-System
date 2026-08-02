@@ -163,8 +163,8 @@ export default function AppShell() {
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
 
-      if (location.pathname !== "/my-needs") {
-        navigate("/my-needs");
+      if (location.pathname !== "/wanted") {
+        navigate("/wanted");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");

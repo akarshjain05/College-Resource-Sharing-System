@@ -7,13 +7,15 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app.models.enums import BorrowStatus
 from app.schemas.user import UserResponse
 from app.schemas.resource import ResourceResponse
+from app.schemas.payment import PaymentResponse
+from app.utils.validation import SafeStr
 
 
 class BorrowRequestCreate(BaseModel):
     resource_id: uuid.UUID
     requested_start_date: datetime
     requested_end_date: datetime
-    purpose: Optional[str] = None
+    purpose: Optional[SafeStr] = Field(None, max_length=1000)
 
     @model_validator(mode="after")
     def validate_dates(self):
@@ -23,18 +25,18 @@ class BorrowRequestCreate(BaseModel):
 
 
 class BorrowRequestDecision(BaseModel):
-    rejection_reason: Optional[str] = None
+    rejection_reason: Optional[SafeStr] = Field(None, max_length=500)
 
 
 class BorrowRequestReturn(BaseModel):
-    damage_report: Optional[str] = None
+    damage_report: Optional[SafeStr] = Field(None, max_length=1000)
     lender_rating: Optional[int] = Field(None, ge=1, le=5)
-    lender_review: Optional[str] = None
+    lender_review: Optional[SafeStr] = Field(None, max_length=1000)
 
 
 class BorrowRequestConfirmReturn(BaseModel):
     borrower_rating: Optional[int] = Field(None, ge=1, le=5)
-    borrower_review: Optional[str] = None
+    borrower_review: Optional[SafeStr] = Field(None, max_length=1000)
 
 
 class BorrowRequestResponse(BaseModel):
@@ -56,4 +58,5 @@ class BorrowRequestResponse(BaseModel):
     resource: Optional[ResourceResponse] = None
     borrower: Optional[UserResponse] = None
     lender: Optional[UserResponse] = None
+    payment: Optional[PaymentResponse] = None
     created_at: datetime

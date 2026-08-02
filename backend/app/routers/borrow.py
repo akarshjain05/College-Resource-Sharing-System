@@ -2,12 +2,13 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundException, ForbiddenException, AppException
+from app.core.rate_limit import limiter
 from app.models.borrow import BorrowRequest
 from app.models.resource import Resource
 from app.models.enums import BorrowStatus, ResourceStatus, NotificationType, UserRole
@@ -46,7 +47,9 @@ def _to_date(val) -> Optional[date]:
 
 
 @router.post("", response_model=BorrowRequestResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 def create_borrow_request(
+    request: Request,
     payload: BorrowRequestCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
@@ -114,14 +117,20 @@ def incoming_borrow_requests(status: Optional[BorrowStatus] = None, current_user
 
 
 def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User, for_update: bool = False) -> BorrowRequest:
-    query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+    if for_update:
+        query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
+    else:
+        query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+        
+    if lender.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.lender_id == lender.id)
+        
     if for_update:
         query = query.with_for_update()
+        
     br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.lender_id != lender.id and lender.role != UserRole.ADMIN:
-        raise ForbiddenException("Only the resource owner can perform this action")
     return br
 
 
@@ -163,13 +172,15 @@ def approve_borrow_request(
     elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
 
     lender = current_user
-    if lender.response_count == 0:
+    rc = lender.response_count or 0
+    avg_sec = lender.avg_response_seconds or 0
+    if rc == 0:
         lender.avg_response_seconds = int(elapsed)
     else:
         lender.avg_response_seconds = int(
-            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+            (avg_sec * rc + elapsed) / (rc + 1)
         )
-    lender.response_count += 1
+    lender.response_count = rc + 1
 
     # Auto-decline any remaining pending requests for this resource that overlap
     other_pending_requests = (
@@ -194,7 +205,7 @@ def approve_borrow_request(
                 NotificationType.BORROW_REJECTED,
                 "Borrow Request Auto-Declined",
                 f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
-                link=f"/borrow-requests/{other_br.id}?tab=lending&subTab=cancelled",
+                link=f"/borrow-requests/{other_br.id}",
             )
 
     db.commit()
@@ -230,13 +241,15 @@ def reject_borrow_request(
     elapsed = (decided - created).total_seconds() if (decided and created) else 0.0
 
     lender = current_user
-    if lender.response_count == 0:
+    rc = lender.response_count or 0
+    avg_sec = lender.avg_response_seconds or 0
+    if rc == 0:
         lender.avg_response_seconds = int(elapsed)
     else:
         lender.avg_response_seconds = int(
-            (lender.avg_response_seconds * lender.response_count + elapsed) / (lender.response_count + 1)
+            (avg_sec * rc + elapsed) / (rc + 1)
         )
-    lender.response_count += 1
+    lender.response_count = rc + 1
 
     db.commit()
 
@@ -244,7 +257,7 @@ def reject_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_REJECTED,
         "Borrow request rejected",
         f"Your request to borrow '{resource_title}' was rejected.",
-        link=f"/borrow-requests/{br.id}?tab=lending&subTab=cancelled",
+        link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -259,6 +272,17 @@ def handover_resource(
     if br.status not in (BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED):
         raise AppException("Only approved requests can be handed over", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
     
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    
+    if br.resource and getattr(br.resource, "deposit_amount", 0) and float(br.resource.deposit_amount) > 0:
+        payment = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+        if not payment or payment.status != PaymentStatus.PAID:
+            raise AppException(
+                "Borrower must complete payment before handover",
+                status_code=status.HTTP_400_BAD_REQUEST, error_code="PAYMENT_REQUIRED",
+            )
+
     br.status = BorrowStatus.HANDOVER_REQUESTED
     db.commit()
 
@@ -277,11 +301,12 @@ def confirm_handover_resource(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.borrower_id != current_user.id:
-        raise ForbiddenException("Only the borrower can confirm receipt")
     if br.status != BorrowStatus.HANDOVER_REQUESTED:
         raise AppException("Only pending handovers can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
@@ -300,32 +325,31 @@ def confirm_handover_resource(
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
 
-@router.post("/{request_id}/decline-handover", response_model=BorrowRequestResponse)
-def decline_handover_resource(
+@router.post("/{request_id}/reject-handover", response_model=BorrowRequestResponse)
+def reject_handover_resource(
     request_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Borrower reports not receiving an item marked as handed over."""
-    br = db.query(BorrowRequest).filter(BorrowRequest.id == request_id).first()
+    query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.borrower_id != current_user.id:
-        raise ForbiddenException("Only the borrower can decline handover")
-    if br.status not in (BorrowStatus.HANDOVER_REQUESTED, BorrowStatus.APPROVED):
-        raise AppException("Cannot decline handover for current status", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    if br.status != BorrowStatus.HANDOVER_REQUESTED:
+        raise AppException("Only pending handovers can be rejected", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
     br.status = BorrowStatus.APPROVED
     db.commit()
     db.refresh(br)
 
-    resource_title = br.resource.title if br.resource else "item"
-
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
-        "Handover Declined / Not Received",
-        f"{current_user.full_name} reported they have NOT received '{resource_title}' yet.",
-        link=f"/borrow-requests/{br.id}?tab=lending&subTab=upcoming",
+        "Handover Rejected / Not Received",
+        f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name}. They reported not receiving it.",
+        link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -336,11 +360,12 @@ def cancel_borrow_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    br = _borrow_query(db).filter(BorrowRequest.id == request_id).first()
+    query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.borrower_id != current_user.id:
-        raise ForbiddenException("Only the borrower can cancel this request")
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request can no longer be cancelled", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
@@ -348,6 +373,19 @@ def cancel_borrow_request(
     resource_title = br.resource.title if br.resource else "item"
     lender_id = br.lender_id
     req_id = br.id
+
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    from app.services import payment_service
+
+    payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    if payment:
+        result = payment_service.refund_payment(
+            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            notes={"reason": "borrow_request_cancelled"},
+        )
+        payment.status = PaymentStatus.REFUND_INITIATED
+        payment.refund_id = result["id"]
 
     br.status = BorrowStatus.CANCELLED
     db.commit()
@@ -359,7 +397,7 @@ def cancel_borrow_request(
         NotificationType.SYSTEM,
         "Borrow request cancelled",
         f"{current_user.full_name} cancelled their {status_text} for '{resource_title}'.",
-        link=f"/borrow-requests/{req_id}?tab=lending&subTab=cancelled",
+        link=f"/borrow-requests/{req_id}",
     )
 
     return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
@@ -372,11 +410,12 @@ def nudge_request(
     db: Session = Depends(get_db),
 ):
     """Borrower nudges a request to remind the owner to respond or hand over the item."""
-    br = _borrow_query(db).filter(BorrowRequest.id == request_id).first()
+    query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.borrower_id != current_user.id:
-        raise ForbiddenException("Only the requester can nudge")
     if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
         raise AppException("This request cannot be nudged", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
@@ -411,11 +450,12 @@ def return_resource(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    br = _borrow_query(db).filter(BorrowRequest.id == request_id).first()
+    query = _borrow_query(db).filter(BorrowRequest.id == request_id)
+    if current_user.role != UserRole.ADMIN:
+        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+    br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.borrower_id != current_user.id:
-        raise ForbiddenException("Only the borrower can mark this as returned")
     if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
         raise AppException("Only active or late borrows can be returned", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
@@ -466,6 +506,19 @@ def confirm_return_resource(
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
     if borrower:
         if not is_damaged:
+            from app.models.payment import Payment
+            from app.models.enums import PaymentStatus
+            from app.services import payment_service
+
+            payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+            if payment and payment.refunded_amount == 0:
+                result = payment_service.refund_payment(
+                    payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
+                    notes={"reason": "security_deposit_return"},
+                )
+                payment.status = PaymentStatus.REFUND_INITIATED
+                payment.refund_id = result["id"]
+
             # Only apply normal trust adjustments for non-damaged returns
             actual_ret = _to_date(br.actual_return_date)
             req_end = _to_date(br.requested_end_date)

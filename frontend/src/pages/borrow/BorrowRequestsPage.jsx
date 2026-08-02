@@ -5,7 +5,9 @@ import { Check, X, RotateCcw, MessageCircle, AlertCircle, MapPin, BellRing, Ban,
 import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
+import ConfirmModal from "../../components/ConfirmModal";
 import { chatEventBus } from "../../utils/chatEventBus";
+import PayNowButton from "../../components/PayNowButton";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -59,7 +61,9 @@ export default function BorrowRequestsPage() {
   const [reviewAction, setReviewAction] = useState(null); // "return" or "confirm_return"
   const [ratingInput, setRatingInput] = useState(5);
   const [commentInput, setCommentInput] = useState("");
+  const [damageReportInput, setDamageReportInput] = useState("");
   const [openChatId, setOpenChatId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const autoOpenedRef = useRef(false);
 
@@ -93,54 +97,35 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
-    const preferredTab = searchParams.get("tab");
-    const preferredSubTab = searchParams.get("subTab") || searchParams.get("section");
 
-    if (preferredTab === "lending" || preferredTab === "incoming") {
-      setTab("lending");
-    } else if (preferredTab === "borrowing") {
-      setTab("borrowing");
-    }
-
-    if (preferredSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(preferredSubTab.toLowerCase())) {
-      setSubTab(preferredSubTab.toLowerCase());
-    }
-
-    if (urlId && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && !autoOpenedRef.current) {
-      autoOpenedRef.current = true;
-
-      const foundLending = bookings.lending.find(b => b.id === urlId);
+    if (urlId && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
       const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
-
-      let foundBooking = null;
-      let targetTab = "borrowing";
-
-      if (preferredTab === "lending" && foundLending) {
-        foundBooking = foundLending;
-        targetTab = "lending";
-      } else if (preferredTab === "borrowing" && foundBorrowing) {
-        foundBooking = foundBorrowing;
-        targetTab = "borrowing";
-      } else if (foundLending) {
-        foundBooking = foundLending;
-        targetTab = "lending";
-      } else if (foundBorrowing) {
-        foundBooking = foundBorrowing;
-        targetTab = "borrowing";
-      }
-
-      if (foundBooking) {
-        setTab(targetTab);
-        setSelectedBookingForModal(foundBooking);
-
-        if (preferredSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(preferredSubTab.toLowerCase())) {
-          setSubTab(preferredSubTab.toLowerCase());
-        } else {
-          const status = (foundBooking.status || "").toLowerCase();
+      if (foundBorrowing) {
+        autoOpenedRef.current = urlId;
+        setTab("borrowing");
+        setSelectedBookingForModal(foundBorrowing);
+        const status = foundBorrowing.status.toLowerCase();
+        if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
+        else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
+        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        
+        searchParams.delete("id");
+        setSearchParams(searchParams);
+      } else if (bookings.lending.length > 0) {
+        const foundLending = bookings.lending.find(b => b.id === urlId);
+        if (foundLending) {
+          autoOpenedRef.current = urlId;
+          setTab("lending");
+          setSelectedBookingForModal(foundLending);
+          const status = foundLending.status.toLowerCase();
           if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-          else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+          else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
           else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
           else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+          
+          searchParams.delete("id");
+          setSearchParams(searchParams);
         }
       }
     }
@@ -168,6 +153,7 @@ export default function BorrowRequestsPage() {
           status: r.status,
           lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
           borrower: { id: r.borrower?.id, full_name: "You" },
+          payment: r.payment,
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
@@ -183,6 +169,7 @@ export default function BorrowRequestsPage() {
           status: r.status,
           lender: { id: r.lender?.id, full_name: "You" },
           borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
+          payment: r.payment,
         }));
 
         setBookings({
@@ -191,7 +178,13 @@ export default function BorrowRequestsPage() {
         });
 
         const targetId = searchParams.get("id");
-        if (targetId) {
+        // Don't auto-open on page refresh (user hit F5/Cmd+R)
+        const isReload = window.performance && 
+                        window.performance.getEntriesByType && 
+                        window.performance.getEntriesByType("navigation").length > 0 && 
+                        window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+        if (targetId && !isReload) {
           let foundBooking = dbMyReqs.find(b => b.id === targetId);
           let newTab = "borrowing";
           if (!foundBooking) {
@@ -203,7 +196,7 @@ export default function BorrowRequestsPage() {
             setTab(newTab);
             const status = foundBooking.status.toLowerCase();
             if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-            else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
+            else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
             else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
             else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
             
@@ -225,8 +218,6 @@ export default function BorrowRequestsPage() {
   };
 
   useEffect(() => {
-    // Keep your friend's load function if they renamed it
-    // (If it says it's undefined later, change this back to load() )
     if (typeof loadBookingsList === 'function') {
       loadBookingsList();
     } else {
@@ -234,13 +225,27 @@ export default function BorrowRequestsPage() {
     }
   }, []);
 
-  // 1. Hook it up to the real database API
   const handleStatusChange = async (bookingId, newStatus) => {
     try {
       if (newStatus === "approved" || newStatus === "approve") await borrowApi.approve(bookingId);
       if (newStatus === "rejected" || newStatus === "reject") {
-        if (!window.confirm("Are you sure you want to reject this request?")) return;
-        await borrowApi.reject(bookingId, "Not available right now");
+        setConfirmDialog({
+          title: "Decline Request",
+          message: "Are you sure you want to decline this request?",
+          confirmText: "Decline",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.reject(bookingId, "Not available right now");
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (newStatus === "nudge") {
         await borrowApi.nudge(bookingId);
@@ -249,13 +254,43 @@ export default function BorrowRequestsPage() {
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
-      if (newStatus === "decline_handover" || newStatus === "not_received") {
-        if (!window.confirm("Report that you have not received this item from the lender?")) return;
-        await borrowApi.declineHandover(bookingId);
+      if (newStatus === "reject_handover" || newStatus === "not_received") {
+        setConfirmDialog({
+          title: "Not Received",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender and decline the handover.",
+          confirmText: "Mark Not Received",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.rejectHandover(bookingId);
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (newStatus === "cancelled" || newStatus === "cancel") {
-        if (!window.confirm("Are you sure you want to cancel this request?")) return;
-        await borrowApi.cancel(bookingId);
+        setConfirmDialog({
+          title: "Cancel Request",
+          message: "Are you sure you want to cancel this request?",
+          confirmText: "Cancel Request",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.cancel(bookingId);
+              toast.success("Updated successfully");
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              else load();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
       }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
       if (newStatus === "returned" || newStatus === "confirm_return") await borrowApi.confirmReturn(bookingId, 5, "");
@@ -275,7 +310,7 @@ export default function BorrowRequestsPage() {
 
     try {
       if (reviewAction === "return") {
-        await borrowApi.returnItem(reviewingId, null, ratingInput, commentInput);
+        await borrowApi.returnItem(reviewingId, damageReportInput || null, ratingInput, commentInput);
       } else if (reviewAction === "confirm_return") {
         await borrowApi.confirmReturn(reviewingId, ratingInput, commentInput);
       }
@@ -283,6 +318,7 @@ export default function BorrowRequestsPage() {
       setReviewingId(null);
       setReviewAction(null);
       setCommentInput("");
+      setDamageReportInput("");
       setRatingInput(5);
       if (typeof loadBookingsList === 'function') loadBookingsList();
       else load();
@@ -464,27 +500,55 @@ export default function BorrowRequestsPage() {
                       </button>
                     </>
                   )}
-                  {tab === "borrowing" && (book.status === "approved" || book.status === "handover_requested") && (
-                    isStarted ? (
-                      <div className="flex flex-wrap gap-2 items-center">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
-                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "decline_handover"); }}
-                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
-                        >
-                          <X className="h-3.5 w-3.5" /> Not Received
-                        </button>
+                  {tab === "borrowing" && book.status === "approved" && (
+                    (!book.payment || book.payment.status !== "paid") ? (
+                      <div className="w-full flex-col items-center">
+                        <PayNowButton 
+                           borrowRequest={book} 
+                           onPaid={() => {
+                              if (typeof loadBookingsList === 'function') loadBookingsList();
+                              else load();
+                           }} 
+                        />
                       </div>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
-                      </span>
+                       isStarted ? (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                            className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
+                            className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                          >
+                            <X className="h-3.5 w-3.5" /> Not Received
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
+                        </span>
+                      )
                     )
+                  )}
+                  {tab === "borrowing" && book.status === "handover_requested" && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                        className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs font-bold"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
+                        className="btn-secondary !py-2 text-xs font-bold !bg-red-50 !text-red-600 hover:!bg-red-100 !border-red-200"
+                      >
+                        <X className="h-3.5 w-3.5" /> Not Received
+                      </button>
+                    </div>
                   )}
                   {tab === "borrowing" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
                     isStarted ? (
@@ -524,7 +588,11 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
                   {tab === "lending" && book.status === "approved" && (
-                    isExpired ? (
+                    (!book.payment || book.payment.status !== "paid") ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
+                      </span>
+                    ) : isExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
                       </span>
@@ -624,6 +692,22 @@ export default function BorrowRequestsPage() {
                 />
               </div>
 
+              {reviewAction === "return" && (
+                <div>
+                  <label className="label">Report Damage (Optional)</label>
+                  <textarea
+                    placeholder="If the item was damaged, please describe it here..."
+                    value={damageReportInput}
+                    onChange={(e) => setDamageReportInput(e.target.value)}
+                    rows={2}
+                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Reporting damage will automatically open a claim for the owner to review.
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <button
                   type="submit"
@@ -690,9 +774,11 @@ export default function BorrowRequestsPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
-                {getStatusBadge(selectedBookingForModal.status)}
+              <div className="text-xs mb-6">
+                <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
+                <div className="inline-flex">
+                  {getStatusBadge(selectedBookingForModal.status || "")}
+                </div>
               </div>
 
               {/* Action Buttons row */}
@@ -708,7 +794,6 @@ export default function BorrowRequestsPage() {
                   >
                     <MessageCircle className="h-3.5 w-3.5" /> Message
                   </button>
-
                   {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
                     <a
                       href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource_id || ''}&against_user_id=${selectedBookingForModal.lender_id || selectedBookingForModal.borrower_id || ''}&category=dispute`}
@@ -815,7 +900,7 @@ export default function BorrowRequestsPage() {
                         </button>
                         <button
                           onClick={async () => {
-                            await handleStatusChange(selectedBookingForModal.id, "decline_handover");
+                            await handleStatusChange(selectedBookingForModal.id, "reject_handover");
                             closeBookingModal({ ...selectedBookingForModal, status: "approved" });
                           }}
                           className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
@@ -908,6 +993,12 @@ export default function BorrowRequestsPage() {
           </div>
         );
       })()}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }

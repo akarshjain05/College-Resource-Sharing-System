@@ -18,6 +18,12 @@ export const authApi = {
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   resetPassword: (payload) => api.post("/auth/reset-password", payload),
+  logout: () => api.post("/auth/logout"),
+};
+
+export const paymentApi = {
+  createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
+  verify: (payload) => api.post("/payments/verify", payload),
 };
 
 
@@ -29,6 +35,7 @@ export const userApi = {
   listPublicDirectory: () => api.get("/users/directory/public"),
   suspendUser: (id) => api.post(`/users/${id}/suspend`),
   unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
+
 };
 
 export const categoryApi = {
@@ -58,7 +65,7 @@ export const borrowApi = {
   nudge: (id) => api.post(`/borrow-requests/${id}/nudge`),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),
   confirmHandover: (id) => api.post(`/borrow-requests/${id}/confirm-handover`),
-  declineHandover: (id) => api.post(`/borrow-requests/${id}/decline-handover`),
+  rejectHandover: (id) => api.post(`/borrow-requests/${id}/reject-handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
   returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
   confirmReturn: (id, borrowerRating, borrowerReview) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating, borrower_review: borrowerReview }),
@@ -113,6 +120,7 @@ export const adminApi = {
   departmentUsage: () => api.get("/admin/analytics/department-usage"),
   listResources: (params) => api.get("/admin/management/resources", { params }),
   listBorrows: (params) => api.get("/admin/management/borrows", { params }),
+  updateUserRole: (id, payload) => api.patch(`/admin/management/users/${id}/role`, payload),
 };
 
 export const uploadApi = {
@@ -136,4 +144,3 @@ export const uploadApi = {
 };
 
 export { getImageUrl };
-

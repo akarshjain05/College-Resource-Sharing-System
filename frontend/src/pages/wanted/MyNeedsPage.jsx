@@ -4,6 +4,7 @@ import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight,
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
+import ConfirmModal from "../../components/ConfirmModal";
 
 
 
@@ -156,6 +157,7 @@ export default function MyNeedsPage() {
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const loadData = () => {
     setLoading(true);
@@ -208,7 +210,8 @@ export default function MyNeedsPage() {
       toast.success("Wanted request posted!");
       setShowModal(false);
       setFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
-      loadData();
+      window.dispatchEvent(new Event("wantedCreated"));
+      navigate("/wanted");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
     }
@@ -243,15 +246,22 @@ export default function MyNeedsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this request?")) return;
-    try {
-      await wantedApi.delete(id);
-      toast.success("Request deleted");
-      if (selectedNeedForModal?.id === id) setSelectedNeedForModal(null);
-      loadData();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Action failed");
-    }
+    setConfirmDialog({
+      title: "Delete Request",
+      message: "Are you sure you want to delete this request?",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await wantedApi.delete(id);
+          toast.success("Request deleted");
+          if (selectedNeedForModal?.id === id) setSelectedNeedForModal(null);
+          loadData();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Action failed");
+        }
+      }
+    });
   };
 
   const openDetailsModal = async (request) => {
@@ -287,14 +297,21 @@ export default function MyNeedsPage() {
   };
 
   const handleCancelOffer = async (offerId) => {
-    if (!window.confirm("Are you sure you want to decline this offer?")) return;
-    try {
-      await wantedApi.cancelOffer(offerId);
-      toast.success("Offer declined");
-      setModalOffers((prev) => prev.filter((o) => o.id !== offerId));
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to decline offer");
-    }
+    setConfirmDialog({
+      title: "Decline Offer",
+      message: "Are you sure you want to decline this offer?",
+      confirmText: "Decline",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await wantedApi.cancelOffer(offerId);
+          toast.success("Offer declined");
+          setModalOffers((prev) => prev.filter((o) => o.id !== offerId));
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Failed to decline offer");
+        }
+      }
+    });
   };
 
   return (
@@ -304,12 +321,12 @@ export default function MyNeedsPage() {
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Manage your posted campus requests and view incoming offers</p>
         </div>  
-        {/* <button
+        <button
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
         >
           <Plus className="h-4 w-4" /> Post New Need
-        </button> */}
+        </button>
       </div>
 
       {loading ? (
@@ -462,6 +479,12 @@ export default function MyNeedsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }

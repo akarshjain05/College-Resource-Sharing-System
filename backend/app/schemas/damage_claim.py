@@ -6,20 +6,23 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import DamageClaimStatus
 from app.schemas.user import UserResponse
+from app.utils.validation import SafeStr
 
 
 class DamageClaimDispute(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Borrower submits a dispute against a damage claim."""
-    dispute_reason: str = Field(..., min_length=10, max_length=2000)
+    dispute_reason: SafeStr = Field(..., min_length=10, max_length=2000)
 
 
 class DamageClaimResolve(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Admin resolves a damage claim with a final verdict."""
     status: DamageClaimStatus = Field(
         ...,
         description="Must be one of: resolved_valid, resolved_invalid, resolved_partial",
     )
-    admin_resolution: str = Field(..., min_length=5, max_length=2000)
+    admin_resolution: SafeStr = Field(..., min_length=5, max_length=2000)
     final_cost: Optional[float] = Field(None, ge=0, description="Final assessed damage cost")
     trust_penalty: int = Field(0, ge=0, le=50, description="Trust score points to deduct from the borrower")
 
