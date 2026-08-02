@@ -133,11 +133,11 @@ class UserResponse(UserBase):
     bio: Optional[str] = None
     skills: Optional[str] = None
     profile_picture_url: Optional[str] = None
-    is_verified: bool
-    is_active: bool
-    is_suspended: bool
-    trust_score: int
-    sharing_score: int
+    is_verified: bool = False
+    is_active: bool = True
+    is_suspended: bool = False
+    trust_score: int = 100
+    sharing_score: int = 0
     avg_response_seconds: Optional[int] = None
     created_at: datetime
 

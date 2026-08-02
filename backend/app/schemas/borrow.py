@@ -42,8 +42,8 @@ class BorrowRequestResponse(BaseModel):
 
     id: uuid.UUID
     status: BorrowStatus
-    requested_start_date: datetime
-    requested_end_date: datetime
+    requested_start_date: Optional[datetime] = None
+    requested_end_date: Optional[datetime] = None
     actual_return_date: Optional[datetime] = None
     purpose: Optional[str] = None
     deposit_paid: Optional[float] = None
