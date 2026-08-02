@@ -740,11 +740,6 @@ export default function BorrowRequestsPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <h4 className="font-bold text-slate-700 dark:text-slate-300">Booking Status</h4>
-                {getStatusBadge(selectedBookingForModal.status)}
-              </div>
-
               <div className="text-xs mb-6">
                 <h4 className="font-bold text-slate-700 dark:text-slate-300 mb-2.5">Booking Status</h4>
                 <div className="inline-flex">
