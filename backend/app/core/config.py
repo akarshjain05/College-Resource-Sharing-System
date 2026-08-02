@@ -2,7 +2,7 @@
 Application configuration loaded from environment variables (.env).
 Uses pydantic-settings so every value is validated at startup.
 """
-from typing import List, Union
+from typing import List, Union, Optional
 from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
