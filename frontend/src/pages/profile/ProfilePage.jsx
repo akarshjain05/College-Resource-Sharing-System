@@ -12,7 +12,7 @@ export default function ProfilePage() {
     course: user?.course || "",
     year_of_study: user?.year_of_study || "",
     bio: user?.bio || "",
-    skills: user?.skills || "",
+    skills: Array.isArray(user?.skills) ? user.skills.join(", ") : (user?.skills || ""),
     phone_number: user?.phone_number || "",
   });
   const [passwords, setPasswords] = useState({ current_password: "", new_password: "", confirm_new_password: "" });
