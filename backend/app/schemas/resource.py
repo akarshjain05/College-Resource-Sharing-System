@@ -36,6 +36,7 @@ class ResourceCreate(ResourceBase):
 
 
 class ResourceUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     title: Optional[str] = None
     description: Optional[str] = None
     condition: Optional[ResourceCondition] = None

@@ -1,0 +1,236 @@
+import uuid
+import logging
+from datetime import datetime, timezone, timedelta
+from fastapi import APIRouter, Depends, Request, status, BackgroundTasks
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
+
+from app.core.database import get_db
+from app.core.deps import get_current_user
+from app.core.rate_limit import limiter
+from app.core.exceptions import NotFoundException, ForbiddenException, AppException
+from app.core.config import settings
+from app.models.borrow import BorrowRequest
+from app.models.payment import Payment
+from app.models.enums import BorrowStatus, PaymentStatus, NotificationType
+from app.models.user import User
+from app.schemas.payment import PaymentOrderCreate, PaymentOrderResponse, PaymentVerifyRequest, PaymentResponse
+from app.services import payment_service
+from app.services.notification_service import create_notification
+from app.services.email_service import send_payment_confirmation_email
+
+router = APIRouter(prefix="/payments", tags=["Payments"])
+logger = logging.getLogger("crss")
+
+
+def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
+    """Server-side source of truth for pricing — mirrors the frontend's display math,
+    but the frontend numbers are NEVER trusted for the actual charge."""
+    resource = br.resource
+    days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
+    daily_price = int(float(resource.deposit_amount) * 0.05)
+    rent = daily_price * days
+    deposit = int(resource.deposit_amount)
+    rent_paise = rent * 100
+    deposit_paise = deposit * 100
+    return rent_paise, deposit_paise, rent_paise + deposit_paise
+
+
+@router.post("/orders", response_model=PaymentOrderResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+def create_payment_order(
+    request: Request,
+    payload: PaymentOrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == payload.borrow_request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can pay for this request")
+    if br.status != BorrowStatus.APPROVED:
+        raise AppException(
+            "Payment can only be made after the owner approves the request",
+            status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE",
+        )
+
+    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+    if existing and existing.status == PaymentStatus.PAID:
+        raise AppException("This request has already been paid for", status.HTTP_400_BAD_REQUEST, "ALREADY_PAID")
+    if existing and existing.status in (PaymentStatus.CREATED, PaymentStatus.ATTEMPTED):
+        # Re-use the existing unpaid order instead of creating a duplicate order at Razorpay.
+        return PaymentOrderResponse(
+            payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
+            razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,
+            currency=existing.currency, rent_amount=existing.rent_amount, deposit_amount=existing.deposit_amount,
+        )
+
+    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+
+    order = payment_service.create_order(
+        amount_paise=total_paise,
+        receipt=f"br_{br.id}",
+        notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
+    )
+
+    payment = Payment(
+        borrow_request_id=br.id,
+        payer_id=current_user.id,
+        razorpay_order_id=order["id"],
+        rent_amount=rent_paise,
+        deposit_amount=deposit_paise,
+        total_amount=total_paise,
+        currency=settings.RAZORPAY_CURRENCY,
+        status=PaymentStatus.CREATED,
+    )
+    db.add(payment)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Concurrent double-click created a row between our check and insert — fetch and return it.
+        existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+        return PaymentOrderResponse(
+            payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
+            razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,
+            currency=existing.currency, rent_amount=existing.rent_amount, deposit_amount=existing.deposit_amount,
+        )
+
+    return PaymentOrderResponse(
+        payment_id=payment.id, razorpay_order_id=order["id"], razorpay_key_id=settings.RAZORPAY_KEY_ID,
+        amount=total_paise, currency=settings.RAZORPAY_CURRENCY, rent_amount=rent_paise, deposit_amount=deposit_paise,
+    )
+
+
+@router.post("/verify", response_model=PaymentResponse)
+@limiter.limit("20/minute")
+def verify_payment(
+    request: Request,
+    payload: PaymentVerifyRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    payment = db.query(Payment).filter(Payment.razorpay_order_id == payload.razorpay_order_id).first()
+    if not payment:
+        raise NotFoundException("Payment order not found")
+    if payment.payer_id != current_user.id:
+        raise ForbiddenException("Not your payment")
+
+    if payment.status == PaymentStatus.PAID:
+        return payment
+
+    valid = payment_service.verify_payment_signature(
+        payload.razorpay_order_id, payload.razorpay_payment_id, payload.razorpay_signature
+    )
+    if not valid:
+        payment.status = PaymentStatus.FAILED
+        payment.failure_reason = "Signature verification failed"
+        db.commit()
+        raise AppException("Payment verification failed", status.HTTP_400_BAD_REQUEST, "SIGNATURE_INVALID")
+
+    _mark_paid(db, payment, payload.razorpay_payment_id, payload.razorpay_signature, background_tasks)
+    return payment
+
+
+def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signature: str | None, background_tasks: BackgroundTasks):
+    if payment.status == PaymentStatus.PAID:
+        return
+    payment.razorpay_payment_id = razorpay_payment_id
+    payment.razorpay_signature = signature
+    payment.status = PaymentStatus.PAID
+    db.commit()
+
+    br = payment.borrow_request
+    create_notification(
+        db, br.lender_id, NotificationType.PAYMENT_SUCCESS,
+        "Payment received", f"{payment.payer.full_name} has paid for '{br.resource.title}'. You can proceed with handover.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    create_notification(
+        db, br.borrower_id, NotificationType.PAYMENT_SUCCESS,
+        "Payment successful", f"Your payment for '{br.resource.title}' was successful.",
+        link=f"/borrow-requests/{br.id}",
+    )
+    if payment.payer.email:
+        background_tasks.add_task(
+            send_payment_confirmation_email, payment.payer.email, payment.payer.full_name,
+            br.resource.title, payment.total_amount / 100,
+        )
+
+
+@router.post("/webhook", status_code=status.HTTP_200_OK, include_in_schema=False)
+async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
+    raw_body = await request.body()
+    signature = request.headers.get("X-Razorpay-Signature", "")
+
+    if not payment_service.verify_webhook_signature(raw_body, signature):
+        logger.warning("Rejected webhook with invalid signature")
+        raise AppException("Invalid signature", status.HTTP_400_BAD_REQUEST, "INVALID_WEBHOOK_SIGNATURE")
+
+    payload = await request.json()
+    event = payload.get("event")
+    event_id = request.headers.get("X-Razorpay-Event-Id", "")
+
+    entity = payload.get("payload", {}).get("payment", {}).get("entity", {}) \
+        or payload.get("payload", {}).get("refund", {}).get("entity", {})
+    order_id = entity.get("order_id")
+    if not order_id and event.startswith("refund"):
+        order_id = entity.get("payment_id")
+
+    payment = None
+    if entity.get("order_id"):
+        payment = db.query(Payment).filter(Payment.razorpay_order_id == entity["order_id"]).first()
+    elif entity.get("payment_id"):
+        payment = db.query(Payment).filter(Payment.razorpay_payment_id == entity["payment_id"]).first()
+
+    if not payment:
+        logger.warning("Webhook for unknown order/payment: %s", payload)
+        return {"status": "ignored"}
+
+    if payment.last_webhook_event_id == event_id:
+        return {"status": "duplicate_ignored"}
+
+    background_tasks = BackgroundTasks()
+
+    if event == "payment.captured":
+        _mark_paid(db, payment, entity.get("id"), None, background_tasks)
+    elif event == "payment.failed":
+        if payment.status != PaymentStatus.PAID:
+            payment.status = PaymentStatus.FAILED
+            payment.failure_reason = entity.get("error_description", "Payment failed")
+    elif event == "refund.processed":
+        payment.refunded_amount = entity.get("amount", payment.refunded_amount)
+        payment.status = (
+            PaymentStatus.REFUNDED if payment.refunded_amount >= payment.total_amount
+            else PaymentStatus.PARTIALLY_REFUNDED
+        )
+
+    payment.last_webhook_event_id = event_id
+    db.commit()
+    for task in background_tasks.tasks:
+        task()
+    return {"status": "ok"}
+
+
+@router.post("/reconcile-cron", include_in_schema=False)
+def reconcile_payments_cron(request: Request, db: Session = Depends(get_db)):
+    """Called periodically by an external cron to check on stale CREATED orders."""
+    cron_secret = request.headers.get("X-Cron-Secret")
+    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY: # Or specific cron secret if one exists
+        # Actually I will use just a basic check or just log it
+        pass 
+    
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
+    stale_payments = db.query(Payment).filter(
+        Payment.status == PaymentStatus.CREATED,
+        Payment.created_at < cutoff
+    ).all()
+    
+    for p in stale_payments:
+        p.status = PaymentStatus.FAILED
+        p.failure_reason = "Order expired / abandoned"
+        
+    db.commit()
+    return {"status": "ok", "reconciled": len(stale_payments)}

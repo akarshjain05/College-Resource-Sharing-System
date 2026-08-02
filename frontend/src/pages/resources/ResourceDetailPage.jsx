@@ -35,7 +35,6 @@ export default function ResourceDetailPage() {
   const [selectedDateRange, setSelectedDateRange] = useState({ start: null, end: null, error: null });
   const [bookings, setBookings] = useState([]);
   const [submittingBorrow, setSubmittingBorrow] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
@@ -451,56 +450,7 @@ export default function ResourceDetailPage() {
                 </div>
               </div>
 
-              {/* Payment Methods */}
-              <div className="space-y-2">
-                <label className="label">Payment Method</label>
 
-                <div className="space-y-2">
-                  {/* UPI */}
-                  <label className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${paymentMethod === "upi"
-                    ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20"
-                    : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}>
-                    <div className="flex items-center gap-2.5">
-                      <CreditCard className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                      <div>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">UPI Method</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">.... 8567@paytm</p>
-                      </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="payment_opt"
-                      value="upi"
-                      checked={paymentMethod === "upi"}
-                      onChange={() => setPaymentMethod("upi")}
-                      className="h-4.5 w-4.5 text-primary-600 focus:ring-primary-500"
-                    />
-                  </label>
-
-                  {/* Wallet */}
-                  <label className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${paymentMethod === "wallet"
-                    ? "border-primary-600 bg-primary-50/20 dark:bg-primary-950/20"
-                    : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    }`}>
-                    <div className="flex items-center gap-2.5">
-                      <Wallet className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                      <div>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">My Wallet Balance</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">₹320 available</p>
-                      </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="payment_opt"
-                      value="wallet"
-                      checked={paymentMethod === "wallet"}
-                      onChange={() => setPaymentMethod("wallet")}
-                      className="h-4.5 w-4.5 text-primary-600 focus:ring-primary-500"
-                    />
-                  </label>
-                </div>
-              </div>
 
               {/* Submit CTA */}
               <button
@@ -513,7 +463,6 @@ export default function ResourceDetailPage() {
                 ) : (
                   <>
                     <span>Send Request</span>
-                    <span className="font-extrabold bg-white/20 px-2 py-0.5 rounded text-[10px]">Pay ₹{totalAmount}</span>
                   </>
                 )}
               </button>

@@ -7,6 +7,7 @@ import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
 import ConfirmModal from "../../components/ConfirmModal";
 import { chatEventBus } from "../../utils/chatEventBus";
+import PayNowButton from "../../components/PayNowButton";
 
 const STATUS_STYLE = {
   requested: "bg-brass-50 text-brass-700",
@@ -152,6 +153,7 @@ export default function BorrowRequestsPage() {
           status: r.status,
           lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
           borrower: { id: r.borrower?.id, full_name: "You" },
+          payment: r.payment,
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
@@ -167,6 +169,7 @@ export default function BorrowRequestsPage() {
           status: r.status,
           lender: { id: r.lender?.id, full_name: "You" },
           borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
+          payment: r.payment,
         }));
 
         setBookings({
@@ -497,26 +500,38 @@ export default function BorrowRequestsPage() {
                       </button>
                     </>
                   )}
-                  {tab === "borrowing" && (book.status === "approved" || book.status === "handover_requested") && (
-                    isStarted ? (
-                      <div className="flex flex-wrap gap-2 items-center">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
-                          className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
-                          className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
-                        >
-                          <X className="h-3.5 w-3.5" /> Not Received
-                        </button>
+                  {tab === "borrowing" && book.status === "approved" && (
+                    (!book.payment || book.payment.status !== "paid") ? (
+                      <div className="w-full flex-col items-center">
+                        <PayNowButton 
+                           borrowRequest={book} 
+                           onPaid={() => {
+                              if (typeof loadBookingsList === 'function') loadBookingsList();
+                              else load();
+                           }} 
+                        />
                       </div>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
-                      </span>
+                       isStarted ? (
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "confirm_handover"); }}
+                            className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_handover"); }}
+                            className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                          >
+                            <X className="h-3.5 w-3.5" /> Not Received
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over (unlocks {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })})
+                        </span>
+                      )
                     )
                   )}
                   {tab === "borrowing" && book.status === "handover_requested" && (
@@ -573,7 +588,11 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
                   {tab === "lending" && book.status === "approved" && (
-                    isExpired ? (
+                    (!book.payment || book.payment.status !== "paid") ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
+                      </span>
+                    ) : isExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
                       </span>

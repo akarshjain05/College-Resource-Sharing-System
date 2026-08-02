@@ -9,11 +9,13 @@ from app.schemas.user import UserResponse
 
 
 class DamageClaimDispute(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Borrower submits a dispute against a damage claim."""
     dispute_reason: str = Field(..., min_length=10, max_length=2000)
 
 
 class DamageClaimResolve(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     """Admin resolves a damage claim with a final verdict."""
     status: DamageClaimStatus = Field(
         ...,
