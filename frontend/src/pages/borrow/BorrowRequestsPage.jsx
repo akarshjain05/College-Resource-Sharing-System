@@ -607,7 +607,7 @@ export default function BorrowRequestsPage() {
                   {/* Global Actions (Chat & Complaint) */}
                   {["active", "returned", "damaged", "late"].includes(book.status) && (
                     <a
-                      href={`/complaints?borrow_request_id=${book.id}`}
+                      href={`/complaints?borrow_request_id=${book.id}&resource_id=${book.resource_id || ''}&against_user_id=${book.lender_id || book.borrower_id || ''}&category=dispute`}
                       onClick={(e) => e.stopPropagation()}
                       className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 hover:border-red-200"
                     >
@@ -777,7 +777,7 @@ export default function BorrowRequestsPage() {
                   </button>
                   {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
                     <a
-                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}`}
+                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource_id || ''}&against_user_id=${selectedBookingForModal.lender_id || selectedBookingForModal.borrower_id || ''}&category=dispute`}
                       className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5"
                     >
                       <AlertCircle className="h-3.5 w-3.5" /> Report Issue
@@ -966,7 +966,7 @@ export default function BorrowRequestsPage() {
                   request={book}
                   onReportIssue={(req) => {
                     setOpenChatId(null);
-                    window.location.href = `/complaints?borrow_request_id=${req.id}`;
+                    window.location.href = `/complaints?borrow_request_id=${req.id}&resource_id=${req.resource_id || ''}&against_user_id=${req.lender_id || req.borrower_id || ''}&category=dispute`;
                   }}
                 />
               </div>
