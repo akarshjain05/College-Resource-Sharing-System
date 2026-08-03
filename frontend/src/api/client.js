@@ -83,7 +83,7 @@ api.interceptors.response.use(
 );
 
 export const getImageUrl = (url) => {
-  if (!url) return "";
+  if (!url) return null;
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
     return url;
   }

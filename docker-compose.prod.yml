@@ -123,8 +123,29 @@ services:
     depends_on:
       - backend
 
+  db_backup:
+    image: prodrigestivill/postgres-backup-local
+    container_name: crss_db_backup
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+      HEALTHCHECK_PORT: 8080
+    volumes:
+      - crss_db_backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   crss_postgres_data:
   crss_uploads:
   caddy_data:
   caddy_config:
+  crss_db_backups:

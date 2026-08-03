@@ -10,8 +10,14 @@ from app.models.base import UUIDMixin, TimestampMixin
 from app.models.enums import BorrowStatus
 
 
+from sqlalchemy import CheckConstraint
+
 class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "borrow_requests"
+    
+    __table_args__ = (
+        CheckConstraint('requested_end_date >= requested_start_date', name='check_borrow_valid_dates'),
+    )
 
     resource_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False
