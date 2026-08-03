@@ -288,7 +288,7 @@ export default function MyNeedsPage() {
         prev.map((r) => (r.id === request.id ? { ...r, is_fulfilled: true } : r))
       );
       setSelectedNeedForModal(null);
-      navigate(`/resources/${resourceId}`);
+      navigate("/borrow-requests?tab=borrowing&section=upcoming");
     } catch (err) {
       toast.error(err.response?.data?.detail || "This request has already been fulfilled");
     } finally {

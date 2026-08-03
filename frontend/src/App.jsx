@@ -21,12 +21,14 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import PublicProfilePage from "./pages/profile/PublicProfilePage";
 import WantedPage from "./pages/wanted/WantedPage";
 import MyNeedsPage from "./pages/wanted/MyNeedsPage";
+import TransactionsPage from "./pages/payments/TransactionsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
+import PaymentsPage from "./pages/PaymentsPage";
 
 export default function App() {
   return (
@@ -53,9 +55,12 @@ export default function App() {
             <Route path="/resources/new" element={<ResourceCreatePage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
             <Route path="/borrow-requests" element={<BorrowRequestsPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/payments" element={<TransactionsPage />} />
             <Route path="/wanted" element={<WantedPage />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/users/:userId" element={<PublicProfilePage />} />
 

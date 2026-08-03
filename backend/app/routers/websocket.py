@@ -8,7 +8,7 @@ Frontend connects with:
 (main.py registers this router with prefix="/api/v1"). Since browsers can't set
 custom headers on a WebSocket handshake, the JWT is passed as a query parameter
 OR as the first JSON message after the handshake instead of the Authorization
-header used elsewhere.  Both styles are accepted for backward/forward compatibility.
+header used elsewhere. Both styles are accepted for backward/forward compatibility.
 """
 import uuid
 from typing import Optional
@@ -44,16 +44,19 @@ async def notifications_websocket(
 
     # --- Authenticate ---
     # Strategy 1: token supplied as a query parameter (?token=...).
-    #   This is the preferred approach because browsers cannot set custom
-    #   headers on WebSocket handshakes, and it avoids an extra round-trip.
+    #   Preferred because browsers cannot set custom headers on WebSocket handshakes.
     # Strategy 2: token supplied as the first JSON message after the handshake.
     #   Kept for backward compatibility with older frontend builds.
+    if not token:
+        token = websocket.query_params.get("token")
+
     if not token:
         try:
             data = await websocket.receive_json()
             token = data.get("token")
         except Exception:
-            pass
+            await websocket.close(code=4401)
+            return
 
     if not token:
         await websocket.close(code=4401)

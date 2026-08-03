@@ -34,3 +34,5 @@ backend/uploads/
 # Celery
 celerybeat-schedule
 backend/celerybeat-schedule
+*.db
+*.sql

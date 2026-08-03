@@ -24,6 +24,11 @@ export const authApi = {
 export const paymentApi = {
   createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
   verify: (payload) => api.post("/payments/verify", payload),
+  getMyTransactions: () => api.get("/payments/my"),
+  myPayments: () => api.get("/payments/my-payments"),
+  simulatePay: (id) => api.post(`/payments/${id}/pay`),
+  simulateFail: (id) => api.post(`/payments/${id}/fail`),
+  cancel: (id) => api.post(`/payments/${id}/cancel`),
 };
 
 

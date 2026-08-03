@@ -1,5 +1,6 @@
 import uuid
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from app.models.enums import PaymentStatus
 
@@ -30,9 +31,42 @@ class PaymentResponse(BaseModel):
     id: uuid.UUID
     borrow_request_id: uuid.UUID
     status: PaymentStatus
+    created_at: datetime
     rent_amount: int
     deposit_amount: int
     total_amount: int
     currency: str
     refunded_amount: int
     failure_reason: Optional[str] = None
+
+
+class WalletSummary(BaseModel):
+    total_spent_paise: int
+    total_earned_paise: int
+    active_deposits_paise: int
+    pending_to_be_paid_paise: int
+
+
+class TransactionItem(BaseModel):
+    id: str
+    borrow_request_id: str
+    status: str
+    rent_amount: int
+    deposit_amount: int
+    total_amount: int
+    currency: str
+    refunded_amount: int
+    created_at: str
+    razorpay_payment_id: Optional[str] = None
+    transaction_type: str
+    item_title: str
+    item_image: Optional[str] = None
+    other_party_name: str
+    borrow_status: str
+    is_to_be_paid: bool = False
+
+
+class MyTransactionsResponse(BaseModel):
+    summary: WalletSummary
+    transactions: list[TransactionItem]
+

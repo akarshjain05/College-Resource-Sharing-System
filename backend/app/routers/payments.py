@@ -14,26 +14,156 @@ from app.models.borrow import BorrowRequest
 from app.models.payment import Payment
 from app.models.enums import BorrowStatus, PaymentStatus, NotificationType
 from app.models.user import User
-from app.schemas.payment import PaymentOrderCreate, PaymentOrderResponse, PaymentVerifyRequest, PaymentResponse
+from app.schemas.payment import (
+    PaymentOrderCreate,
+    PaymentOrderResponse,
+    PaymentVerifyRequest,
+    PaymentResponse,
+    MyTransactionsResponse,
+    TransactionItem,
+    WalletSummary,
+)
 from app.services import payment_service
 from app.services.notification_service import create_notification
 from app.services.email_service import send_payment_confirmation_email
 
+from typing import List
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 logger = logging.getLogger("crss")
+
+@router.get("/my-payments", response_model=List[PaymentResponse])
+def get_my_payments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all payments associated with the current logged-in user.
+    """
+    payments = db.query(Payment).filter(Payment.payer_id == current_user.id).order_by(Payment.created_at.desc()).all()
+    return payments
+
 
 
 def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
     """Server-side source of truth for pricing — mirrors the frontend's display math,
     but the frontend numbers are NEVER trusted for the actual charge."""
     resource = br.resource
-    days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
-    daily_price = int(float(resource.deposit_amount) * 0.05)
+    deposit_val = float(getattr(resource, "deposit_amount", 0) or 0)
+    try:
+        days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
+    except Exception:
+        days = 1
+    daily_price = int(deposit_val * 0.05)
     rent = daily_price * days
-    deposit = int(resource.deposit_amount)
+    deposit = int(deposit_val)
     rent_paise = rent * 100
     deposit_paise = deposit * 100
-    return rent_paise, deposit_paise, rent_paise + deposit_paise
+    total_paise = max(100, rent_paise + deposit_paise)
+    return rent_paise, deposit_paise, total_paise
+
+
+@router.get("/my", response_model=MyTransactionsResponse)
+def get_my_transactions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    brs = db.query(BorrowRequest).filter(
+        (BorrowRequest.borrower_id == current_user.id) | (BorrowRequest.lender_id == current_user.id)
+    ).order_by(BorrowRequest.created_at.desc()).all()
+
+    items = []
+    total_spent_paise = 0
+    total_earned_paise = 0
+    active_deposits_paise = 0
+    pending_to_be_paid_paise = 0
+
+    for br in brs:
+        p = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
+        is_lender = (br.lender_id == current_user.id)
+        other_party = (
+            getattr(br.borrower, "full_name", "Unknown") if is_lender else getattr(br.lender, "full_name", "Unknown")
+        )
+        item_title = getattr(br.resource, "title", "Unknown Resource") if br.resource else "Unknown Resource"
+        image_url = None
+        if br.resource and br.resource.images and len(br.resource.images) > 0:
+            image_url = br.resource.images[0]
+
+        if p:
+            tx_type = "CREDIT" if is_lender else "DEBIT"
+            status_str = p.status.value if hasattr(p.status, "value") else str(p.status)
+
+            if p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUND_INITIATED):
+                if tx_type == "DEBIT":
+                    spent = (p.rent_amount or 0) + max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
+                    total_spent_paise += spent
+                    if br.status in (
+                        BorrowStatus.APPROVED,
+                        BorrowStatus.ACTIVE,
+                        BorrowStatus.HANDOVER_REQUESTED,
+                        BorrowStatus.RETURN_REQUESTED,
+                        BorrowStatus.LATE,
+                    ):
+                        active_deposits_paise += max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
+                else:
+                    total_earned_paise += (p.rent_amount or 0)
+            elif tx_type == "DEBIT" and br.status == BorrowStatus.APPROVED:
+                pending_to_be_paid_paise += (p.total_amount or 0)
+
+            items.append(
+                TransactionItem(
+                    id=str(p.id),
+                    borrow_request_id=str(br.id),
+                    status=status_str,
+                    rent_amount=int(p.rent_amount or 0),
+                    deposit_amount=int(p.deposit_amount or 0),
+                    total_amount=int(p.total_amount or 0),
+                    currency=p.currency or "INR",
+                    refunded_amount=int(p.refunded_amount or 0),
+                    created_at=p.created_at.isoformat() if p.created_at else "",
+                    razorpay_payment_id=p.razorpay_payment_id,
+                    transaction_type=tx_type,
+                    item_title=item_title,
+                    item_image=image_url,
+                    other_party_name=other_party,
+                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
+                    is_to_be_paid=(status_str in ("created", "attempted", "pending_payment") and br.status == BorrowStatus.APPROVED and not is_lender),
+                )
+            )
+        elif not is_lender and br.status == BorrowStatus.APPROVED:
+            rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+            pending_to_be_paid_paise += total_paise
+            items.append(
+                TransactionItem(
+                    id=f"pending_{br.id}",
+                    borrow_request_id=str(br.id),
+                    status="PENDING_PAYMENT",
+                    rent_amount=rent_paise,
+                    deposit_amount=deposit_paise,
+                    total_amount=total_paise,
+                    currency=settings.RAZORPAY_CURRENCY,
+                    refunded_amount=0,
+                    created_at=br.created_at.isoformat() if br.created_at else "",
+                    razorpay_payment_id=None,
+                    transaction_type="DEBIT",
+                    item_title=item_title,
+                    item_image=image_url,
+                    other_party_name=other_party,
+                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
+                    is_to_be_paid=True,
+                )
+            )
+
+    return MyTransactionsResponse(
+        summary=WalletSummary(
+            total_spent_paise=total_spent_paise,
+            total_earned_paise=total_earned_paise,
+            active_deposits_paise=active_deposits_paise,
+            pending_to_be_paid_paise=pending_to_be_paid_paise,
+        ),
+        transactions=items,
+    )
+
 
 
 @router.post("/orders", response_model=PaymentOrderResponse, status_code=status.HTTP_201_CREATED)
@@ -55,24 +185,33 @@ def create_payment_order(
             status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE",
         )
 
-    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
     if existing and existing.status == PaymentStatus.PAID:
         raise AppException("This request has already been paid for", status.HTTP_400_BAD_REQUEST, "ALREADY_PAID")
-    if existing and existing.status in (PaymentStatus.CREATED, PaymentStatus.ATTEMPTED):
-        # Re-use the existing unpaid order instead of creating a duplicate order at Razorpay.
+
+    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+
+    import time
+    order = payment_service.create_order(
+        amount_paise=total_paise,
+        receipt=f"br_{str(br.id)[:18]}_{int(time.time())}",
+        notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
+    )
+
+    if existing and existing.status in (PaymentStatus.CREATED, PaymentStatus.ATTEMPTED, PaymentStatus.FAILED):
+        existing.razorpay_order_id = order["id"]
+        existing.rent_amount = rent_paise
+        existing.deposit_amount = deposit_paise
+        existing.total_amount = total_paise
+        existing.currency = settings.RAZORPAY_CURRENCY
+        existing.status = PaymentStatus.CREATED
+        db.commit()
+        db.refresh(existing)
         return PaymentOrderResponse(
             payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
             razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,
             currency=existing.currency, rent_amount=existing.rent_amount, deposit_amount=existing.deposit_amount,
         )
-
-    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
-
-    order = payment_service.create_order(
-        amount_paise=total_paise,
-        receipt=f"br_{br.id}",
-        notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
-    )
 
     payment = Payment(
         borrow_request_id=br.id,
@@ -89,8 +228,10 @@ def create_payment_order(
         db.commit()
     except IntegrityError:
         db.rollback()
-        # Concurrent double-click created a row between our check and insert — fetch and return it.
         existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+        existing.razorpay_order_id = order["id"]
+        db.commit()
+        db.refresh(existing)
         return PaymentOrderResponse(
             payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
             razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,

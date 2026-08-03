@@ -19,6 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    import sqlalchemy as _sa
+    if _sa.inspect(op.get_bind()).has_table("payments"): return
     op.create_table(
         "payments",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
