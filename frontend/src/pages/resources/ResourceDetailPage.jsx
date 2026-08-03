@@ -174,7 +174,7 @@ export default function ResourceDetailPage() {
   const totalReviewsCount = reviews.length > 0 ? reviews.length : (resource.reviews_count || 0);
   const calculatedAvgRating = reviews.length > 0
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-    : (resource.average_rating || "5.0");
+    : (resource.average_rating || "0.0");
 
   const ratingCounts = [5, 4, 3, 2, 1].map((stars) => {
     const count = reviews.filter((r) => r.rating === stars).length;
