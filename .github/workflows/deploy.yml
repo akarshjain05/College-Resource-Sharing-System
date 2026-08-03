@@ -41,5 +41,9 @@ jobs:
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
             
+            # 3.8 Clean up old Docker build cache and unused images to prevent disk full / "no space left on device"
+            docker system prune -af || true
+            docker builder prune -af || true
+
             # 4. Rebuild and restart the Docker containers with the new code
             docker compose -f docker-compose.prod.yml up -d --build
