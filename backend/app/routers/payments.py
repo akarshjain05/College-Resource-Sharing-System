@@ -182,7 +182,7 @@ def create_payment_order(
     import time
     order = payment_service.create_order(
         amount_paise=total_paise,
-        receipt=f"br_{br.id}_{int(time.time())}",
+        receipt=f"br_{str(br.id)[:18]}_{int(time.time())}",
         notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
     )
 
