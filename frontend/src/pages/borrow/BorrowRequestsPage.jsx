@@ -589,7 +589,7 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
                   {tab === "lending" && book.status === "approved" && (
-                    (!book.payment || book.payment.status !== "paid") ? (
+                    (!book.payment || book.payment.status !== "paid") && book.total_amount > 0 ? (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
                       </span>
@@ -831,7 +831,11 @@ export default function BorrowRequestsPage() {
                   )}
 
                   {isLenderModal && selectedBookingForModal.status === "approved" && (
-                    modalIsExpired ? (
+                    (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
+                      </span>
+                    ) : modalIsExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
                       </span>
