@@ -21,6 +21,7 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import PublicProfilePage from "./pages/profile/PublicProfilePage";
 import WantedPage from "./pages/wanted/WantedPage";
 import MyNeedsPage from "./pages/wanted/MyNeedsPage";
+import TransactionsPage from "./pages/payments/TransactionsPage";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
@@ -53,6 +54,8 @@ export default function App() {
             <Route path="/resources/new" element={<ResourceCreatePage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
             <Route path="/borrow-requests" element={<BorrowRequestsPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/payments" element={<TransactionsPage />} />
             <Route path="/wanted" element={<WantedPage />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />

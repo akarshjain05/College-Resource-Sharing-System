@@ -512,6 +512,10 @@ export default function BorrowRequestsPage() {
                            }} 
                         />
                       </div>
+                    ) : !isStarted ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
@@ -885,6 +889,10 @@ export default function BorrowRequestsPage() {
                            }} 
                         />
                       </div>
+                    ) : !modalIsStarted ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      </span>
                     ) : (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
