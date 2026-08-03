@@ -9,7 +9,7 @@ import { resolveNotificationLink } from "../utils/routeResolver";
 // reuse the same base URL/origin the rest of the app already talks to.
 //
 // In production the Vite build receives VITE_API_BASE_URL="/api/v1" (a
-// relative path) from docker-compose.prod.yml. Calling .replace(/^http/, "ws")
+// relative path) from docker-compose.prod.yml.  Calling .replace(/^http/, "ws")
 // on a relative string is a no-op and produces an invalid WebSocket URL.
 // We therefore derive the WS base from window.location when the env var does
 // not start with "http".
@@ -25,13 +25,19 @@ function getWebSocketBaseUrl() {
   return `${protocol}//${window.location.host}${API_BASE_URL}`;
 }
 
+// Reconnect backoff: starts at 1 s, doubles on each failure, caps at 30 s.
+const RECONNECT_BASE_MS = 1_000;
+const RECONNECT_MAX_MS = 30_000;
+
 /**
  * Opens a WebSocket to receive real-time notifications from the backend
- * and shows a toast for each one as it arrives. Reconnects automatically if connection drops.
+ * and shows a toast for each one as it arrives.  Reconnects automatically
+ * with exponential backoff so a brief network hiccup doesn't spam retries.
  */
 export function useNotificationSocket(onNotification, user) {
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
+  const reconnectDelayRef = useRef(RECONNECT_BASE_MS);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,16 +47,20 @@ export function useNotificationSocket(onNotification, user) {
 
     const connect = () => {
       if (cancelled) return;
+
+      // Always read the token fresh — it may have been refreshed since last connect.
       const token = localStorage.getItem("crss_access_token");
       if (!token) return;
-      // Pass the JWT as a query parameter — browsers cannot set custom
-      // headers on WebSocket handshakes, so this is the standard approach.
+
       const wsBase = getWebSocketBaseUrl();
-      const socket = new WebSocket(`${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`);
+      const socket = new WebSocket(
+        `${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`
+      );
       socketRef.current = socket;
 
       socket.onopen = () => {
-        // Token is already in the URL; nothing extra needed on open.
+        // Connected — reset backoff so the next disconnect starts fresh.
+        reconnectDelayRef.current = RECONNECT_BASE_MS;
       };
 
       socket.onmessage = (event) => {
@@ -58,11 +68,10 @@ export function useNotificationSocket(onNotification, user) {
           const rawPayload = JSON.parse(event.data);
           const payload = rawPayload.payload || rawPayload;
 
-          // Route chat messages directly to open threads
+          // Route chat messages directly to open threads.
           if (payload.type === "chat_message") {
             const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
-            // If the thread is open (handled), we might not want to show a toast,
-            // or we could show a quieter one. Let's just return if handled so it doesn't toast
+            // If the thread is open (handled), skip the toast.
             if (isHandled) return;
           }
 
@@ -74,10 +83,16 @@ export function useNotificationSocket(onNotification, user) {
                 else if (payload.type === "chat_message") navigate(`/borrow-requests`);
                 toast.dismiss(t.id);
               }}
-              style={{ cursor: (resolveNotificationLink(payload.link) || payload.type === "chat_message") ? "pointer" : "default" }}
+              style={{
+                cursor:
+                  resolveNotificationLink(payload.link) || payload.type === "chat_message"
+                    ? "pointer"
+                    : "default",
+              }}
             >
               <div style={{ fontWeight: "bold" }}>
-                {payload.title || (payload.type === "chat_message" ? "New message received" : "New Notification")}
+                {payload.title ||
+                  (payload.type === "chat_message" ? "New message received" : "New Notification")}
               </div>
               {payload.message && (
                 <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>
@@ -86,19 +101,25 @@ export function useNotificationSocket(onNotification, user) {
               )}
             </div>
           ), { icon: "🔔" });
+
           onNotification?.(payload);
-        } catch (err) {
+        } catch {
           // ignore malformed payloads
         }
       };
 
-      socket.onclose = () => {
-        if (!cancelled) {
-          reconnectTimeoutRef.current = setTimeout(connect, 3000);
-        }
+      socket.onclose = (event) => {
+        if (cancelled) return;
+
+        // Code 4401 = auth failure (bad/expired token).  Don't retry immediately —
+        // the token may have rotated; wait the normal backoff then re-read it.
+        const delay = reconnectDelayRef.current;
+        reconnectDelayRef.current = Math.min(delay * 2, RECONNECT_MAX_MS);
+        reconnectTimeoutRef.current = setTimeout(connect, delay);
       };
 
       socket.onerror = () => {
+        // onerror is always followed by onclose, so we let onclose handle the retry.
         socket.close();
       };
     };
