@@ -9,7 +9,7 @@ import { resolveNotificationLink } from "../utils/routeResolver";
 // reuse the same base URL/origin the rest of the app already talks to.
 //
 // In production the Vite build receives VITE_API_BASE_URL="/api/v1" (a
-// relative path) from docker-compose.prod.yml.  Calling .replace(/^http/, "ws")
+// relative path) from docker-compose.prod.yml. Calling .replace(/^http/, "ws")
 // on a relative string is a no-op and produces an invalid WebSocket URL.
 // We therefore derive the WS base from window.location when the env var does
 // not start with "http".
