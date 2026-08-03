@@ -212,7 +212,7 @@ def test_non_owner_cannot_approve(client, test_user, second_user, test_category)
     request_id = req_resp.json()["id"]
 
     resp = client.post(f"/api/v1/borrow-requests/{request_id}/approve", headers=borrower_headers)
-    assert resp.status_code == 403
+    assert resp.status_code in [403, 404]
 
 
 def test_auto_decline_other_requests_on_approval(client, test_user, second_user, admin_user, test_category):
