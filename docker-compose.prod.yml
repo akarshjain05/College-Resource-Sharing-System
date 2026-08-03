@@ -154,7 +154,7 @@ services:
     container_name: crss_frontend
     restart: unless-stopped
     environment:
-      - DOMAIN=${DOMAIN:-13.48.123.128.sslip.io}
+      - DOMAIN=${DOMAIN:-13-48-123-128.sslip.io}
     ports:
       - "80:80"
       - "443:443"
