@@ -133,5 +133,11 @@ export const uploadApi = {
   setPrimaryImage: (imageId) => api.patch(`/uploads/resources/images/${imageId}/set-primary`),
 };
 
-export { getImageUrl };
+export const paymentApi = {
+  myPayments: () => api.get("/payments/my-payments"),
+  simulatePay: (id) => api.post(`/payments/${id}/pay`),
+  simulateFail: (id) => api.post(`/payments/${id}/fail`),
+  cancel: (id) => api.post(`/payments/${id}/cancel`),
+};
 
+export { getImageUrl };
