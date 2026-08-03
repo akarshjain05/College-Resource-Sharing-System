@@ -46,4 +46,5 @@ jobs:
             docker builder prune -af || true
 
             # 4. Rebuild and restart the Docker containers with the new code
-            docker compose -f docker-compose.prod.yml up -d --build
+            docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
