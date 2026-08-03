@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /build/wheels /wheels
 COPY --from=builder /build/requirements.txt .
 
-RUN pip install --no-cache --upgrade setuptools wheel && \
+RUN pip install --no-cache "setuptools==69.5.1" wheel && \
     pip install --no-cache /wheels/*
 
 COPY . .
