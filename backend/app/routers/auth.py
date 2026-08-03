@@ -10,7 +10,8 @@ from google.auth.transport import requests as google_requests
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_user_optional
+from typing import Optional
 from app.core.exceptions import AppException, ConflictException
 from app.core.security import (
     hash_password,
@@ -417,11 +418,18 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
     return Token(access_token=access_token, refresh_token=new_refresh_token)
 
 @router.post("/logout")
-def logout(response: Response, current_user: User = Depends(get_current_user), request: Request = None):
-    cookie_token = request.cookies.get("crss_refresh_token") if request else None
-    if cookie_token:
+def logout(
+    response: Response,
+    request: Request,
+    current_user: Optional[User] = Depends(get_current_user_optional),
+):
+    cookie_token = request.cookies.get("crss_refresh_token")
+    if current_user and cookie_token:
         from app.services.session_service import revoke_refresh_token
         revoke_refresh_token(str(current_user.id), cookie_token)
+    elif current_user:
+        from app.services.session_service import revoke_all_refresh_tokens
+        revoke_all_refresh_tokens(str(current_user.id))
     clear_refresh_cookie(response)
     return {"detail": "Logged out successfully"}
 

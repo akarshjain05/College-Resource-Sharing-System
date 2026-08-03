@@ -28,6 +28,14 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     loadUser();
+    const handleUnauthorized = () => {
+      setUser(null);
+      localStorage.removeItem("crss_access_token");
+    };
+    window.addEventListener("crss:auth-unauthorized", handleUnauthorized);
+    return () => {
+      window.removeEventListener("crss:auth-unauthorized", handleUnauthorized);
+    };
   }, [loadUser]);
 
   const login = async (email, password) => {
