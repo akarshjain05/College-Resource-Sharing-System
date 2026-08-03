@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -83,11 +83,11 @@ api.interceptors.response.use(
 );
 
 export const getImageUrl = (url) => {
-  if (!url) return "";
+  if (!url) return null;
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
     return url;
   }
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "/api/v1";
   try {
     if (apiBase.startsWith("/")) {
       return `${window.location.origin}${url}`;
@@ -95,7 +95,7 @@ export const getImageUrl = (url) => {
     const origin = new URL(apiBase).origin;
     return `${origin}${url}`;
   } catch (e) {
-    return `http://localhost:8000${url}`;
+    return url;
   }
 };
 
