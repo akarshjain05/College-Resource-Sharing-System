@@ -34,13 +34,16 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 async def notifications_websocket(websocket: WebSocket):
     await websocket.accept()
     
-    try:
-        data = await websocket.receive_json()
-        token = data.get("token")
-        if not token:
+    token = websocket.query_params.get("token")
+    if not token:
+        try:
+            data = await websocket.receive_json()
+            token = data.get("token")
+        except Exception:
             await websocket.close(code=4401)
             return
-    except Exception:
+
+    if not token:
         await websocket.close(code=4401)
         return
     db = core_db.SessionLocal()

@@ -8,7 +8,14 @@ import { resolveNotificationLink } from "../utils/routeResolver";
 // (see backend/app/routers/websocket.py), not a separate microservice --
 // reuse the same base URL/origin the rest of the app already talks to.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
-const NOTIFICATION_WS_BASE = API_BASE_URL.replace(/^http/, "ws");
+
+function getWebSocketBaseUrl() {
+  if (API_BASE_URL.startsWith("http")) {
+    return API_BASE_URL.replace(/^http/, "ws");
+  }
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}${API_BASE_URL}`;
+}
 
 /**
  * Opens a WebSocket to receive real-time notifications from the backend
@@ -28,7 +35,8 @@ export function useNotificationSocket(onNotification, user) {
       if (cancelled) return;
       const token = localStorage.getItem("crss_access_token");
       if (!token) return;
-      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications`);
+      const wsBase = getWebSocketBaseUrl();
+      const socket = new WebSocket(`${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`);
       socketRef.current = socket;
 
       socket.onopen = () => {
