@@ -15,9 +15,3 @@
         file_server
     }
 }
-
-:443 {
-    tls internal
-    header Strict-Transport-Security "max-age=0"
-    redir http://{host}{uri} permanent
-}
