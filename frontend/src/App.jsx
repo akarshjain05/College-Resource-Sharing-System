@@ -27,6 +27,7 @@ import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
+import PaymentsPage from "./pages/PaymentsPage";
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/wanted" element={<WantedPage />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
+            <Route path="/payments" element={<PaymentsPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/users/:userId" element={<PublicProfilePage />} />
 

@@ -1,5 +1,6 @@
 import uuid
 from typing import Optional
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from app.models.enums import PaymentStatus
 
@@ -30,6 +31,7 @@ class PaymentResponse(BaseModel):
     id: uuid.UUID
     borrow_request_id: uuid.UUID
     status: PaymentStatus
+    created_at: datetime
     rent_amount: int
     deposit_amount: int
     total_amount: int

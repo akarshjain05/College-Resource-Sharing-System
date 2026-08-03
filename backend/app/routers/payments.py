@@ -19,8 +19,22 @@ from app.services import payment_service
 from app.services.notification_service import create_notification
 from app.services.email_service import send_payment_confirmation_email
 
+from typing import List
+
 router = APIRouter(prefix="/payments", tags=["Payments"])
 logger = logging.getLogger("crss")
+
+@router.get("/my-payments", response_model=List[PaymentResponse])
+def get_my_payments(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get all payments associated with the current logged-in user.
+    """
+    payments = db.query(Payment).filter(Payment.payer_id == current_user.id).order_by(Payment.created_at.desc()).all()
+    return payments
+
 
 
 def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
