@@ -443,7 +443,7 @@ export default function TransactionsPage() {
                           {isPending ? "" : isCredit ? "+ " : "- "}
                           {formatRupees(
                             isCredit
-                              ? tx.rent_amount
+                              ? tx.total_amount
                               : tx.rent_amount + Math.max(0, tx.deposit_amount - tx.refunded_amount)
                           )}
                         </p>

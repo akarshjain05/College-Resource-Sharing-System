@@ -933,7 +933,7 @@ export default function BorrowRequestsPage() {
                           await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
                           closeBookingModal({ ...selectedBookingForModal, status: "active" });
                         }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                        className="btn-primary !bg-blue-600 hover:!bg-blue-700 !py-2 text-xs flex items-center gap-1 text-white font-bold"
                       >
                         <Check className="h-3.5 w-3.5" /> Confirm Receipt
                       </button>
