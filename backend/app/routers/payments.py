@@ -49,10 +49,14 @@ def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
     """Server-side source of truth for pricing — mirrors the frontend's display math,
     but the frontend numbers are NEVER trusted for the actual charge."""
     resource = br.resource
-    days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
-    daily_price = int(float(resource.deposit_amount) * 0.05)
+    deposit_val = float(getattr(resource, "deposit_amount", 0) or 0)
+    try:
+        days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
+    except Exception:
+        days = 1
+    daily_price = int(deposit_val * 0.05)
     rent = daily_price * days
-    deposit = int(resource.deposit_amount)
+    deposit = int(deposit_val)
     rent_paise = rent * 100
     deposit_paise = deposit * 100
     total_paise = max(100, rent_paise + deposit_paise)
@@ -75,16 +79,21 @@ def get_my_transactions(
     pending_to_be_paid_paise = 0
 
     for br in brs:
-        p = br.payment
+        p = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
         is_lender = (br.lender_id == current_user.id)
-        other_party = br.borrower.full_name if is_lender else br.lender.full_name
-        image_url = br.resource.images[0] if br.resource.images and len(br.resource.images) > 0 else None
+        other_party = (
+            getattr(br.borrower, "full_name", "Unknown") if is_lender else getattr(br.lender, "full_name", "Unknown")
+        )
+        item_title = getattr(br.resource, "title", "Unknown Resource") if br.resource else "Unknown Resource"
+        image_url = None
+        if br.resource and br.resource.images and len(br.resource.images) > 0:
+            image_url = br.resource.images[0]
 
         if p and p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.FAILED):
             tx_type = "CREDIT" if is_lender else "DEBIT"
             if p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED):
                 if tx_type == "DEBIT":
-                    spent = p.rent_amount + max(0, p.deposit_amount - p.refunded_amount)
+                    spent = (p.rent_amount or 0) + max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
                     total_spent_paise += spent
                     if br.status in (
                         BorrowStatus.APPROVED,
@@ -94,27 +103,27 @@ def get_my_transactions(
                         BorrowStatus.HANDOVER_REQUESTED,
                         BorrowStatus.RETURN_REQUESTED,
                     ):
-                        active_deposits_paise += max(0, p.deposit_amount - p.refunded_amount)
+                        active_deposits_paise += max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
                 else:
-                    total_earned_paise += p.rent_amount
+                    total_earned_paise += (p.rent_amount or 0)
 
             items.append(
                 TransactionItem(
                     id=str(p.id),
                     borrow_request_id=str(br.id),
-                    status=p.status.value,
-                    rent_amount=p.rent_amount,
-                    deposit_amount=p.deposit_amount,
-                    total_amount=p.total_amount,
-                    currency=p.currency,
-                    refunded_amount=p.refunded_amount,
+                    status=p.status.value if hasattr(p.status, "value") else str(p.status),
+                    rent_amount=int(p.rent_amount or 0),
+                    deposit_amount=int(p.deposit_amount or 0),
+                    total_amount=int(p.total_amount or 0),
+                    currency=p.currency or "INR",
+                    refunded_amount=int(p.refunded_amount or 0),
                     created_at=p.created_at.isoformat() if p.created_at else "",
                     razorpay_payment_id=p.razorpay_payment_id,
                     transaction_type=tx_type,
-                    item_title=br.resource.title,
+                    item_title=item_title,
                     item_image=image_url,
                     other_party_name=other_party,
-                    borrow_status=br.status.value,
+                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
                     is_to_be_paid=False,
                 )
             )
@@ -134,10 +143,10 @@ def get_my_transactions(
                     created_at=br.created_at.isoformat() if br.created_at else "",
                     razorpay_payment_id=None,
                     transaction_type="DEBIT",
-                    item_title=br.resource.title,
+                    item_title=item_title,
                     item_image=image_url,
                     other_party_name=other_party,
-                    borrow_status=br.status.value,
+                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
                     is_to_be_paid=True,
                 )
             )
