@@ -1,14 +1,19 @@
 """
 WebSocket endpoint for real-time notification delivery.
 
-Frontend connects with: ws://<host>/api/v1/ws/notifications?token=<access_token>
+Frontend connects with:
+  wss://<host>/api/v1/ws/notifications?token=<access_token>   (preferred)
+  ws://<host>/api/v1/ws/notifications                          (then sends JSON {token})
+
 (main.py registers this router with prefix="/api/v1"). Since browsers can't set
 custom headers on a WebSocket handshake, the JWT is passed as a query parameter
-instead of the Authorization header used elsewhere.
+OR as the first JSON message after the handshake instead of the Authorization
+header used elsewhere. Both styles are accepted for backward/forward compatibility.
 """
 import uuid
+from typing import Optional
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
 import app.core.database as core_db
@@ -31,10 +36,20 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 
 
 @router.websocket("/ws/notifications")
-async def notifications_websocket(websocket: WebSocket):
+async def notifications_websocket(
+    websocket: WebSocket,
+    token: Optional[str] = Query(default=None),
+):
     await websocket.accept()
-    
-    token = websocket.query_params.get("token")
+
+    # --- Authenticate ---
+    # Strategy 1: token supplied as a query parameter (?token=...).
+    #   Preferred because browsers cannot set custom headers on WebSocket handshakes.
+    # Strategy 2: token supplied as the first JSON message after the handshake.
+    #   Kept for backward compatibility with older frontend builds.
+    if not token:
+        token = websocket.query_params.get("token")
+
     if not token:
         try:
             data = await websocket.receive_json()
@@ -46,6 +61,7 @@ async def notifications_websocket(websocket: WebSocket):
     if not token:
         await websocket.close(code=4401)
         return
+
     db = core_db.SessionLocal()
     try:
         user = _authenticate_ws_token(token, db)

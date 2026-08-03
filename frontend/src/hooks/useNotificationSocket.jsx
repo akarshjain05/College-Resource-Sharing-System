@@ -7,12 +7,20 @@ import { resolveNotificationLink } from "../utils/routeResolver";
 // The realtime notification WebSocket is served by the main backend itself
 // (see backend/app/routers/websocket.py), not a separate microservice --
 // reuse the same base URL/origin the rest of the app already talks to.
+//
+// In production the Vite build receives VITE_API_BASE_URL="/api/v1" (a
+// relative path) from docker-compose.prod.yml. Calling .replace(/^http/, "ws")
+// on a relative string is a no-op and produces an invalid WebSocket URL.
+// We therefore derive the WS base from window.location when the env var does
+// not start with "http".
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
 function getWebSocketBaseUrl() {
   if (API_BASE_URL.startsWith("http")) {
+    // Absolute URL (local dev): just swap the scheme.
     return API_BASE_URL.replace(/^http/, "ws");
   }
+  // Relative URL (production behind Caddy): build wss:// or ws:// from window.location.
   const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${protocol}//${window.location.host}${API_BASE_URL}`;
 }
@@ -35,12 +43,14 @@ export function useNotificationSocket(onNotification, user) {
       if (cancelled) return;
       const token = localStorage.getItem("crss_access_token");
       if (!token) return;
+      // Pass the JWT as a query parameter — browsers cannot set custom
+      // headers on WebSocket handshakes, so this is the standard approach.
       const wsBase = getWebSocketBaseUrl();
       const socket = new WebSocket(`${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`);
       socketRef.current = socket;
 
       socket.onopen = () => {
-        socket.send(JSON.stringify({ token }));
+        // Token is already in the URL; nothing extra needed on open.
       };
 
       socket.onmessage = (event) => {
