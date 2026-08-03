@@ -55,7 +55,8 @@ def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
     deposit = int(resource.deposit_amount)
     rent_paise = rent * 100
     deposit_paise = deposit * 100
-    return rent_paise, deposit_paise, rent_paise + deposit_paise
+    total_paise = max(100, rent_paise + deposit_paise)
+    return rent_paise, deposit_paise, total_paise
 
 
 @router.get("/my", response_model=MyTransactionsResponse)
@@ -175,21 +176,30 @@ def create_payment_order(
     existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
     if existing and existing.status == PaymentStatus.PAID:
         raise AppException("This request has already been paid for", status.HTTP_400_BAD_REQUEST, "ALREADY_PAID")
-    if existing and existing.status in (PaymentStatus.CREATED, PaymentStatus.ATTEMPTED):
-        # Re-use the existing unpaid order instead of creating a duplicate order at Razorpay.
+
+    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+
+    import time
+    order = payment_service.create_order(
+        amount_paise=total_paise,
+        receipt=f"br_{br.id}_{int(time.time())}",
+        notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
+    )
+
+    if existing and existing.status in (PaymentStatus.CREATED, PaymentStatus.ATTEMPTED, PaymentStatus.FAILED):
+        existing.razorpay_order_id = order["id"]
+        existing.rent_amount = rent_paise
+        existing.deposit_amount = deposit_paise
+        existing.total_amount = total_paise
+        existing.currency = settings.RAZORPAY_CURRENCY
+        existing.status = PaymentStatus.CREATED
+        db.commit()
+        db.refresh(existing)
         return PaymentOrderResponse(
             payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
             razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,
             currency=existing.currency, rent_amount=existing.rent_amount, deposit_amount=existing.deposit_amount,
         )
-
-    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
-
-    order = payment_service.create_order(
-        amount_paise=total_paise,
-        receipt=f"br_{br.id}",
-        notes={"borrow_request_id": str(br.id), "borrower_id": str(current_user.id)},
-    )
 
     payment = Payment(
         borrow_request_id=br.id,
@@ -206,8 +216,10 @@ def create_payment_order(
         db.commit()
     except IntegrityError:
         db.rollback()
-        # Concurrent double-click created a row between our check and insert — fetch and return it.
         existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+        existing.razorpay_order_id = order["id"]
+        db.commit()
+        db.refresh(existing)
         return PaymentOrderResponse(
             payment_id=existing.id, razorpay_order_id=existing.razorpay_order_id,
             razorpay_key_id=settings.RAZORPAY_KEY_ID, amount=existing.total_amount,
