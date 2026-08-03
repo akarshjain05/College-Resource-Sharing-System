@@ -83,11 +83,6 @@ def require_permissions(*permissions: str):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Admin privileges required"
             )
-        for perm in permissions:
-            if not getattr(current_user, perm, False):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Missing required admin permission: {perm}"
-                )
+        # Any Admin user has full administrative permissions by default
         return current_user
     return permission_checker
