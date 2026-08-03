@@ -89,29 +89,32 @@ def get_my_transactions(
         if br.resource and br.resource.images and len(br.resource.images) > 0:
             image_url = br.resource.images[0]
 
-        if p and p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.FAILED):
+        if p:
             tx_type = "CREDIT" if is_lender else "DEBIT"
-            if p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED):
+            status_str = p.status.value if hasattr(p.status, "value") else str(p.status)
+
+            if p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.REFUND_INITIATED):
                 if tx_type == "DEBIT":
                     spent = (p.rent_amount or 0) + max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
                     total_spent_paise += spent
                     if br.status in (
                         BorrowStatus.APPROVED,
                         BorrowStatus.ACTIVE,
-                        BorrowStatus.ONGOING,
-                        BorrowStatus.LATE,
                         BorrowStatus.HANDOVER_REQUESTED,
                         BorrowStatus.RETURN_REQUESTED,
+                        BorrowStatus.LATE,
                     ):
                         active_deposits_paise += max(0, (p.deposit_amount or 0) - (p.refunded_amount or 0))
                 else:
                     total_earned_paise += (p.rent_amount or 0)
+            elif tx_type == "DEBIT" and br.status == BorrowStatus.APPROVED:
+                pending_to_be_paid_paise += (p.total_amount or 0)
 
             items.append(
                 TransactionItem(
                     id=str(p.id),
                     borrow_request_id=str(br.id),
-                    status=p.status.value if hasattr(p.status, "value") else str(p.status),
+                    status=status_str,
                     rent_amount=int(p.rent_amount or 0),
                     deposit_amount=int(p.deposit_amount or 0),
                     total_amount=int(p.total_amount or 0),
@@ -124,10 +127,10 @@ def get_my_transactions(
                     item_image=image_url,
                     other_party_name=other_party,
                     borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
-                    is_to_be_paid=False,
+                    is_to_be_paid=(status_str in ("created", "attempted", "pending_payment") and br.status == BorrowStatus.APPROVED and not is_lender),
                 )
             )
-        elif not is_lender and br.status == BorrowStatus.APPROVED and (not p or p.status != PaymentStatus.PAID):
+        elif not is_lender and br.status == BorrowStatus.APPROVED:
             rent_paise, deposit_paise, total_paise = _compute_amounts(br)
             pending_to_be_paid_paise += total_paise
             items.append(
@@ -182,7 +185,7 @@ def create_payment_order(
             status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE",
         )
 
-    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).first()
+    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
     if existing and existing.status == PaymentStatus.PAID:
         raise AppException("This request has already been paid for", status.HTTP_400_BAD_REQUEST, "ALREADY_PAID")
 
