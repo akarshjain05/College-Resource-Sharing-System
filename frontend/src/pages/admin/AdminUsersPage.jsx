@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { ShieldOff, ShieldCheck, UserPlus } from "lucide-react";
+import { ShieldOff, ShieldCheck, UserPlus, UserMinus } from "lucide-react";
 import { userApi, adminApi } from "../../api/endpoints";
 import ConfirmModal from "../../components/ConfirmModal";
 
@@ -45,6 +45,29 @@ export default function AdminUsersPage() {
             can_resolve_damage_claims: true
           });
           toast.success(`${user.full_name} is now an Admin`);
+          load();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Action failed");
+        }
+      }
+    });
+  };
+
+  const handleRemoveAdmin = (user) => {
+    setConfirmDialog({
+      title: "Remove from Admin",
+      message: `Are you sure you want to remove admin privileges from ${user.full_name}? They will be changed back to a Student and lose administrative access.`,
+      confirmText: "Remove Admin",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await adminApi.updateUserRole(user.id, {
+            role: "student",
+            can_moderate_complaints: false,
+            can_manage_users: false,
+            can_resolve_damage_claims: false
+          });
+          toast.success(`${user.full_name} is no longer an Admin`);
           load();
         } catch (err) {
           toast.error(err.response?.data?.detail || "Action failed");
@@ -107,9 +130,13 @@ export default function AdminUsersPage() {
                           </>
                         )}
                       </button>
-                      {u.role !== 'admin' && (
+                      {u.role !== 'admin' ? (
                         <button onClick={() => handleMakeAdmin(u)} className="btn-secondary !py-1 !px-2 text-xs text-primary-600 border-primary-200 hover:bg-primary-50">
                           <UserPlus className="h-3.5 w-3.5" /> Make Admin
+                        </button>
+                      ) : (
+                        <button onClick={() => handleRemoveAdmin(u)} className="btn-secondary !py-1 !px-2 text-xs text-red-600 border-red-200 hover:bg-red-50">
+                          <UserMinus className="h-3.5 w-3.5" /> Remove Admin
                         </button>
                       )}
                     </div>
