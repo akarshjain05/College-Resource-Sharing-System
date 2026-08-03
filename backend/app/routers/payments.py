@@ -14,7 +14,15 @@ from app.models.borrow import BorrowRequest
 from app.models.payment import Payment
 from app.models.enums import BorrowStatus, PaymentStatus, NotificationType
 from app.models.user import User
-from app.schemas.payment import PaymentOrderCreate, PaymentOrderResponse, PaymentVerifyRequest, PaymentResponse
+from app.schemas.payment import (
+    PaymentOrderCreate,
+    PaymentOrderResponse,
+    PaymentVerifyRequest,
+    PaymentResponse,
+    MyTransactionsResponse,
+    TransactionItem,
+    WalletSummary,
+)
 from app.services import payment_service
 from app.services.notification_service import create_notification
 from app.services.email_service import send_payment_confirmation_email
@@ -48,6 +56,101 @@ def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
     rent_paise = rent * 100
     deposit_paise = deposit * 100
     return rent_paise, deposit_paise, rent_paise + deposit_paise
+
+
+@router.get("/my", response_model=MyTransactionsResponse)
+def get_my_transactions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    brs = db.query(BorrowRequest).filter(
+        (BorrowRequest.borrower_id == current_user.id) | (BorrowRequest.lender_id == current_user.id)
+    ).order_by(BorrowRequest.created_at.desc()).all()
+
+    items = []
+    total_spent_paise = 0
+    total_earned_paise = 0
+    active_deposits_paise = 0
+    pending_to_be_paid_paise = 0
+
+    for br in brs:
+        p = br.payment
+        is_lender = (br.lender_id == current_user.id)
+        other_party = br.borrower.full_name if is_lender else br.lender.full_name
+        image_url = br.resource.images[0] if br.resource.images and len(br.resource.images) > 0 else None
+
+        if p and p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED, PaymentStatus.FAILED):
+            tx_type = "CREDIT" if is_lender else "DEBIT"
+            if p.status in (PaymentStatus.PAID, PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED):
+                if tx_type == "DEBIT":
+                    spent = p.rent_amount + max(0, p.deposit_amount - p.refunded_amount)
+                    total_spent_paise += spent
+                    if br.status in (
+                        BorrowStatus.APPROVED,
+                        BorrowStatus.ACTIVE,
+                        BorrowStatus.ONGOING,
+                        BorrowStatus.LATE,
+                        BorrowStatus.HANDOVER_REQUESTED,
+                        BorrowStatus.RETURN_REQUESTED,
+                    ):
+                        active_deposits_paise += max(0, p.deposit_amount - p.refunded_amount)
+                else:
+                    total_earned_paise += p.rent_amount
+
+            items.append(
+                TransactionItem(
+                    id=str(p.id),
+                    borrow_request_id=str(br.id),
+                    status=p.status.value,
+                    rent_amount=p.rent_amount,
+                    deposit_amount=p.deposit_amount,
+                    total_amount=p.total_amount,
+                    currency=p.currency,
+                    refunded_amount=p.refunded_amount,
+                    created_at=p.created_at.isoformat() if p.created_at else "",
+                    razorpay_payment_id=p.razorpay_payment_id,
+                    transaction_type=tx_type,
+                    item_title=br.resource.title,
+                    item_image=image_url,
+                    other_party_name=other_party,
+                    borrow_status=br.status.value,
+                    is_to_be_paid=False,
+                )
+            )
+        elif not is_lender and br.status == BorrowStatus.APPROVED and (not p or p.status != PaymentStatus.PAID):
+            rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+            pending_to_be_paid_paise += total_paise
+            items.append(
+                TransactionItem(
+                    id=f"pending_{br.id}",
+                    borrow_request_id=str(br.id),
+                    status="PENDING_PAYMENT",
+                    rent_amount=rent_paise,
+                    deposit_amount=deposit_paise,
+                    total_amount=total_paise,
+                    currency=settings.RAZORPAY_CURRENCY,
+                    refunded_amount=0,
+                    created_at=br.created_at.isoformat() if br.created_at else "",
+                    razorpay_payment_id=None,
+                    transaction_type="DEBIT",
+                    item_title=br.resource.title,
+                    item_image=image_url,
+                    other_party_name=other_party,
+                    borrow_status=br.status.value,
+                    is_to_be_paid=True,
+                )
+            )
+
+    return MyTransactionsResponse(
+        summary=WalletSummary(
+            total_spent_paise=total_spent_paise,
+            total_earned_paise=total_earned_paise,
+            active_deposits_paise=active_deposits_paise,
+            pending_to_be_paid_paise=pending_to_be_paid_paise,
+        ),
+        transactions=items,
+    )
+
 
 
 @router.post("/orders", response_model=PaymentOrderResponse, status_code=status.HTTP_201_CREATED)

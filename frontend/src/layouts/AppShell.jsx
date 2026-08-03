@@ -22,6 +22,7 @@ import {
   Moon,
   Globe,
   Mail,
+  Wallet,
   CreditCard,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -37,6 +38,7 @@ const NAV_ITEMS = [
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
+  { to: "/transactions", label: "Wallet & Payments", icon: Wallet },
   { to: "/payments", label: "My Payments", icon: CreditCard },
   // { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
