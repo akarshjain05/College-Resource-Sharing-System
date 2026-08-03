@@ -48,6 +48,7 @@ jobs:
 
             # 4. Rebuild and restart the Docker containers with the new code
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
+            docker rm -f crss_db crss_redis crss_backend crss_celery_worker crss_celery_beat crss_frontend crss_db_backup 2>/dev/null || true
             docker rmi -f crss_backend:latest docker.io/library/crss_backend:latest crss_frontend_prod:latest 2>/dev/null || true
             docker compose -f docker-compose.prod.yml build backend
             docker compose -f docker-compose.prod.yml build frontend
