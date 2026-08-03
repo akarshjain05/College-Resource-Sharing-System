@@ -49,6 +49,8 @@ class User(Base, UUIDMixin, TimestampMixin):
     avg_response_seconds: Mapped[Optional[int]] = mapped_column(nullable=True)
     response_count: Mapped[int] = mapped_column(default=0)
 
+    fcm_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
     resources: Mapped[List["Resource"]] = relationship(
         "Resource", back_populates="owner", cascade="all, delete-orphan"
     )

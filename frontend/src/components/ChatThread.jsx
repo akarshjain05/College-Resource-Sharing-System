@@ -100,16 +100,16 @@ export default function ChatThread({ request, onReportIssue }) {
   }
 
   return (
-    <div className="flex flex-col border border-slate-200 rounded-xl bg-slate-50 mt-4 overflow-hidden">
+    <div className="flex flex-col border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900 mt-4 overflow-hidden">
       {/* Pickup Location Header */}
       {request.resource?.pickup_location && (
-        <div className="bg-white px-4 py-3 border-b border-slate-200 flex items-start gap-2.5">
-          <div className="p-1.5 bg-primary-50 text-primary-600 rounded-lg shrink-0 mt-0.5">
+        <div className="bg-white dark:bg-slate-950 px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-start gap-2.5">
+          <div className="p-1.5 bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 rounded-lg shrink-0 mt-0.5">
             <MapPin className="h-4 w-4" />
           </div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pickup Location</p>
-            <p className="text-xs font-semibold text-slate-800">{request.resource.pickup_location}</p>
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{request.resource.pickup_location}</p>
           </div>
         </div>
       )}
@@ -117,7 +117,7 @@ export default function ChatThread({ request, onReportIssue }) {
       {/* Messages Area */}
       <div className="p-4 space-y-4 max-h-64 overflow-y-auto min-h-[160px]">
         {messages.length === 0 ? (
-          <div className="text-center text-xs text-slate-400 mt-8">
+          <div className="text-center text-xs text-slate-400 dark:text-slate-500 mt-8">
             <p>No messages yet.</p>
             <p className="mt-1">Send a message to coordinate pickup.</p>
           </div>
@@ -145,11 +145,11 @@ export default function ChatThread({ request, onReportIssue }) {
                   className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
                     isMe 
                       ? "bg-primary-600 text-white rounded-br-sm" 
-                      : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm"
+                      : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-sm"
                   }`}
                 >
                   {renderMessageContent(msg)}
-                  <p className={`text-[9px] mt-1 text-right ${isMe ? "text-primary-200" : "text-slate-400"}`}>
+                  <p className={`text-[9px] mt-1 text-right ${isMe ? "text-primary-200" : "text-slate-400 dark:text-slate-400"}`}>
                     {format(new Date(msg.created_at), "h:mm a")}
                   </p>
                 </div>
@@ -161,14 +161,14 @@ export default function ChatThread({ request, onReportIssue }) {
       </div>
 
       {/* Input Area */}
-      <div className="p-3 bg-white border-t border-slate-200">
+      <div className="p-3 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800">
         <form onSubmit={handleSend} className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+            className="flex-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
             disabled={sending}
           />
           <button

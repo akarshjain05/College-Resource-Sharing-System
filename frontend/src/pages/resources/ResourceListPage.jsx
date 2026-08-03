@@ -66,10 +66,10 @@ export default function ResourceListPage() {
         </div>
       </div>
 
-      <div className="card p-4 space-y-4">
+      <div className="rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-300 dark:text-slate-500" />
             <input
               className="input pl-9"
               placeholder="Search by title, description, or tag..."
@@ -88,9 +88,9 @@ export default function ResourceListPage() {
               setCategoryId(e.target.value);
             }}
           >
-            <option value="">All categories</option>
+            <option value="" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">All categories</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.id}>
+              <option key={c.id} value={c.id} className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">
                 {c.name}
               </option>
             ))}
@@ -103,11 +103,11 @@ export default function ResourceListPage() {
               setCondition(e.target.value);
             }}
           >
-            <option value="">Any condition</option>
-            <option value="new">New</option>
-            <option value="good">Good</option>
-            <option value="fair">Fair</option>
-            <option value="worn">Worn</option>
+            <option value="" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Any condition</option>
+            <option value="new" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">New</option>
+            <option value="good" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Good</option>
+            <option value="fair" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Fair</option>
+            <option value="worn" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Worn</option>
           </select>
           <button
             type="button"
@@ -129,7 +129,7 @@ export default function ResourceListPage() {
 
         {/* Collapsible Advanced Filters & Sorting Panel */}
         {showFilters && (
-          <div className="grid grid-cols-1 gap-4 pt-3 border-t border-ink-100/60 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 pt-3 border-t border-ink-100/60 dark:border-slate-800 sm:grid-cols-2 md:grid-cols-3">
             <div>
               <label className="label">Status</label>
               <select
@@ -140,11 +140,11 @@ export default function ResourceListPage() {
                   setStatus(e.target.value);
                 }}
               >
-                <option value="">Any status</option>
-                <option value="available">Available</option>
-                <option value="borrowed">Borrowed</option>
-                <option value="unavailable">Unavailable</option>
-                <option value="pending_approval">Pending Approval</option>
+                <option value="" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Any status</option>
+                <option value="available" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Available</option>
+                <option value="borrowed" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Borrowed</option>
+                <option value="unavailable" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Unavailable</option>
+                <option value="pending_approval" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Pending Approval</option>
               </select>
             </div>
 
@@ -158,11 +158,11 @@ export default function ResourceListPage() {
                   setMinRating(e.target.value);
                 }}
               >
-                <option value="">Any rating</option>
-                <option value="4.5">4.5+ Stars</option>
-                <option value="4.0">4.0+ Stars</option>
-                <option value="3.0">3.0+ Stars</option>
-                <option value="2.0">2.0+ Stars</option>
+                <option value="" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Any rating</option>
+                <option value="4.5" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">4.5+ Stars</option>
+                <option value="4.0" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">4.0+ Stars</option>
+                <option value="3.0" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">3.0+ Stars</option>
+                <option value="2.0" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">2.0+ Stars</option>
               </select>
             </div>
 
@@ -178,12 +178,12 @@ export default function ResourceListPage() {
                   setSortDir(direction);
                 }}
               >
-                <option value="created_at:desc">Newest Listed</option>
-                <option value="created_at:asc">Oldest Listed</option>
-                <option value="average_rating:desc">Highest Rated</option>
-                <option value="total_borrows:desc">Most Popular</option>
-                <option value="title:asc">Title (A-Z)</option>
-                <option value="title:desc">Title (Z-A)</option>
+                <option value="created_at:desc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Newest Listed</option>
+                <option value="created_at:asc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Oldest Listed</option>
+                <option value="average_rating:desc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Highest Rated</option>
+                <option value="total_borrows:desc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Most Popular</option>
+                <option value="title:asc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Title (A-Z)</option>
+                <option value="title:desc" className="bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100">Title (Z-A)</option>
               </select>
             </div>
           </div>
@@ -193,11 +193,11 @@ export default function ResourceListPage() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 animate-pulse rounded-lg bg-ink-100" />
+            <div key={i} className="h-64 animate-pulse rounded-2xl bg-slate-200/60 dark:bg-slate-800/60" />
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="card p-10 text-center text-sm text-ink-500">
+        <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-10 text-center text-xs text-slate-400">
           No resources match your search. Try a different filter.
         </div>
       ) : (
@@ -214,7 +214,7 @@ export default function ResourceListPage() {
             <button
               key={p}
               onClick={() => setPage(p)}
-              className={`h-8 w-8 rounded-md text-sm font-semibold ${p === page ? "bg-primary-600 text-white" : "bg-white text-ink-500 hover:bg-ink-50"
+              className={`h-8 w-8 rounded-md text-sm font-semibold ${p === page ? "bg-primary-600 text-white" : "bg-white dark:bg-slate-900 text-ink-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-ink-50 dark:hover:bg-slate-800 dark:hover:text-white"
                 }`}
             >
               {p}

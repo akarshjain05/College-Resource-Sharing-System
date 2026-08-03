@@ -150,13 +150,34 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     borrower_notifs = client.get("/api/v1/notifications", headers=borrower_headers).json()
     assert any(n["type"] == NotificationType.BORROW_APPROVED.value for n in borrower_notifs)
 
-    # 4. Owner hands over resource (transition to HANDOVER_REQUESTED)
-    client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
-    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
+    # Mock payment so handover can proceed
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    import uuid
+    db_session.add(Payment(
+        borrow_request_id=uuid.UUID(req_id),
+        payer_id=second_user.id,
+        razorpay_order_id="mock_order",
+        razorpay_payment_id="mock_payment",
+        rent_amount=100, deposit_amount=100, total_amount=200,
+        currency="INR", status=PaymentStatus.PAID, refunded_amount=100
+    ))
+    db_session.commit()
+
+    # 4. Owner hands over resource
+    ho = client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    cho = client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
+    
+    # Mock time passing so we can return
+    from app.models.borrow import BorrowRequest
+    from datetime import datetime, timezone, timedelta
+    br_record = db_session.query(BorrowRequest).filter(BorrowRequest.id == uuid.UUID(req_id)).first()
+    br_record.requested_start_date = datetime.now(timezone.utc) - timedelta(days=1)
+    db_session.commit()
 
     # 5. Borrower requests return
-    client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
-
+    ret_resp = client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
+    assert ret_resp.status_code == 200, ret_resp.json()
     # Check owner received RETURN_REQUESTED (SYSTEM) notification
     owner_notifs_updated = client.get("/api/v1/notifications", headers=owner_headers).json()
     assert any("Return requested" in n["title"] for n in owner_notifs_updated)
