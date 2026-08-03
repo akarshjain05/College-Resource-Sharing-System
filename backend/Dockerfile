@@ -32,7 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /build/wheels /wheels
 COPY --from=builder /build/requirements.txt .
 
-RUN pip install --no-cache "setuptools==69.5.1" wheel && \
+# Pin setuptools<82 because setuptools 82.0.0+ removed pkg_resources, which Razorpay SDK requires
+RUN pip install --no-cache "setuptools<82" wheel && \
     pip install --no-cache /wheels/*
 
 COPY . .
