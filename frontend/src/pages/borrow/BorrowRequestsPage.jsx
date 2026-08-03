@@ -477,7 +477,16 @@ export default function BorrowRequestsPage() {
                   </div>
                   <div className="space-y-1 sm:text-right border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-3.5">
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</p>
-                    <p className="text-primary-600 dark:text-primary-400 font-extrabold">₹{book.total_amount}</p>
+                    <div className="flex items-center gap-1.5 sm:justify-end">
+                      <p className="text-primary-600 dark:text-primary-400 font-extrabold">₹{book.total_amount}</p>
+                      {book.total_amount === 0 ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
+                      ) : book.payment?.status === "paid" ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -757,8 +766,25 @@ export default function BorrowRequestsPage() {
                   </span>
                 </div>
                 <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                  <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Amount</span>
-                  <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
+                  <span className="text-[9px] font-bold uppercase text-slate-400 block mb-1">Total Amount</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
+                    {(selectedBookingForModal.total_amount || 0) === 0 ? (
+                      <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
+                    ) : selectedBookingForModal.payment?.status === "paid" ? (
+                      <span className="inline-flex items-center rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
+                    )}
+                  </div>
+                  {(selectedBookingForModal.total_amount || 0) > 0 && selectedBookingForModal.payment?.status !== "paid" && (
+                    <p className="text-[9px] text-red-500 dark:text-red-400 mt-1 font-semibold">Payment pending — complete payment to confirm booking</p>
+                  )}
+                  {selectedBookingForModal.payment?.status === "paid" && selectedBookingForModal.payment?.paid_at && (
+                    <p className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
+                      Paid on {new Date(selectedBookingForModal.payment.paid_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  )}
                 </div>
               </div>
 
