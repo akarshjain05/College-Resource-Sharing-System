@@ -506,6 +506,7 @@ export default function BorrowRequestsPage() {
                         <PayNowButton 
                            borrowRequest={book} 
                            onPaid={() => {
+                              setSelectedBookingForModal(null);
                               if (typeof loadBookingsList === 'function') loadBookingsList();
                               else load();
                            }} 
