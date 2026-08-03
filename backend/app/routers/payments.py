@@ -87,7 +87,13 @@ def get_my_transactions(
         item_title = getattr(br.resource, "title", "Unknown Resource") if br.resource else "Unknown Resource"
         image_url = None
         if br.resource and br.resource.images and len(br.resource.images) > 0:
-            image_url = br.resource.images[0]
+            first_img = br.resource.images[0]
+            if hasattr(first_img, "image_url"):
+                image_url = first_img.image_url
+            elif isinstance(first_img, str):
+                image_url = first_img
+            else:
+                image_url = str(getattr(first_img, "url", "")) or None
 
         if p:
             tx_type = "CREDIT" if is_lender else "DEBIT"
