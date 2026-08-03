@@ -8,7 +8,8 @@ instead of the Authorization header used elsewhere.
 """
 import uuid
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Optional
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
 import app.core.database as core_db
@@ -31,10 +32,20 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
 
 
 @router.websocket("/ws/notifications")
-async def notifications_websocket(websocket: WebSocket):
+async def notifications_websocket(
+    websocket: WebSocket,
+    token: Optional[str] = Query(default=None),
+):
     await websocket.accept()
-    
-    token = websocket.query_params.get("token")
+
+    # --- Authenticate ---
+    # Strategy 1: token supplied as a query parameter (?token=...).
+    #   Preferred because browsers cannot set custom headers on WebSocket handshakes.
+    # Strategy 2: token supplied as the first JSON message after the handshake.
+    #   Kept for backward compatibility with older frontend builds.
+    if not token:
+        token = websocket.query_params.get("token")
+
     if not token:
         try:
             data = await websocket.receive_json()
