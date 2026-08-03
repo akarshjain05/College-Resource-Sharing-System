@@ -9,8 +9,14 @@ from app.core.database import Base
 from app.models.base import UUIDMixin, TimestampMixin
 
 
+from sqlalchemy import CheckConstraint
+
 class WantedRequest(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "wanted_requests"
+    
+    __table_args__ = (
+        CheckConstraint('end_date >= start_date', name='check_wanted_valid_dates'),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
