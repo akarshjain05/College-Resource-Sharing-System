@@ -891,8 +891,18 @@ export default function BorrowRequestsPage() {
                     </>
                   )}
 
-                  {!isLenderModal && (selectedBookingForModal.status === "approved" || selectedBookingForModal.status === "handover_requested") && (
-                    modalIsStarted ? (
+                  {!isLenderModal && selectedBookingForModal.status === "approved" && (
+                    (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
+                      <div className="w-full flex-col items-center">
+                        <PayNowButton 
+                           borrowRequest={selectedBookingForModal} 
+                           onPaid={() => {
+                              setSelectedBookingForModal(null);
+                              if (typeof loadBookingsList === 'function') loadBookingsList();
+                           }} 
+                        />
+                      </div>
+                    ) : modalIsStarted ? (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={async () => {
@@ -918,6 +928,29 @@ export default function BorrowRequestsPage() {
                         <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
                       </span>
                     )
+                  )}
+
+                  {!isLenderModal && selectedBookingForModal.status === "handover_requested" && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
+                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                        }}
+                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "reject_handover");
+                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                        }}
+                        className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
+                      >
+                        <X className="h-3.5 w-3.5" /> Not Received
+                      </button>
+                    </div>
                   )}
 
                   {!isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
