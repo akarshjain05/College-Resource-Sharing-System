@@ -9,7 +9,6 @@ import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import ComplaintsPage from "./pages/ComplaintsPage";
 import ResourceListPage from "./pages/resources/ResourceListPage";
@@ -48,7 +47,6 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/resources" element={<ResourceListPage />} />
             <Route path="/wishlist" element={<WishlistPage />} />

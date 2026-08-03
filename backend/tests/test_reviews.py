@@ -16,7 +16,7 @@ def create_resource(client, headers, category_id):
 
 
 def request_borrow(client, headers, resource_id):
-    start = date.today() + timedelta(days=1)
+    start = date.today()
     end = start + timedelta(days=3)
     return client.post(
         "/api/v1/borrow-requests",
@@ -77,6 +77,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     req_id = req_resp.json()["id"]
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
     client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
@@ -102,6 +103,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     req_id2 = req_resp2.json()["id"]
     client.post(f"/api/v1/borrow-requests/{req_id2}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id2}/handover", headers=owner_headers)
+    client.post(f"/api/v1/borrow-requests/{req_id2}/confirm-handover", headers=borrower_headers)
     client.post(f"/api/v1/borrow-requests/{req_id2}/return", headers=borrower_headers, json={})
     client.post(f"/api/v1/borrow-requests/{req_id2}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
@@ -109,11 +111,11 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     resp3 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 4, "comment": "Second time is great!"},
+        json={"resource_id": resource["id"], "rating": 4, "comment": "Second time!"},
     )
     assert resp3.status_code == 201
 
-    # Try to review third time -> Should fail
+    # Try 3rd review on second borrow -> Should fail
     resp4 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
@@ -135,6 +137,7 @@ def test_admin_can_delete_any_review(client, test_user, second_user, admin_user,
     req_id = req_resp.json()["id"]
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
     client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 
@@ -146,7 +149,7 @@ def test_admin_can_delete_any_review(client, test_user, second_user, admin_user,
     assert review_resp.status_code == 201
     review_id = review_resp.json()["id"]
 
-    # Admin deletes the review
+    # Delete review as admin
     del_resp = client.delete(f"/api/v1/reviews/{review_id}", headers=admin_headers)
     assert del_resp.status_code == 204
 
@@ -165,6 +168,7 @@ def test_non_admin_cannot_delete_review(client, test_user, second_user, test_cat
     req_id = req_resp.json()["id"]
     client.post(f"/api/v1/borrow-requests/{req_id}/approve", headers=owner_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
     client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
     client.post(f"/api/v1/borrow-requests/{req_id}/confirm-return", headers=owner_headers, json={"borrower_rating": 5})
 

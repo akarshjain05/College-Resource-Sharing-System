@@ -28,6 +28,7 @@ import {
 import { resourceApi, categoryApi, borrowApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
+import ConfirmModal from "../../components/ConfirmModal";
 
 const STATUS_BADGES = {
   requested: { label: "Requested", style: "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800" },
@@ -121,7 +122,7 @@ function ItemBorrowersSection({ requests, onAction }) {
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 dark:border-slate-800/60 pb-2.5">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 font-bold text-white shadow-xs">
-                    {req.borrower?.full_name?.charAt(0).toUpperCase() || "B"}
+                    {(req.borrower?.full_name?.charAt(0) || "B").toUpperCase()}
                   </div>
                   <div>
                     <Link
@@ -314,6 +315,34 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
           </div>
         </div>
 
+        {/* Item Availability & Date Schedule */}
+        <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-3 text-xs">
+          <h4 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+            Item Date Schedule & Availability
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Listing Available Dates</span>
+              <p className="font-extrabold text-slate-850 dark:text-slate-100 text-xs">
+                {item.available_from && item.available_to ? (
+                  `${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} → ${new Date(item.available_to).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
+                ) : item.available_from ? (
+                  `From ${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} onwards`
+                ) : (
+                  "Available Indefinitely (Active)"
+                )}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Date Listed</span>
+              <p className="font-extrabold text-slate-850 dark:text-slate-100 text-xs">
+                {item.created_at ? new Date(item.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Description & Tags */}
         {item.description && (
           <div className="space-y-1.5 text-xs">
@@ -345,11 +374,7 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
           </div>
           <div className="flex gap-2">
             <button
-              onClick={(e) => {
-                if (window.confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-                  onDelete(item.id, e);
-                }
-              }}
+              onClick={(e) => onDelete(item.id, e)}
               className="btn-secondary !py-2 !px-4 text-xs !bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100 dark:!bg-red-950/40 dark:!text-red-400 dark:!border-red-800"
             >
               Delete Listing
@@ -456,6 +481,7 @@ export default function MyListingsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedItemForModal, setSelectedItemForModal] = useState(null);
   const [publishingItem, setPublishingItem] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const pageSize = 12;
 
@@ -602,21 +628,46 @@ export default function MyListingsPage() {
       e.stopPropagation();
     }
     
-    try {
-      await resourceApi.remove(itemId);
-      toast.success("Listing deleted successfully");
-      setItems((prev) => prev.filter((item) => item.id !== itemId));
-      setTotal((prev) => prev - 1);
-      setSelectedItemForModal(null);
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to delete listing");
-    }
+    setConfirmDialog({
+      title: "Delete Listing",
+      message: "Are you sure you want to delete this listing? This action cannot be undone.",
+      confirmText: "Delete",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await resourceApi.remove(itemId);
+          toast.success("Listing deleted successfully");
+          setItems((prev) => prev.filter((item) => item.id !== itemId));
+          setTotal((prev) => prev - 1);
+          setSelectedItemForModal(null);
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Failed to delete listing");
+        }
+      }
+    });
   };
 
   const handleAction = async (action, requestId) => {
     try {
       if (action === "approve") await borrowApi.approve(requestId);
-      if (action === "reject") await borrowApi.reject(requestId, "Unavailable right now");
+      if (action === "reject") {
+        setConfirmDialog({
+          title: "Reject Request",
+          message: "Are you sure you want to reject this request?",
+          confirmText: "Reject",
+          isDanger: true,
+          onConfirm: async () => {
+            try {
+              await borrowApi.reject(requestId, "Unavailable right now");
+              toast.success("Borrow request updated!");
+              fetchData();
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
+          }
+        });
+        return;
+      }
       if (action === "handover") await borrowApi.handover(requestId);
       if (action === "confirm_return") await borrowApi.confirmReturn(requestId, 5, "");
 
@@ -891,6 +942,12 @@ export default function MyListingsPage() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }

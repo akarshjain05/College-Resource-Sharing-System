@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, ForeignKey, Boolean
+from sqlalchemy import String, ForeignKey, Boolean, Date
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -9,13 +9,21 @@ from app.core.database import Base
 from app.models.base import UUIDMixin, TimestampMixin
 
 
+from sqlalchemy import CheckConstraint
+
 class WantedRequest(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "wanted_requests"
+    
+    __table_args__ = (
+        CheckConstraint('end_date >= start_date', name='check_wanted_valid_dates'),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str] = mapped_column(String(1000), nullable=True)
     category_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=False)
+    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
+    end_date: Mapped[datetime.date] = mapped_column(Date, nullable=True)
     is_fulfilled: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
     user = relationship("User")

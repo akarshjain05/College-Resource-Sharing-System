@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { ShieldOff, ShieldCheck } from "lucide-react";
-import { userApi } from "../../api/endpoints";
+import { ShieldOff, ShieldCheck, UserPlus } from "lucide-react";
+import { userApi, adminApi } from "../../api/endpoints";
+import ConfirmModal from "../../components/ConfirmModal";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const load = () => {
     setLoading(true);
@@ -26,6 +28,29 @@ export default function AdminUsersPage() {
     } catch (err) {
       toast.error("Could not update user status.");
     }
+  };
+
+  const handleMakeAdmin = (user) => {
+    setConfirmDialog({
+      title: "Promote to Admin",
+      message: `Are you sure you want to promote ${user.full_name} to an Admin? They will be granted all administrative permissions.`,
+      confirmText: "Make Admin",
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await adminApi.updateUserRole(user.id, {
+            role: "admin",
+            can_moderate_complaints: true,
+            can_manage_users: true,
+            can_resolve_damage_claims: true
+          });
+          toast.success(`${user.full_name} is now an Admin`);
+          load();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Action failed");
+        }
+      }
+    });
   };
 
   return (
@@ -70,17 +95,24 @@ export default function AdminUsersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => handleToggleSuspend(u)} className="btn-secondary !py-1 !px-2 text-xs">
-                      {u.is_suspended ? (
-                        <>
-                          <ShieldCheck className="h-3.5 w-3.5" /> Unsuspend
-                        </>
-                      ) : (
-                        <>
-                          <ShieldOff className="h-3.5 w-3.5" /> Suspend
-                        </>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleToggleSuspend(u)} className="btn-secondary !py-1 !px-2 text-xs">
+                        {u.is_suspended ? (
+                          <>
+                            <ShieldCheck className="h-3.5 w-3.5" /> Unsuspend
+                          </>
+                        ) : (
+                          <>
+                            <ShieldOff className="h-3.5 w-3.5" /> Suspend
+                          </>
+                        )}
+                      </button>
+                      {u.role !== 'admin' && (
+                        <button onClick={() => handleMakeAdmin(u)} className="btn-secondary !py-1 !px-2 text-xs text-primary-600 border-primary-200 hover:bg-primary-50">
+                          <UserPlus className="h-3.5 w-3.5" /> Make Admin
+                        </button>
                       )}
-                    </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -88,6 +120,12 @@ export default function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        isOpen={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        {...confirmDialog}
+      />
     </div>
   );
 }

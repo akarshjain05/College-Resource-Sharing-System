@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 export default function PaymentsPage() {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('PENDING'); // PENDING, COMPLETED, CANCELLED, FAILED
+  const [activeTab, setActiveTab] = useState('created'); // created, paid, failed
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -61,10 +61,11 @@ export default function PaymentsPage() {
   };
 
   const tabs = [
-    { id: 'PENDING', label: 'Yet to Pay' },
-    { id: 'COMPLETED', label: 'Completed' },
-    { id: 'FAILED', label: 'Failed' },
-    { id: 'CANCELLED', label: 'Cancelled' },
+    { id: 'created', label: 'Yet to Pay' },
+    { id: 'attempted', label: 'Attempted' },
+    { id: 'paid', label: 'Paid' },
+    { id: 'failed', label: 'Failed' },
+    { id: 'refunded', label: 'Refunded' },
   ];
 
   return (
@@ -115,11 +116,12 @@ export default function PaymentsPage() {
               
               <div className="flex-1 w-full">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">{payment.reason}</h3>
-                  {payment.status === 'PENDING' && <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full">Pending</span>}
-                  {payment.status === 'COMPLETED' && <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Paid</span>}
-                  {payment.status === 'FAILED' && <span className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Failed</span>}
-                  {payment.status === 'CANCELLED' && <span className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><XCircle className="w-3 h-3"/> Cancelled</span>}
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">Payment for Request {payment.borrow_request_id.split('-')[0]}</h3>
+                  {payment.status === 'created' && <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full">Created</span>}
+                  {payment.status === 'attempted' && <span className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full">Attempted</span>}
+                  {payment.status === 'paid' && <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><CheckCircle className="w-3 h-3"/> Paid</span>}
+                  {payment.status === 'failed' && <span className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><AlertTriangle className="w-3 h-3"/> Failed</span>}
+                  {payment.status === 'refunded' && <span className="bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"><XCircle className="w-3 h-3"/> Refunded</span>}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row sm:gap-6">
                   <span>Created: {format(new Date(payment.created_at), 'PPP')}</span>
@@ -131,10 +133,10 @@ export default function PaymentsPage() {
 
               <div className="flex flex-col items-end gap-3 w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800 pt-4 sm:pt-0 sm:pl-6">
                 <div className="text-2xl font-black text-slate-900 dark:text-white">
-                  ${payment.amount.toFixed(2)}
+                  ${(payment.total_amount / 100).toFixed(2)}
                 </div>
                 
-                {payment.status === 'PENDING' && (
+                {(payment.status === 'created' || payment.status === 'attempted') && (
                   <div className="flex flex-wrap gap-2 w-full justify-end">
                     <button
                       onClick={() => handleSimulatePay(payment.id)}
@@ -156,7 +158,7 @@ export default function PaymentsPage() {
                     </button>
                   </div>
                 )}
-                {payment.status === 'FAILED' && (
+                {payment.status === 'failed' && (
                   <div className="flex flex-wrap gap-2 w-full justify-end">
                     <button
                       onClick={() => handleSimulatePay(payment.id)}

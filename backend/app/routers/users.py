@@ -201,3 +201,50 @@ def unsuspend_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post("/{user_id}/make-admin", response_model=UserResponse)
+def make_user_admin(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    from app.models.enums import UserRole
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise NotFoundException("User not found")
+    user.role = UserRole.ADMIN
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.get("/{user_id}/presence")
+def get_user_presence_endpoint(
+    user_id: uuid.UUID,
+    _current_user: User = Depends(get_current_user),
+):
+    from app.services.presence_service import get_user_presence
+    status_str = get_user_presence(str(user_id))
+    return {"user_id": str(user_id), "status": status_str}
+
+
+@router.get("/presence/all")
+def get_all_presences_endpoint(
+    _current_user: User = Depends(get_current_user),
+):
+    from app.services.presence_service import get_all_presences
+    return {"presence": get_all_presences()}
+
+
+@router.post("/me/fcm-token", status_code=status.HTTP_204_NO_CONTENT)
+def save_fcm_token(
+    payload: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Store a Firebase Cloud Messaging token for the authenticated user."""
+    token = payload.get("fcm_token")
+    if token:
+        current_user.fcm_token = token
+        db.commit()

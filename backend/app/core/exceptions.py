@@ -6,7 +6,7 @@ import logging
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 logger = logging.getLogger("crss")
@@ -56,6 +56,14 @@ def register_exception_handlers(app: FastAPI) -> None:
             content={"detail": errors, "error_code": "VALIDATION_ERROR"},
         )
 
+    @app.exception_handler(ResponseValidationError)
+    async def response_validation_exception_handler(request: Request, exc: ResponseValidationError):
+        logger.error("Response validation error: %s", str(exc))
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Response serialization error", "error_code": "RESPONSE_VALIDATION_ERROR"},
+        )
+
     @app.exception_handler(IntegrityError)
     async def integrity_error_handler(request: Request, exc: IntegrityError):
         logger.error("Integrity error: %s", str(exc))
@@ -74,8 +82,8 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
-        logger.exception("Unhandled exception")
+        logger.exception("Unhandled exception: %s", str(exc))
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": "Internal server error", "error_code": "INTERNAL_ERROR"},
+            content={"detail": f"Internal server error: {str(exc)}", "error_code": "INTERNAL_ERROR"},
         )

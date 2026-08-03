@@ -1,31 +1,40 @@
-from pydantic import BaseModel, UUID4, Field
-from datetime import datetime
+import uuid
 from typing import Optional
-from enum import Enum
+from datetime import datetime
+from pydantic import BaseModel, ConfigDict
+from app.models.enums import PaymentStatus
 
-class PaymentStatus(str, Enum):
-    PENDING = "PENDING"
-    COMPLETED = "COMPLETED"
-    CANCELLED = "CANCELLED"
-    FAILED = "FAILED"
 
-class PaymentBase(BaseModel):
-    amount: float = Field(..., gt=0)
-    reason: str
-    status: PaymentStatus = PaymentStatus.PENDING
-    borrow_request_id: Optional[UUID4] = None
+class PaymentOrderCreate(BaseModel):
+    borrow_request_id: uuid.UUID
 
-class PaymentCreate(PaymentBase):
-    user_id: UUID4
 
-class PaymentUpdate(BaseModel):
+class PaymentOrderResponse(BaseModel):
+    """Everything the frontend needs to open Razorpay Checkout. No secret ever included."""
+    payment_id: uuid.UUID
+    razorpay_order_id: str
+    razorpay_key_id: str
+    amount: int              # paise — what Checkout must display/charge
+    currency: str
+    rent_amount: int
+    deposit_amount: int
+
+
+class PaymentVerifyRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+
+class PaymentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    borrow_request_id: uuid.UUID
     status: PaymentStatus
-
-class PaymentResponse(PaymentBase):
-    id: UUID4
-    user_id: UUID4
     created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+    rent_amount: int
+    deposit_amount: int
+    total_amount: int
+    currency: str
+    refunded_amount: int
+    failure_reason: Optional[str] = None

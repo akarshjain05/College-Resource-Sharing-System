@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Query, status, BackgroundTasks, Request
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceRespons
 from app.core.deps import get_current_user_optional
 from app.services.notification_service import notify_all_except_owner_bg
 from app.services.availability import get_blocked_dates
+from app.core.rate_limit import limiter
 from datetime import date
 router = APIRouter(prefix="/resources", tags=["Resources"])
 
@@ -38,7 +39,11 @@ def list_resources(
     page_size: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    query = db.query(Resource)
+    from sqlalchemy.orm import joinedload
+    query = db.query(Resource).options(
+        joinedload(Resource.category),
+        joinedload(Resource.owner)
+    )
 
     if search:
         like = f"%{search}%"
@@ -53,22 +58,6 @@ def list_resources(
         query = query.filter(Resource.status == status_filter)
     elif not owner_id:
         # Default to available for public explore page
-        # A resource is available today if current active bookings for today are less than its total quantity
-        from sqlalchemy import func
-        today = date.today()
-        blocking_statuses = [BorrowStatus.APPROVED, BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED, BorrowStatus.LATE]
-        
-        subq = (
-            db.query(BorrowRequest.resource_id, func.count(BorrowRequest.id).label('booked_count'))
-            .filter(BorrowRequest.status.in_(blocking_statuses))
-            .filter(BorrowRequest.requested_start_date <= today)
-            .filter(BorrowRequest.requested_end_date >= today)
-            .group_by(BorrowRequest.resource_id)
-            .subquery()
-        )
-        
-        query = query.outerjoin(subq, Resource.id == subq.c.resource_id)
-        query = query.filter(or_(subq.c.booked_count == None, subq.c.booked_count < Resource.quantity_available))
         query = query.filter(Resource.status != ResourceStatus.UNAVAILABLE)
     if min_rating is not None:
         query = query.filter(Resource.average_rating >= min_rating)
@@ -115,8 +104,14 @@ def get_my_listings_with_borrowers(
     Fetch all resources listed by the current user along with complete borrower history,
     contact info, requested dates, actual return dates, and current borrow status.
     """
+    from sqlalchemy.orm import joinedload
+
     resources = (
         db.query(Resource)
+        .options(
+            joinedload(Resource.category),
+            joinedload(Resource.owner)
+        )
         .filter(Resource.owner_id == current_user.id)
         .order_by(Resource.created_at.desc())
         .all()
@@ -125,6 +120,7 @@ def get_my_listings_with_borrowers(
     resource_ids = [r.id for r in resources]
     borrow_requests = (
         db.query(BorrowRequest)
+        .options(joinedload(BorrowRequest.borrower))
         .filter(BorrowRequest.resource_id.in_(resource_ids))
         .order_by(BorrowRequest.created_at.desc())
         .all()
@@ -151,7 +147,7 @@ def get_my_listings_with_borrowers(
                 "full_name": borrower.full_name,
                 "email": borrower.email,
                 "trust_score": borrower.trust_score,
-                "college_domain": borrower.college_domain,
+                "college_domain": borrower.email.split("@")[1] if borrower.email and "@" in borrower.email else None,
             } if borrower else None,
             "created_at": br.created_at.isoformat() if br.created_at else None,
         })
@@ -171,7 +167,16 @@ def get_resource(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    resource = db.query(Resource).filter(Resource.id == resource_id).first()
+    from sqlalchemy.orm import joinedload
+    resource = (
+        db.query(Resource)
+        .options(
+            joinedload(Resource.category),
+            joinedload(Resource.owner)
+        )
+        .filter(Resource.id == resource_id)
+        .first()
+    )
     if not resource:
         raise NotFoundException("Resource not found")
     resource.view_count += 1
@@ -188,7 +193,9 @@ def get_resource(
 
 
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 def create_resource(
+    request: Request,
     payload: ResourceCreate,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
@@ -203,13 +210,14 @@ def create_resource(
     db.commit()
     db.refresh(resource)
 
-    background_tasks.add_task(
-        notify_all_except_owner_bg,
-        current_user.id,
-        resource.id,
-        resource.title,
-        current_user.full_name,
-    )
+    if resource.status == ResourceStatus.AVAILABLE:
+        background_tasks.add_task(
+            notify_all_except_owner_bg,
+            current_user.id,
+            resource.id,
+            resource.title,
+            current_user.full_name,
+        )
 
     return resource
 
@@ -228,6 +236,7 @@ def get_availability(resource_id: uuid.UUID, db: Session = Depends(get_db)):
 def update_resource(
     resource_id: uuid.UUID,
     payload: ResourceUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -237,10 +246,21 @@ def update_resource(
     if resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise ForbiddenException("You can only edit your own resources")
 
+    old_status = resource.status
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(resource, field, value)
     db.commit()
     db.refresh(resource)
+
+    if old_status != ResourceStatus.AVAILABLE and resource.status == ResourceStatus.AVAILABLE:
+        background_tasks.add_task(
+            notify_all_except_owner_bg,
+            current_user.id,
+            resource.id,
+            resource.title,
+            current_user.full_name,
+        )
+
     return resource
 
 

@@ -36,11 +36,11 @@ export default function AdminBorrowsPage() {
           onChange={(e) => setSearchParams(e.target.value === "all" ? {} : { status: e.target.value })}
         >
           <option value="all">All Statuses</option>
-          <option value="pending_approval">Pending Approval</option>
+          <option value="requested">Pending Approval</option>
           <option value="approved">Approved</option>
           <option value="active">Active</option>
           <option value="return_requested">Return Requested</option>
-          <option value="completed">Completed</option>
+          <option value="returned">Completed / Returned</option>
           <option value="rejected">Rejected</option>
           <option value="cancelled">Cancelled</option>
         </select>
@@ -84,7 +84,7 @@ export default function AdminBorrowsPage() {
                       <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider
                         ${b.status === "completed" ? "bg-forest-50 text-forest-700" :
                           b.status === "active" ? "bg-brass-50 text-brass-700" :
-                          b.status === "pending_approval" ? "bg-amber-50 text-amber-700" :
+                          b.status === "requested" ? "bg-amber-50 text-amber-700" :
                           b.status === "rejected" || b.status === "cancelled" ? "bg-red-50 text-red-700" :
                           "bg-ink-100 text-ink-700"}`}>
                         {b.status.replace("_", " ")}

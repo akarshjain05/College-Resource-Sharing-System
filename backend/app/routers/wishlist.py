@@ -22,9 +22,18 @@ def get_wishlist(
     db: Session = Depends(get_db),
 ):
     """Get all resources the current user has wishlisted."""
-    items = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id).all()
-    # We can just return the resource of each item, the schema handles mapping
-    return [item.resource for item in items]
+    from sqlalchemy.orm import joinedload
+
+    items = (
+        db.query(WishlistItem)
+        .options(
+            joinedload(WishlistItem.resource).joinedload(Resource.category),
+            joinedload(WishlistItem.resource).joinedload(Resource.owner),
+        )
+        .filter(WishlistItem.user_id == current_user.id)
+        .all()
+    )
+    return [item.resource for item in items if item.resource is not None]
 
 
 @router.post("/{resource_id}", status_code=status.HTTP_201_CREATED)

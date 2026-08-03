@@ -10,8 +10,14 @@ from app.models.base import UUIDMixin, TimestampMixin
 from app.models.enums import BorrowStatus
 
 
+from sqlalchemy import CheckConstraint
+
 class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "borrow_requests"
+    
+    __table_args__ = (
+        CheckConstraint('requested_end_date >= requested_start_date', name='check_borrow_valid_dates'),
+    )
 
     resource_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False
@@ -23,12 +29,12 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     )
 
     status: Mapped[BorrowStatus] = mapped_column(
-        SAEnum(BorrowStatus), default=BorrowStatus.REQUESTED, index=True
+        SAEnum(BorrowStatus, values_callable=lambda obj: [e.value for e in obj]), default=BorrowStatus.REQUESTED, index=True
     )
 
-    requested_start_date: Mapped[date] = mapped_column(Date, nullable=False)
-    requested_end_date: Mapped[date] = mapped_column(Date, nullable=False)
-    actual_return_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    requested_start_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    requested_end_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    actual_return_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     purpose: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     deposit_paid: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
@@ -47,6 +53,17 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
         "User", back_populates="borrow_requests", foreign_keys=[borrower_id]
     )
     lender: Mapped["User"] = relationship("User", foreign_keys=[lender_id])
+    payment: Mapped[Optional["Payment"]] = relationship(
+        "Payment", back_populates="borrow_request", uselist=False
+    )
+
+    @property
+    def start_date(self) -> datetime:
+        return self.requested_start_date
+
+    @property
+    def end_date(self) -> datetime:
+        return self.requested_end_date
 
     def __repr__(self) -> str:
         return f"<BorrowRequest {self.id} status={self.status}>"

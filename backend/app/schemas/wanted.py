@@ -1,11 +1,12 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 
 from pydantic import BaseModel, Field, ConfigDict
 
 from app.schemas.user import UserResponse
 from app.schemas.resource import CategoryResponse, ResourceResponse
+from app.utils.validation import SafeStr
 
 
 class WantedOfferCreate(BaseModel):
@@ -28,9 +29,11 @@ class WantedOfferResponse(BaseModel):
 
 
 class WantedCreate(BaseModel):
-    title: str = Field(..., min_length=2, max_length=100)
-    description: Optional[str] = Field(None, max_length=1000)
+    title: SafeStr = Field(..., min_length=2, max_length=100)
+    description: Optional[SafeStr] = Field(None, max_length=1000)
     category_id: uuid.UUID
+    start_date: date
+    end_date: date
 
 
 class WantedResponse(BaseModel):
@@ -41,8 +44,11 @@ class WantedResponse(BaseModel):
     title: str
     description: Optional[str] = None
     category_id: uuid.UUID
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
     is_fulfilled: bool
     created_at: datetime
+    has_offered: Optional[bool] = False
 
     user: UserResponse
     category: CategoryResponse

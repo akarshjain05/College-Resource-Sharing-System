@@ -1,35 +1,87 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from app.models.enums import ComplaintStatus
 from app.schemas.user import UserResponse
+from app.utils.validation import SafeStr
 
 
 class ComplaintCreate(BaseModel):
-    subject: str = Field(..., min_length=3, max_length=200)
-    description: str = Field(..., min_length=10)
+    category: Optional[SafeStr] = Field(default="general", max_length=50)
+    severity: Optional[SafeStr] = Field(default="medium", max_length=20)
+    subject: SafeStr = Field(..., min_length=3, max_length=200)
+    description: SafeStr = Field(..., min_length=10, max_length=5000)
+    evidence_url: Optional[str] = Field(None, max_length=500)
     against_user_id: Optional[uuid.UUID] = None
     resource_id: Optional[uuid.UUID] = None
     borrow_request_id: Optional[uuid.UUID] = None
 
 
 class ComplaintAdminUpdate(BaseModel):
-    status: ComplaintStatus
-    admin_response: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+    status: Optional[ComplaintStatus] = None
+    assigned_to_id: Optional[uuid.UUID] = None
+    admin_response: Optional[SafeStr] = Field(None, max_length=5000)
+    resolution_action: Optional[SafeStr] = Field(None, max_length=100, description="refund_issued, replacement_provided, warning_issued, dismissed")
+    resolution_amount: Optional[float] = None
+    resolution_notes: Optional[SafeStr] = Field(None, max_length=5000)
     trust_score_penalty: Optional[int] = Field(None, description="Amount to deduct from the against_user's trust score")
+
+
+class ResourceMinResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    title: str
+
+
+class BorrowRequestMinResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    status: Optional[str] = "requested"
+    requested_start_date: Optional[datetime] = None
+    requested_end_date: Optional[datetime] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_start_end_dates(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "requested_start_date" not in data and "start_date" in data:
+                data["requested_start_date"] = data["start_date"]
+            if "requested_end_date" not in data and "end_date" in data:
+                data["requested_end_date"] = data["end_date"]
+        return data
+
+    @computed_field
+    def start_date(self) -> Optional[datetime]:
+        return self.requested_start_date
+
+    @computed_field
+    def end_date(self) -> Optional[datetime]:
+        return self.requested_end_date
 
 
 class ComplaintResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    subject: str
-    description: str
-    borrow_request_id: Optional[uuid.UUID] = None
-    status: ComplaintStatus
+    category: Optional[str] = "general"
+    severity: Optional[str] = "medium"
+    subject: Optional[str] = ""
+    description: Optional[str] = ""
+    evidence_url: Optional[str] = None
+    status: Optional[ComplaintStatus] = ComplaintStatus.OPEN
+    assigned_to_id: Optional[uuid.UUID] = None
+    assigned_to: Optional[UserResponse] = None
     admin_response: Optional[str] = None
-    filed_by: UserResponse
-    created_at: datetime
+    resolution_data: Optional[str] = None
+    filed_by: Optional[UserResponse] = None
+    against_user_id: Optional[uuid.UUID] = None
+    against_user: Optional[UserResponse] = None
+    resource_id: Optional[uuid.UUID] = None
+    resource: Optional[ResourceMinResponse] = None
+    borrow_request_id: Optional[uuid.UUID] = None
+    borrow_request: Optional[BorrowRequestMinResponse] = None
+    created_at: Optional[datetime] = None

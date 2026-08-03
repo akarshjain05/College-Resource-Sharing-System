@@ -18,6 +18,16 @@ export const authApi = {
   changePassword: (payload) => api.post("/auth/change-password", payload),
   forgotPassword: (email) => api.post("/auth/forgot-password", { email }),
   resetPassword: (payload) => api.post("/auth/reset-password", payload),
+  logout: () => api.post("/auth/logout"),
+};
+
+export const paymentApi = {
+  createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
+  verify: (payload) => api.post("/payments/verify", payload),
+  myPayments: () => api.get("/payments/my-payments"),
+  simulatePay: (id) => api.post(`/payments/${id}/pay`),
+  simulateFail: (id) => api.post(`/payments/${id}/fail`),
+  cancel: (id) => api.post(`/payments/${id}/cancel`),
 };
 
 
@@ -29,6 +39,7 @@ export const userApi = {
   listPublicDirectory: () => api.get("/users/directory/public"),
   suspendUser: (id) => api.post(`/users/${id}/suspend`),
   unsuspendUser: (id) => api.post(`/users/${id}/unsuspend`),
+
 };
 
 export const categoryApi = {
@@ -57,6 +68,8 @@ export const borrowApi = {
   reject: (id, reason) => api.post(`/borrow-requests/${id}/reject`, { rejection_reason: reason }),
   nudge: (id) => api.post(`/borrow-requests/${id}/nudge`),
   handover: (id) => api.post(`/borrow-requests/${id}/handover`),
+  confirmHandover: (id) => api.post(`/borrow-requests/${id}/confirm-handover`),
+  rejectHandover: (id) => api.post(`/borrow-requests/${id}/reject-handover`),
   cancel: (id) => api.post(`/borrow-requests/${id}/cancel`),
   returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
   confirmReturn: (id, borrowerRating, borrowerReview) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating, borrower_review: borrowerReview }),
@@ -76,7 +89,7 @@ export const chatApi = {
 };
 
 export const notificationApi = {
-  list: () => api.get("/notifications"),
+  list: () => api.get(`/notifications?_t=${Date.now()}`),
   markRead: (id) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
   clearAll: () => api.delete("/notifications/clear-all"),
@@ -111,6 +124,7 @@ export const adminApi = {
   departmentUsage: () => api.get("/admin/analytics/department-usage"),
   listResources: (params) => api.get("/admin/management/resources", { params }),
   listBorrows: (params) => api.get("/admin/management/borrows", { params }),
+  updateUserRole: (id, payload) => api.patch(`/admin/management/users/${id}/role`, payload),
 };
 
 export const uploadApi = {
@@ -131,13 +145,6 @@ export const uploadApi = {
   },
   deleteResourceImage: (imageId) => api.delete(`/uploads/resources/images/${imageId}`),
   setPrimaryImage: (imageId) => api.patch(`/uploads/resources/images/${imageId}/set-primary`),
-};
-
-export const paymentApi = {
-  myPayments: () => api.get("/payments/my-payments"),
-  simulatePay: (id) => api.post(`/payments/${id}/pay`),
-  simulateFail: (id) => api.post(`/payments/${id}/fail`),
-  cancel: (id) => api.post(`/payments/${id}/cancel`),
 };
 
 export { getImageUrl };

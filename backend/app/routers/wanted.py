@@ -23,11 +23,16 @@ def create_wanted_request(
     if not category:
         raise NotFoundException("Category not found")
 
+    if payload.end_date < payload.start_date:
+        raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+
     wanted = WantedRequest(
         user_id=current_user.id,
         title=payload.title,
         description=payload.description,
         category_id=payload.category_id,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
     )
     db.add(wanted)
     db.commit()
@@ -41,12 +46,25 @@ def list_wanted_requests(
     db: Session = Depends(get_db)
 ):
     from app.models.wanted import WantedOffer
-    # Sort by newest first, only unfulfilled, excluding current user's own requests and requests already offered by current user
-    return db.query(WantedRequest).filter(
+    from sqlalchemy.orm import joinedload
+
+    requests = db.query(WantedRequest).options(
+        joinedload(WantedRequest.user),
+        joinedload(WantedRequest.category)
+    ).filter(
         WantedRequest.is_fulfilled == False,
-        WantedRequest.user_id != current_user.id,
-        ~WantedRequest.offers.any(WantedOffer.offerer_id == current_user.id)
+        WantedRequest.user_id != current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
+
+    valid_requests = [r for r in requests if r.user is not None and r.category is not None]
+
+    for r in valid_requests:
+        r.has_offered = db.query(WantedOffer).filter(
+            WantedOffer.wanted_request_id == r.id,
+            WantedOffer.offerer_id == current_user.id
+        ).first() is not None
+
+    return valid_requests
 
 
 @router.get("/me", response_model=list[WantedResponse])
@@ -54,10 +72,16 @@ def my_wanted_requests(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # Sort by newest first, include both unfulfilled and fulfilled for own requests
-    return db.query(WantedRequest).filter(
+    from sqlalchemy.orm import joinedload
+
+    requests = db.query(WantedRequest).options(
+        joinedload(WantedRequest.user),
+        joinedload(WantedRequest.category)
+    ).filter(
         WantedRequest.user_id == current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
+
+    return [r for r in requests if r.user is not None and r.category is not None]
 
 
 @router.post("/{wanted_id}/fulfill", response_model=WantedResponse)
@@ -118,6 +142,17 @@ def cancel_wanted_offer(
     if offer.status == "ACCEPTED":
         raise ForbiddenException("Accepted offers cannot be deleted. Manage the active borrow request instead.")
 
+    if wanted.user_id == current_user.id:
+        from app.services.notification_service import create_notification
+        create_notification(
+            db,
+            user_id=offer.offerer_id,
+            notif_type=NotificationType.SYSTEM,
+            title="Offer Declined",
+            message=f"Your offer for '{wanted.title}' was declined by the requester.",
+            link=f"/wanted"
+        )
+
     db.delete(offer)
     db.commit()
 
@@ -177,7 +212,7 @@ def offer_wanted_request(
         notif_type=NotificationType.SYSTEM,
         title="Someone has the item you requested!",
         message=f"{current_user.full_name} has offered their item '{resource.title}' for your request '{wanted.title}'!",
-        link=f"/wanted"  # Link them back to wanted page to see offers
+        link=f"/my-needs?id={wanted.id}"  # Link them back to their needs page to see offers
     )
 
     return offer
@@ -203,6 +238,7 @@ def accept_wanted_offer(
     db: Session = Depends(get_db),
 ):
     from app.services.notification_service import create_notification
+    from app.services.availability import is_resource_available_for_dates
     from datetime import date, timedelta
 
     offer = db.query(WantedOffer).filter(WantedOffer.id == offer_id).first()
@@ -221,20 +257,17 @@ def accept_wanted_offer(
     if not resource:
         raise NotFoundException("Resource not found")
         
-    if resource.quantity_available < 1:
-        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
+    start_date = date.today()
+    end_date = start_date + timedelta(days=resource.max_borrow_days)
 
-    # Decrement resource quantity
-    resource.quantity_available -= 1
-    if resource.quantity_available <= 0:
-        resource.status = ResourceStatus.BORROWED
+    if not is_resource_available_for_dates(db, resource.id, start_date, end_date, resource.quantity):
+        raise AppException("This resource is no longer available", status_code=status.HTTP_409_CONFLICT, error_code="OUT_OF_STOCK")
 
     offer.status = "ACCEPTED"
     wanted.is_fulfilled = True
     
     # Auto-create BorrowRequest
-    start_date = date.today()
-    end_date = start_date + timedelta(days=resource.max_borrow_days)
+
     
     borrow_request = BorrowRequest(
         resource_id=resource.id,
@@ -249,13 +282,21 @@ def accept_wanted_offer(
     )
     db.add(borrow_request)
     
-    # Reject other offers
+    # Reject other offers & notify each offerer
     other_offers = db.query(WantedOffer).filter(
         WantedOffer.wanted_request_id == wanted.id,
         WantedOffer.id != offer.id
     ).all()
     for other in other_offers:
         other.status = "REJECTED"
+        create_notification(
+            db,
+            user_id=other.offerer_id,
+            notif_type=NotificationType.SYSTEM,
+            title="Offer status update",
+            message=f"Your offer for '{wanted.title}' was automatically declined because another offer was selected.",
+            link=f"/wanted"
+        )
 
     db.commit()
     db.refresh(wanted)

@@ -19,7 +19,6 @@ export function AuthProvider({ children }) {
     } catch (err) {
       if (err.response && err.response.status === 401) {
         localStorage.removeItem("crss_access_token");
-        localStorage.removeItem("crss_refresh_token");
         setUser(null);
       }
     } finally {
@@ -34,7 +33,6 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { data } = await authApi.login(email, password);
     localStorage.setItem("crss_access_token", data.access_token);
-    localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
   };
 
@@ -42,7 +40,6 @@ export function AuthProvider({ children }) {
     const { data } = await authApi.googleLogin(credential);
     if (data.status === "login") {
       localStorage.setItem("crss_access_token", data.access_token);
-      localStorage.setItem("crss_refresh_token", data.refresh_token);
       await loadUser();
     }
     // If data.status === "needs_profile", the caller (Login/RegisterPage) is
@@ -53,7 +50,6 @@ export function AuthProvider({ children }) {
   const completeGoogleProfile = async (payload) => {
     const { data } = await authApi.completeGoogleProfile(payload);
     localStorage.setItem("crss_access_token", data.access_token);
-    localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
   };
 
@@ -65,7 +61,6 @@ export function AuthProvider({ children }) {
   const verifySignupOtp = async (payload) => {
     const { data } = await authApi.verifySignupOtp(payload);
     localStorage.setItem("crss_access_token", data.access_token);
-    localStorage.setItem("crss_refresh_token", data.refresh_token);
     await loadUser();
     return data;
   };
@@ -75,9 +70,13 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.error("Logout failed on server:", err);
+    }
     localStorage.removeItem("crss_access_token");
-    localStorage.removeItem("crss_refresh_token");
     setUser(null);
   };
 

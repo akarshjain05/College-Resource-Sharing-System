@@ -1,4 +1,5 @@
 import uuid
+from datetime import date, timedelta
 from unittest.mock import patch, MagicMock
 
 from app.models.enums import NotificationType
@@ -130,8 +131,8 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
         headers=borrower_headers,
         json={
             "resource_id": resource_id,
-            "requested_start_date": "2026-08-01",
-            "requested_end_date": "2026-08-03",
+            "requested_start_date": date.today().isoformat(),
+            "requested_end_date": (date.today() + timedelta(days=2)).isoformat(),
             "purpose": "Biology experiment",
         },
     )
@@ -149,12 +150,34 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     borrower_notifs = client.get("/api/v1/notifications", headers=borrower_headers).json()
     assert any(n["type"] == NotificationType.BORROW_APPROVED.value for n in borrower_notifs)
 
-    # 4. Owner hands over resource (transition to ACTIVE)
-    client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    # Mock payment so handover can proceed
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    import uuid
+    db_session.add(Payment(
+        borrow_request_id=uuid.UUID(req_id),
+        payer_id=second_user.id,
+        razorpay_order_id="mock_order",
+        razorpay_payment_id="mock_payment",
+        rent_amount=100, deposit_amount=100, total_amount=200,
+        currency="INR", status=PaymentStatus.PAID, refunded_amount=100
+    ))
+    db_session.commit()
+
+    # 4. Owner hands over resource
+    ho = client.post(f"/api/v1/borrow-requests/{req_id}/handover", headers=owner_headers)
+    cho = client.post(f"/api/v1/borrow-requests/{req_id}/confirm-handover", headers=borrower_headers)
+    
+    # Mock time passing so we can return
+    from app.models.borrow import BorrowRequest
+    from datetime import datetime, timezone, timedelta
+    br_record = db_session.query(BorrowRequest).filter(BorrowRequest.id == uuid.UUID(req_id)).first()
+    br_record.requested_start_date = datetime.now(timezone.utc) - timedelta(days=1)
+    db_session.commit()
 
     # 5. Borrower requests return
-    client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
-
+    ret_resp = client.post(f"/api/v1/borrow-requests/{req_id}/return", headers=borrower_headers, json={})
+    assert ret_resp.status_code == 200, ret_resp.json()
     # Check owner received RETURN_REQUESTED (SYSTEM) notification
     owner_notifs_updated = client.get("/api/v1/notifications", headers=owner_headers).json()
     assert any("Return requested" in n["title"] for n in owner_notifs_updated)
@@ -165,6 +188,46 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     # Check borrower received RETURN_CONFIRMED notification
     borrower_notifs_updated = client.get("/api/v1/notifications", headers=borrower_headers).json()
     assert any(n["type"] == NotificationType.RETURN_CONFIRMED.value for n in borrower_notifs_updated)
+
+
+def test_borrow_cancel_notification(client, test_user, second_user, test_category, db_session):
+    """Verify lender receives a notification when borrower cancels a request."""
+    owner_headers = auth_headers(client, test_user.email, "Password123!")
+    borrower_headers = auth_headers(client, second_user.email, "Password123!")
+
+    res_resp = client.post(
+        "/api/v1/resources",
+        headers=owner_headers,
+        json={
+            "title": "Projector",
+            "description": "HD Portable Projector",
+            "condition": "good",
+            "quantity": 1,
+            "category_id": str(test_category.id),
+            "max_borrow_days": 3,
+        },
+    )
+    resource_id = res_resp.json()["id"]
+
+    req_resp = client.post(
+        "/api/v1/borrow-requests",
+        headers=borrower_headers,
+        json={
+            "resource_id": resource_id,
+            "requested_start_date": "2026-08-01",
+            "requested_end_date": "2026-08-03",
+            "purpose": "Presentation",
+        },
+    )
+    req_id = req_resp.json()["id"]
+
+    # Borrower cancels request
+    cancel_resp = client.post(f"/api/v1/borrow-requests/{req_id}/cancel", headers=borrower_headers)
+    assert cancel_resp.status_code == 200
+
+    # Verify owner (lender) receives cancellation notification
+    owner_notifs = client.get("/api/v1/notifications", headers=owner_headers).json()
+    assert any(n["title"] == "Borrow request cancelled" for n in owner_notifs)
 
 
 def test_notify_all_except_owner_bg_helper(db_session, test_user, second_user):
@@ -239,3 +302,42 @@ def test_websocket_realtime_notifications(client, test_user, db_session):
         data = websocket.receive_json()
         assert data["title"] == "Realtime Test"
         assert data["message"] == "WebSocket push payload test"
+
+
+def test_publish_resource_from_my_listings_sends_notification(client, test_user, second_user, test_category):
+    """Test that publishing an item from My Listings (status update to AVAILABLE) sends notification to other users."""
+    owner_headers = auth_headers(client, test_user.email, "Password123!")
+    other_headers = auth_headers(client, second_user.email, "Password123!")
+
+    # 1. Create unpublished resource (UNAVAILABLE status)
+    res_resp = client.post(
+        "/api/v1/resources",
+        headers=owner_headers,
+        json={
+            "title": "Unpublished Drone",
+            "description": "Camera drone in draft mode",
+            "condition": "new",
+            "quantity": 1,
+            "category_id": str(test_category.id),
+            "max_borrow_days": 3,
+            "status": "unavailable",
+        },
+    )
+    assert res_resp.status_code == 201
+    resource_id = res_resp.json()["id"]
+
+    # Clear any existing notifications
+    client.get("/api/v1/notifications", headers=other_headers)
+
+    # 2. Publish item via PUT /api/v1/resources/{id} (like My Listings toggle switch)
+    pub_resp = client.put(
+        f"/api/v1/resources/{resource_id}",
+        headers=owner_headers,
+        json={"status": "available"},
+    )
+    assert pub_resp.status_code == 200
+    assert pub_resp.json()["status"] == "available"
+
+    # 3. Check that second_user received "New Resource Listed" notification
+    other_notifs = client.get("/api/v1/notifications", headers=other_headers).json()
+    assert any("listed a new resource" in n["message"] for n in other_notifs)

@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { chatEventBus } from "../utils/chatEventBus";
+import { resolveNotificationLink } from "../utils/routeResolver";
 
 // The realtime notification WebSocket is served by the main backend itself
 // (see backend/app/routers/websocket.py), not a separate microservice --
@@ -27,14 +28,18 @@ export function useNotificationSocket(onNotification, user) {
       if (cancelled) return;
       const token = localStorage.getItem("crss_access_token");
       if (!token) return;
-      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications?token=${token}`);
+      const socket = new WebSocket(`${NOTIFICATION_WS_BASE}/ws/notifications`);
       socketRef.current = socket;
+
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ token }));
+      };
 
       socket.onmessage = (event) => {
         try {
           const rawPayload = JSON.parse(event.data);
           const payload = rawPayload.payload || rawPayload;
-          
+
           // Route chat messages directly to open threads
           if (payload.type === "chat_message") {
             const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
@@ -42,15 +47,16 @@ export function useNotificationSocket(onNotification, user) {
             // or we could show a quieter one. Let's just return if handled so it doesn't toast
             if (isHandled) return;
           }
-          
+
           toast((t) => (
-            <div 
+            <div
               onClick={() => {
-                if (payload.link) navigate(payload.link);
+                const resolved = resolveNotificationLink(payload.link);
+                if (resolved) navigate(resolved);
                 else if (payload.type === "chat_message") navigate(`/borrow-requests`);
                 toast.dismiss(t.id);
               }}
-              style={{ cursor: (payload.link || payload.type === "chat_message") ? "pointer" : "default" }}
+              style={{ cursor: (resolveNotificationLink(payload.link) || payload.type === "chat_message") ? "pointer" : "default" }}
             >
               <div style={{ fontWeight: "bold" }}>
                 {payload.title || (payload.type === "chat_message" ? "New message received" : "New Notification")}

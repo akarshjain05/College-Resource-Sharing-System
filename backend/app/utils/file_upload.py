@@ -4,6 +4,7 @@ Utilities for validating and persisting uploaded files (profile pictures, resour
 import os
 import uuid
 from pathlib import Path
+from PIL import Image
 
 from fastapi import UploadFile
 
@@ -50,18 +51,35 @@ def save_upload_file(file: UploadFile, subfolder: str) -> str:
     destination = upload_dir / new_filename
 
     max_bytes = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
-    size = 0
-    with open(destination, "wb") as out_file:
-        while chunk := file.file.read(1024 * 1024):
-            size += len(chunk)
-            if size > max_bytes:
-                out_file.close()
-                os.remove(destination)
-                raise AppException(
-                    f"File exceeds the {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    error_code="FILE_TOO_LARGE",
-                )
-            out_file.write(chunk)
+    file_bytes = file.file.read(max_bytes + 1)
+    if len(file_bytes) > max_bytes:
+        raise AppException(
+            f"File exceeds the {settings.MAX_UPLOAD_SIZE_MB}MB limit.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="FILE_TOO_LARGE",
+        )
+    
+    # Use Pillow to read, verify, and re-encode the image.
+    # This inherently validates magic bytes (rejects HTML/PHP polyglots)
+    # and strips EXIF/GPS metadata when saved fresh.
+    try:
+        import io
+        img = Image.open(io.BytesIO(file_bytes))
+        img.verify()
+        
+        # reopen to actually process after verify
+        img = Image.open(io.BytesIO(file_bytes))
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+        
+        img.save(destination, quality=85)
+    except Exception as e:
+        if destination.exists():
+            destination.unlink()
+        raise AppException(
+            "Invalid image file. Could not parse image.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="INVALID_IMAGE_CONTENT",
+        )
 
     return f"/uploads/{subfolder}/{new_filename}"

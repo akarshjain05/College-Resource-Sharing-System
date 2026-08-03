@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import axios from "axios";
+import api from "../api/client";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCXKGuwKX3zHQ9VslvrTNESCPAFON12lYA",
@@ -14,8 +14,6 @@ const firebaseConfig = {
 };
 
 const VAPID_KEY = "BA6CZ5D9U-OB9PAlrc7RjIkdDQHjWrype-_sAZUhBZK32lau5GA8LW_uKsKew3YMFLZlFCb5wBxqtzGcwaIzymY";
-
-const NOTIFICATION_API_URL = import.meta.env.VITE_NOTIFICATION_API_URL || "https://notification-olgf.onrender.com";
 
 function getFirebaseMessaging() {
     try {
@@ -45,7 +43,7 @@ export function usePushNotification(user) {
         if (!messaging) return;
 
         try {
-            // Register the service worker explicitly
+            // 1. Register the service worker
             const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
             console.log("Service Worker registered successfully:", registration);
 
@@ -58,17 +56,12 @@ export function usePushNotification(user) {
             if (token) {
                 console.log("FCM Token retrieved successfully:", token);
 
-                // 3. Register the token with the notification microservice
+                // 3. Save the token via our own backend (no external microservice needed)
                 try {
-                    await axios.post(`${NOTIFICATION_API_URL}/users/${user.id}/token`, {
-                        fcm_token: token,
-                        email: user.email,
-                    });
-                    console.log("FCM Token registered with Notification Microservice successfully.");
+                    await api.post("/users/me/fcm-token", { fcm_token: token });
+                    console.log("FCM Token saved to backend successfully.");
                 } catch (netErr) {
-                    console.warn(
-                        `Could not register FCM token: Notification Microservice at ${NOTIFICATION_API_URL} is offline or unreachable.`
-                    );
+                    console.warn("Could not save FCM token to backend:", netErr?.message);
                 }
             } else {
                 console.warn("No FCM registration token received.");
@@ -136,3 +129,4 @@ export function usePushNotification(user) {
         requestAndRegister
     };
 }
+

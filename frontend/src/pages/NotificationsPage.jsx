@@ -19,6 +19,8 @@ import { notificationApi } from "../api/endpoints";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { usePushNotification } from "../hooks/usePushNotification";
+import { resolveNotificationLink } from "../utils/routeResolver";
+import PaymentCard from "../components/PaymentCard";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
@@ -57,7 +59,7 @@ export default function NotificationsPage() {
           created_at: n.created_at,
           is_read: n.is_read,
           link: n.link,
-          type: n.title.toLowerCase().includes("request") ? "request" : "calendar"
+          type: n.type
         }));
 
         setNotifications(dbNotifs);
@@ -70,6 +72,8 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     loadNotifications();
+    window.addEventListener("refreshNotificationsList", loadNotifications);
+    return () => window.removeEventListener("refreshNotificationsList", loadNotifications);
   }, []);
 
   const handleMarkAll = async () => {
@@ -95,8 +99,9 @@ export default function NotificationsPage() {
       console.log("Failed to mark read", e);
     }
 
-    if (n.link) {
-      navigate(n.link);
+    const resolvedLink = resolveNotificationLink(n.link, n);
+    if (resolvedLink) {
+      navigate(resolvedLink);
     } else {
       loadNotifications(); // Refresh to show is_read=true state
     }
@@ -117,14 +122,14 @@ export default function NotificationsPage() {
   // Helper to render notification category icons matching designs (from feature branch)
   const getNotificationIcon = (type) => {
     const tp = type?.toLowerCase() || "";
-    if (tp === "check") {
+    if (["borrow_approved", "borrow_rejected", "return_confirmed", "damage_claim_resolved", "payment_success"].includes(tp) || tp === "check") {
       return (
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex-shrink-0 shadow-sm">
           <CheckCircle className="h-5 w-5" />
         </div>
       );
     }
-    if (tp === "request") {
+    if (["borrow_request", "new_review"].includes(tp) || tp === "request") {
       return (
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex-shrink-0 shadow-sm">
           <Mail className="h-5 w-5" />
@@ -138,10 +143,17 @@ export default function NotificationsPage() {
         </div>
       );
     }
-    if (tp === "alarm") {
+    if (["return_reminder"].includes(tp) || tp === "alarm") {
       return (
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex-shrink-0 shadow-sm">
           <Clock className="h-5 w-5" />
+        </div>
+      );
+    }
+    if (tp.startsWith("damage_claim")) {
+      return (
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex-shrink-0 shadow-sm">
+          <AlertTriangle className="h-5 w-5" />
         </div>
       );
     }
@@ -163,6 +175,27 @@ export default function NotificationsPage() {
     if (mins < 60) return `${mins} min${mins > 1 ? "s" : ""} ago`;
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     return `${days} day${days > 1 ? "s" : ""} ago`;
+  };
+
+  const renderNotificationMessage = (n) => {
+    if (n.type === "payment_success") {
+      try {
+        const paymentData = JSON.parse(n.message);
+        return <PaymentCard paymentData={paymentData} />;
+      } catch (e) {
+        // Fallback if not valid JSON
+        return (
+          <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
+            {n.message}
+          </p>
+        );
+      }
+    }
+    return (
+      <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
+        {n.message}
+      </p>
+    );
   };
 
   return (
@@ -242,9 +275,7 @@ export default function NotificationsPage() {
                     {getRelativeTimeLabel(n.created_at)}
                   </span>
                 </div>
-                <p className="mt-1.5 text-xs font-medium text-slate-650 dark:text-slate-400 leading-normal break-words">
-                  {n.message}
-                </p>
+                {renderNotificationMessage(n)}
               </div>
             </button>
           ))}

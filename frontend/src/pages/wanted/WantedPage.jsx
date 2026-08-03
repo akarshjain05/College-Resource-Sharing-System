@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, ArrowRight } from "lucide-react";
+import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, ArrowRight, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi, resourceApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 
-function NeedDetailsModal({ request, onClose, onOpenOffer }) {
+function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
   if (!request) return null;
 
   return (
@@ -23,10 +23,16 @@ function NeedDetailsModal({ request, onClose, onOpenOffer }) {
             <HelpCircle className="h-6 w-6" />
           </div>
           <div>
-            <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              {request.category?.name || "Campus Need"}
-            </span>
-            <h2 className="font-display text-lg font-extrabold text-slate-900 dark:text-white leading-tight mt-0.5">{request.title}</h2>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {request.category?.name || "Campus Need"}
+              </span>
+              <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {new Date(request.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(request.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+              </span>
+            </div>
+            <h2 className="font-display text-lg font-extrabold text-slate-900 dark:text-white leading-tight mt-1">{request.title}</h2>
           </div>
         </div>
 
@@ -52,12 +58,17 @@ function NeedDetailsModal({ request, onClose, onOpenOffer }) {
 
           <button
             onClick={() => {
+              if (hasOffered) return;
               onClose();
               onOpenOffer(request);
             }}
-            className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 text-xs font-bold shadow-sm transition-all active:scale-95"
+            disabled={hasOffered}
+            className={`inline-flex items-center gap-1 rounded-xl px-4 py-2 text-xs font-bold shadow-sm transition-all active:scale-95 ${hasOffered
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 pointer-events-none"
+                : "bg-primary-600 hover:bg-primary-700 text-white"
+              }`}
           >
-            I Have This →
+            {hasOffered ? "Offer Sent" : "I Have This →"}
           </button>
         </div>
 
@@ -103,9 +114,9 @@ export default function WantedPage() {
     ])
       .then(([reqRes, catRes, resRes]) => {
         setRequests(reqRes.data || []);
-        setCategories(catRes.data || []);
+        setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data?.items || []));
         if (user) {
-          setMyResources((resRes.data?.items || resRes.data || []).filter(r => r.owner_id === user.id));
+          setMyResources((resRes.data?.items || resRes.data || []).filter(r => r.owner?.id === user.id));
         }
       })
       .finally(() => setLoading(false));
@@ -199,12 +210,12 @@ export default function WantedPage() {
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Explore requests from students & offer solutions</p>
         </div>
-        {/* <button
+        <button
           onClick={() => setShowModal(true)}
           className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
         >
           <Plus className="h-4 w-4" /> Post a Need
-        </button> */}
+        </button>
       </div>
 
       {loading ? (
@@ -220,7 +231,6 @@ export default function WantedPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 items-start">
           {requests
-            .filter((r) => !offeredWantedIds.has(r.id))
             .map((r) => {
               return (
                 <div
@@ -233,9 +243,15 @@ export default function WantedPage() {
                       <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {r.title}
                       </h3>
-                      <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {r.category?.name}
-                      </span>
+                      <div className="flex gap-1">
+                        <span className="rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                          {r.category?.name}
+                        </span>
+                        <span className="rounded-md bg-primary-50 dark:bg-primary-900/40 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(r.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })} - {new Date(r.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
                     </div>
                     <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-3 leading-relaxed">
                       {r.description || "No description provided."}
@@ -262,11 +278,16 @@ export default function WantedPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (r.has_offered || offeredWantedIds.has(r.id)) return;
                           openOfferModal(r);
                         }}
-                        className="inline-flex items-center gap-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs"
+                        disabled={r.has_offered || offeredWantedIds.has(r.id)}
+                        className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95 shadow-xs ${(r.has_offered || offeredWantedIds.has(r.id))
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 pointer-events-none"
+                            : "bg-primary-600 hover:bg-primary-700 text-white"
+                          }`}
                       >
-                        I Have This
+                        {(r.has_offered || offeredWantedIds.has(r.id)) ? "Offer Sent" : "I Have This"}
                       </button>
                     </div>
 
@@ -289,6 +310,7 @@ export default function WantedPage() {
           request={selectedNeedForModal}
           onClose={() => setSelectedNeedForModal(null)}
           onOpenOffer={openOfferModal}
+          hasOffered={selectedNeedForModal.has_offered || offeredWantedIds.has(selectedNeedForModal.id)}
         />
       )}
 
@@ -386,18 +408,38 @@ export default function WantedPage() {
                       </button>
                     </div>
                   ) : (
-                    <div>
+                    <div className="space-y-2">
                       <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Select Item to Offer</label>
-                      <select
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                        value={selectedResourceId}
-                        onChange={(e) => setSelectedResourceId(e.target.value)}
-                      >
-                        <option value="">-- Choose an item --</option>
+                      <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
                         {myResources.map(r => (
-                          <option key={r.id} value={r.id}>{r.title}</option>
+                          <div 
+                            key={r.id} 
+                            onClick={() => setSelectedResourceId(r.id)}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${selectedResourceId === r.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 hover:border-slate-300 dark:hover:border-slate-700'}`}
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                              {r.images?.length > 0 ? (
+                                <img src={r.images.find(img => img.is_primary)?.image_url || r.images[0].image_url} alt={r.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-lg">📦</span>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`text-xs font-bold truncate ${selectedResourceId === r.id ? 'text-primary-700 dark:text-primary-400' : 'text-slate-800 dark:text-slate-200'}`}>{r.title}</h4>
+                              <div className="flex items-center gap-2 mt-0.5 text-[10px] font-bold text-slate-500">
+                                <span className="text-slate-600 dark:text-slate-400">Deposit: ₹{r.deposit_amount}</span>
+                                <span>•</span>
+                                <span className="uppercase">{r.condition}</span>
+                              </div>
+                            </div>
+                            {selectedResourceId === r.id && (
+                              <div className="flex-shrink-0 text-primary-600 dark:text-primary-400">
+                                <Check className="h-4 w-4" />
+                              </div>
+                            )}
+                          </div>
                         ))}
-                      </select>
+                      </div>
                     </div>
                   )}
                 </>

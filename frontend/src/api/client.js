@@ -1,10 +1,11 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 function getCookie(name) {
@@ -49,24 +50,17 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
       isRefreshing = true;
-      const refreshToken = localStorage.getItem("crss_refresh_token");
-
-      if (!refreshToken) {
-        localStorage.removeItem("crss_access_token");
-        localStorage.removeItem("crss_refresh_token");
-        window.location.href = "/login";
-        return Promise.reject(error);
-      }
+      
+      // We no longer read refresh token from localStorage, it's sent automatically via httpOnly cookie
 
       try {
         const csrfToken = getCookie("csrf_token");
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        }, {
-          headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {}
+        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+          headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
+          withCredentials: true,
         });
         localStorage.setItem("crss_access_token", data.access_token);
-        localStorage.setItem("crss_refresh_token", data.refresh_token);
+        // refresh_token is set via Set-Cookie header automatically
         processQueue(null, data.access_token);
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
         return api(originalRequest);
@@ -75,7 +69,7 @@ api.interceptors.response.use(
         const status = refreshError.response?.status;
         if (status === 401 || status === 400) {
           localStorage.removeItem("crss_access_token");
-          localStorage.removeItem("crss_refresh_token");
+          // No need to remove crss_refresh_token as it's a cookie managed by backend
           window.location.href = "/login";
         }
         return Promise.reject(refreshError);
@@ -89,11 +83,11 @@ api.interceptors.response.use(
 );
 
 export const getImageUrl = (url) => {
-  if (!url) return "";
+  if (!url) return null;
   if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
     return url;
   }
-  const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
+  const apiBase = import.meta.env.VITE_API_BASE_URL || "/api/v1";
   try {
     if (apiBase.startsWith("/")) {
       return `${window.location.origin}${url}`;
@@ -101,7 +95,7 @@ export const getImageUrl = (url) => {
     const origin = new URL(apiBase).origin;
     return `${origin}${url}`;
   } catch (e) {
-    return `http://localhost:8000${url}`;
+    return url;
   }
 };
 

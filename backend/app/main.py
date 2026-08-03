@@ -36,6 +36,8 @@ from app.routers import (
     payments,
 )
 from app.middleware.csrf import CSRFMiddleware
+from app.middleware.limit_body_size import ContentSizeLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.ws_manager import manager
 
 configure_logging(debug=settings.DEBUG)
@@ -44,20 +46,23 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description="A secure, campus-only platform for students, faculty, and clubs to lend and borrow resources.",
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
+    redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
     openapi_url="/openapi.json",
 )
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(ContentSizeLimitMiddleware, max_content_size=2 * 1024 * 1024) # 2MB limit for JSON bodies
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-CSRF-Token"],
 )
 app.add_middleware(CSRFMiddleware)
 
@@ -83,7 +88,7 @@ app.include_router(wanted.router, prefix="/api/v1")
 app.include_router(wishlist.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")
-app.include_router(payments.router, prefix="/api/v1/payments")
+app.include_router(payments.router, prefix=API_PREFIX)
 
 
 @app.on_event("startup")
