@@ -22,10 +22,11 @@ jobs:
             cd College-Resource-Sharing-System
             
             # 2. Pull the latest code from GitHub main branch
-            git fetch origin
+            rm -f .git/*.lock .git/refs/heads/*.lock .git/refs/remotes/origin/*.lock || true
+            git fetch origin --prune
             git reset --hard origin/main
             git clean -fdx -e .env
-            
+
             # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
             if [ $(sudo swapon --show | wc -l) -eq 0 ]; then
               echo "No swap file found. Creating a 2GB swap file to prevent out-of-memory errors..."
@@ -37,14 +38,16 @@ jobs:
             else
               echo "Swap file already exists."
             fi
-            
+
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
-            
+
             # 3.8 Clean up old Docker build cache and unused images to prevent disk full / "no space left on device"
             docker system prune -af || true
             docker builder prune -af || true
 
             # 4. Rebuild and restart the Docker containers with the new code
             docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            docker rmi -f crss_backend:latest docker.io/library/crss_backend:latest 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml build backend
+            docker compose -f docker-compose.prod.yml up -d --no-build --remove-orphans
