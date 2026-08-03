@@ -24,7 +24,7 @@ pytest-asyncio==0.23.7
 qrcode==7.4.2
 slowapi==0.1.9
 razorpay==1.4.2
-setuptools==71.1.0
+setuptools==83.0.0
 jaraco.context==6.1.0
 pyasn1==0.6.4
 wheel==0.46.2
