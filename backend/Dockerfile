@@ -36,12 +36,7 @@ RUN pip install --no-cache /wheels/*
 
 COPY . .
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/uploads && \
-    chown -R appuser:appuser /app
-
-USER appuser
+RUN mkdir -p /app/uploads
 
 EXPOSE 8000
 
