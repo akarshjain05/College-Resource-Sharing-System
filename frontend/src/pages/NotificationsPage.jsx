@@ -99,7 +99,7 @@ export default function NotificationsPage() {
       console.log("Failed to mark read", e);
     }
 
-    const resolvedLink = resolveNotificationLink(n.link);
+    const resolvedLink = resolveNotificationLink(n.link, n);
     if (resolvedLink) {
       navigate(resolvedLink);
     } else {

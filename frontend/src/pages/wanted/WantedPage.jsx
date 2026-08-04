@@ -449,9 +449,10 @@ export default function WantedPage() {
                     <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Item Name</label>
                     <input
                       type="text"
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-primary-500"
                       value={newOfferForm.title}
                       onChange={(e) => setNewOfferForm({ ...newOfferForm, title: e.target.value })}
+                      placeholder="Enter specific item name you are offering..."
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">

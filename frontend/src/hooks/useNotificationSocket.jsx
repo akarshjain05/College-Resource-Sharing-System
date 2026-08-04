@@ -92,7 +92,7 @@ export function useNotificationSocket(onNotification, user) {
                     // ignore
                   }
                 }
-                const resolved = resolveNotificationLink(payload.link);
+                const resolved = resolveNotificationLink(payload.link, payload);
                 if (resolved && resolved !== "/borrow-requests") {
                   navigate(resolved);
                 } else if (payload.type === "chat_message" && payload.borrow_request_id) {
@@ -104,7 +104,7 @@ export function useNotificationSocket(onNotification, user) {
               }}
               style={{
                 cursor:
-                  resolveNotificationLink(payload.link) || payload.type === "chat_message"
+                  resolveNotificationLink(payload.link, payload) || payload.type === "chat_message"
                     ? "pointer"
                     : "default",
               }}
