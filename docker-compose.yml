@@ -37,6 +37,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_backend
     restart: unless-stopped
     command: sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -58,6 +59,7 @@ services:
 
   celery_worker:
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_celery_worker
     restart: unless-stopped
     command: celery -A app.tasks.celery_app worker --loglevel=info
@@ -77,6 +79,7 @@ services:
 
   celery_beat:
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_celery_beat
     restart: unless-stopped
     command: celery -A app.tasks.celery_app beat --loglevel=info
@@ -94,6 +97,8 @@ services:
         condition: service_healthy
 
   frontend:
+    image: crss_frontend_dev:latest
+    pull_policy: never
     build:
       context: ./frontend
       dockerfile: Dockerfile
