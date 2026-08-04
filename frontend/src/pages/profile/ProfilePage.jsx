@@ -34,7 +34,8 @@ export default function ProfilePage() {
       await refreshUser();
       toast.success("Profile updated successfully!");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not update profile.");
+      const detail = err.response?.data?.detail;
+      toast.error(typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join(", ") : "Could not update profile."));
     } finally {
       setSaving(false);
     }
@@ -57,7 +58,8 @@ export default function ProfilePage() {
       toast.success("Password updated successfully!");
       setPasswords({ current_password: "", new_password: "", confirm_new_password: "" });
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not change password.");
+      const detail = err.response?.data?.detail;
+      toast.error(typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join(", ") : "Could not change password."));
     } finally {
       setChangingPw(false);
     }
@@ -235,7 +237,7 @@ export default function ProfilePage() {
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">New Password</label>
               <PasswordInput
                 required
-                minLength={8}
+                minLength={12}
                 value={passwords.new_password}
                 onChange={updatePw("new_password")}
                 autoComplete="new-password"
@@ -245,7 +247,7 @@ export default function ProfilePage() {
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">Confirm New Password</label>
               <PasswordInput
                 required
-                minLength={8}
+                minLength={12}
                 value={passwords.confirm_new_password}
                 onChange={updatePw("confirm_new_password")}
                 autoComplete="new-password"

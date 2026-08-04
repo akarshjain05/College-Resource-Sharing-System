@@ -72,7 +72,14 @@ export default function RegisterPage() {
       if (err.response?.status === 429) {
         toast.error("Too many attempts. Please try again later.");
       } else {
-        toast.error(err.response?.data?.detail || "Registration failed. Please try again.");
+        let msg = "Registration failed. Please try again.";
+        const detail = err.response?.data?.detail;
+        if (typeof detail === 'string') {
+          msg = detail;
+        } else if (Array.isArray(detail)) {
+          msg = detail.map(d => d.msg).join(", ");
+        }
+        toast.error(msg);
       }
     } finally {
       setSubmitting(false);
@@ -172,7 +179,7 @@ export default function RegisterPage() {
                   <label className="label">Password</label>
                   <PasswordInput
                     required
-                    minLength={8}
+                    minLength={12}
                     value={form.password}
                     onChange={update("password")}
                     autoComplete="new-password"
@@ -182,7 +189,7 @@ export default function RegisterPage() {
                   <label className="label">Confirm password</label>
                   <PasswordInput
                     required
-                    minLength={8}
+                    minLength={12}
                     value={form.confirm_password}
                     onChange={update("confirm_password")}
                     autoComplete="new-password"
