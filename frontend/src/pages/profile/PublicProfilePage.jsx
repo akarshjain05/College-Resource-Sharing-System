@@ -57,17 +57,7 @@ export default function PublicProfilePage() {
   }
 
   if (error) {
-    if (error === "404") {
-      return <NotFoundPage message="This user profile doesn't exist or has been removed." />;
-    }
-    return (
-      <div className="max-w-xl mx-auto my-12 rounded-3xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-8 text-center text-red-600 dark:text-red-400">
-        <p className="font-bold text-lg">{error}</p>
-        <Link to="/resources" className="inline-block mt-4 text-sm font-bold text-primary-600 hover:underline">
-          Return to Explore Items
-        </Link>
-      </div>
-    );
+    return <NotFoundPage message="This user profile doesn't exist or has been removed." />;
   }
 
   if (!profile) return null;
