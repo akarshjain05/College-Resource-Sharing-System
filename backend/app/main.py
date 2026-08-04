@@ -3,6 +3,9 @@ Campus Resource Sharing System - FastAPI application entrypoint.
 """
 import os
 
+from contextlib import asynccontextmanager
+import asyncio
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -42,6 +45,18 @@ from app.services.ws_manager import manager
 
 configure_logging(debug=settings.DEBUG)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Capture the running event loop so ws_manager can schedule coroutines
+    # from synchronous route handlers via asyncio.run_coroutine_threadsafe.
+    # Must be done in an async context so asyncio.get_running_loop() is valid.
+    manager.bind_loop(asyncio.get_running_loop())
+    if settings.ENVIRONMENT == "development":
+        Base.metadata.create_all(bind=engine)
+    yield
+    # (cleanup on shutdown can go here if needed)
+
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="A secure, campus-only platform for students, faculty, and clubs to lend and borrow resources.",
@@ -49,6 +64,7 @@ app = FastAPI(
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -91,15 +107,7 @@ app.include_router(websocket.router, prefix="/api/v1")
 app.include_router(payments.router, prefix=API_PREFIX)
 
 
-@app.on_event("startup")
-def on_startup():
-    # In development, auto-create tables if they don't already exist.
-    # In production, Alembic migrations should be the source of truth (see alembic/).
-    if settings.ENVIRONMENT == "development":
-        Base.metadata.create_all(bind=engine)
-
-    import asyncio
-    manager.bind_loop(asyncio.get_event_loop())
+# Startup logic moved to the lifespan context manager above.
 
 
 @app.get("/")

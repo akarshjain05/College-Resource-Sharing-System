@@ -1,4 +1,5 @@
 import uuid
+import threading
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -9,8 +10,31 @@ from app.models.user import User
 from app.models.wanted import WantedRequest
 from app.models.category import Category
 from app.schemas.wanted import WantedCreate, WantedResponse
+from app.models.enums import NotificationType
 
 router = APIRouter(prefix="/wanted", tags=["Wanted Requests"])
+
+
+def _notify_new_wanted_bg(poster_id: uuid.UUID, poster_name: str, wanted_id: uuid.UUID, title: str) -> None:
+    """Fan out a notification to all other users about the new wanted post (runs in a background thread)."""
+    from app.core.database import SessionLocal
+    from app.services.notification_service import create_notification
+
+    db = SessionLocal()
+    try:
+        other_users = db.query(User).filter(User.id != poster_id).all()
+        for user in other_users:
+            create_notification(
+                db=db,
+                user_id=user.id,
+                notif_type=NotificationType.SYSTEM,
+                title="New Campus Need Posted",
+                message=f"{poster_name} is looking for: '{title}'. Can you help?",
+                link=f"/wanted",
+                event_type="wanted.new",
+            )
+    finally:
+        db.close()
 
 
 @router.post("", response_model=WantedResponse, status_code=status.HTTP_201_CREATED)
@@ -37,6 +61,14 @@ def create_wanted_request(
     db.add(wanted)
     db.commit()
     db.refresh(wanted)
+
+    # Notify all other users in the background so this response stays fast.
+    threading.Thread(
+        target=_notify_new_wanted_bg,
+        args=(current_user.id, current_user.full_name, wanted.id, wanted.title),
+        daemon=True,
+    ).start()
+
     return wanted
 
 
