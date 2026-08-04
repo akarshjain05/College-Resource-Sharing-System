@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { chatEventBus } from "../utils/chatEventBus";
 import { resolveNotificationLink } from "../utils/routeResolver";
+import { notificationApi } from "../api/endpoints";
 
 // The realtime notification WebSocket is served by the main backend itself
 // (see backend/app/routers/websocket.py), not a separate microservice --
@@ -25,53 +26,59 @@ function getWebSocketBaseUrl() {
   return `${protocol}//${window.location.host}${API_BASE_URL}`;
 }
 
-/**
- * Opens a WebSocket to receive real-time notifications from the backend
- * and shows a toast for each one as it arrives. Reconnects automatically if connection drops.
- */
 export function useNotificationSocket(onNotification, user) {
+  const navigate = useNavigate();
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user?.id) return undefined;
+    if (!user) return;
+
+    const token = localStorage.getItem("crss_access_token");
+    if (!token) return;
 
     let cancelled = false;
 
     const connect = () => {
-      if (cancelled) return;
-      const token = localStorage.getItem("crss_access_token");
-      if (!token) return;
-      // Pass the JWT as a query parameter — browsers cannot set custom
-      // headers on WebSocket handshakes, so this is the standard approach.
-      const wsBase = getWebSocketBaseUrl();
-      const socket = new WebSocket(`${wsBase}/ws/notifications?token=${encodeURIComponent(token)}`);
+      const wsUrl = `${getWebSocketBaseUrl()}/ws/notifications`;
+      const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
 
       socket.onopen = () => {
-        // Token is already in the URL; nothing extra needed on open.
+        // Send token as first message after handshake
+        socket.send(JSON.stringify({ token }));
       };
 
       socket.onmessage = (event) => {
         try {
-          const rawPayload = JSON.parse(event.data);
-          const payload = rawPayload.payload || rawPayload;
-
-          // Route chat messages directly to open threads
+          const payload = JSON.parse(event.data);
+          
+          // Check if there is an active chat component handling this message
           if (payload.type === "chat_message") {
-            const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
-            // If the thread is open (handled), we might not want to show a toast,
-            // or we could show a quieter one. Let's just return if handled so it doesn't toast
+            const isHandled = chatEventBus.emit("message", payload);
+            // If the user is currently viewing this chat thread, don't show a toast
             if (isHandled) return;
           }
 
           toast((t) => (
             <div
               onClick={() => {
+                if (payload.id) {
+                  try {
+                    notificationApi.markRead(payload.id);
+                    window.dispatchEvent(new Event("refreshUnreadCount"));
+                  } catch (e) {
+                    // ignore
+                  }
+                }
                 const resolved = resolveNotificationLink(payload.link);
-                if (resolved) navigate(resolved);
-                else if (payload.type === "chat_message") navigate(`/borrow-requests`);
+                if (resolved && resolved !== "/borrow-requests") {
+                  navigate(resolved);
+                } else if (payload.type === "chat_message" && payload.borrow_request_id) {
+                  navigate(`/borrow-requests?id=${payload.borrow_request_id}&openChat=true`);
+                } else if (resolved) {
+                  navigate(resolved);
+                }
                 toast.dismiss(t.id);
               }}
               style={{ cursor: (resolveNotificationLink(payload.link) || payload.type === "chat_message") ? "pointer" : "default" }}

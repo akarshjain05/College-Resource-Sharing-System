@@ -97,36 +97,41 @@ export default function BorrowRequestsPage() {
 
   useEffect(() => {
     const urlId = searchParams.get("id");
+    const isOpenChat = searchParams.get("openChat") === "true";
 
-    if (urlId && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
-      const foundBorrowing = bookings.borrowing.find(b => b.id === urlId);
-      if (foundBorrowing) {
+    // Don't auto-open on page refresh (user hit F5/Cmd+R)
+    const isReload = window.performance && 
+                    window.performance.getEntriesByType && 
+                    window.performance.getEntriesByType("navigation").length > 0 && 
+                    window.performance.getEntriesByType("navigation")[0].type === "reload";
+
+    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
+      let foundBooking = bookings.borrowing.find(b => b.id === urlId);
+      let newTab = "borrowing";
+      if (!foundBooking) {
+        foundBooking = bookings.lending.find(b => b.id === urlId);
+        if (foundBooking) newTab = "lending";
+      }
+
+      if (foundBooking) {
         autoOpenedRef.current = urlId;
-        setTab("borrowing");
-        setSelectedBookingForModal(foundBorrowing);
-        const status = foundBorrowing.status.toLowerCase();
+        setTab(newTab);
+        const status = foundBooking.status.toLowerCase();
         if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
         else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
         else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
         else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
-        
-        searchParams.delete("id");
-        setSearchParams(searchParams);
-      } else if (bookings.lending.length > 0) {
-        const foundLending = bookings.lending.find(b => b.id === urlId);
-        if (foundLending) {
-          autoOpenedRef.current = urlId;
-          setTab("lending");
-          setSelectedBookingForModal(foundLending);
-          const status = foundLending.status.toLowerCase();
-          if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-          else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
-          else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
-          else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
-          
-          searchParams.delete("id");
-          setSearchParams(searchParams);
+
+        if (isOpenChat) {
+          setOpenChatId(urlId);
+        } else {
+          setSelectedBookingForModal(foundBooking);
         }
+
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("id");
+        newParams.delete("openChat");
+        setSearchParams(newParams, { replace: true });
       }
     }
   }, [bookings, searchParams]);
@@ -176,39 +181,6 @@ export default function BorrowRequestsPage() {
           borrowing: dbMyReqs,
           lending: dbIncomingReqs
         });
-
-        const targetId = searchParams.get("id");
-        // Don't auto-open on page refresh (user hit F5/Cmd+R)
-        const isReload = window.performance && 
-                        window.performance.getEntriesByType && 
-                        window.performance.getEntriesByType("navigation").length > 0 && 
-                        window.performance.getEntriesByType("navigation")[0].type === "reload";
-
-        if (targetId && !isReload) {
-          let foundBooking = dbMyReqs.find(b => b.id === targetId);
-          let newTab = "borrowing";
-          if (!foundBooking) {
-            foundBooking = dbIncomingReqs.find(b => b.id === targetId);
-            if (foundBooking) newTab = "lending";
-          }
-          
-          if (foundBooking) {
-            setTab(newTab);
-            const status = foundBooking.status.toLowerCase();
-            if (["requested", "pending", "approved"].includes(status)) setSubTab("upcoming");
-            else if (["handover_requested", "active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
-            else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
-            else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
-            
-            setSelectedBookingForModal(foundBooking);
-          }
-          
-          // Remove id from URL so it doesn't reopen if user navigates back
-          const newParams = new URLSearchParams(searchParams);
-          newParams.delete("id");
-          setSearchParams(newParams, { replace: true });
-        }
-
       })
       .catch((err) => {
         console.error("Failed to load bookings:", err);
