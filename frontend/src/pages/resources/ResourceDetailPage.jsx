@@ -52,12 +52,7 @@ export default function ResourceDetailPage() {
         setBookings(availResp.data);
       })
       .catch((err) => {
-        if (err.response?.status === 404) {
-          setNotFound(true);
-        } else {
-          toast.error("Could not fetch resource details.");
-          navigate("/");
-        }
+        setNotFound(true);
       })
       .finally(() => {
         setLoading(false);
