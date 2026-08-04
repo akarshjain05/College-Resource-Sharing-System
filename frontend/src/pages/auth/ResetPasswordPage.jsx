@@ -50,6 +50,7 @@ export default function ResetPasswordPage() {
               <label className="label">New password</label>
               <PasswordInput
                 required
+                autoComplete="new-password"
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -59,6 +60,7 @@ export default function ResetPasswordPage() {
               <label className="label">Confirm password</label>
               <PasswordInput
                 required
+                autoComplete="new-password"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

@@ -24,6 +24,7 @@ export const authApi = {
 export const paymentApi = {
   createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
   verify: (payload) => api.post("/payments/verify", payload),
+  getMyTransactions: () => api.get("/payments/my"),
   myPayments: () => api.get("/payments/my-payments"),
   simulatePay: (id) => api.post(`/payments/${id}/pay`),
   simulateFail: (id) => api.post(`/payments/${id}/fail`),
@@ -86,6 +87,8 @@ export const chatApi = {
   list: (requestId) => api.get(`/borrow-requests/${requestId}/messages`),
   send: (requestId, payload) => api.post(`/borrow-requests/${requestId}/messages`, payload),
   markRead: (requestId) => api.patch(`/borrow-requests/${requestId}/messages/read`),
+  report: (requestId, messageId, reason = "Inappropriate content") =>
+    api.post(`/borrow-requests/${requestId}/messages/${messageId}/report?reason=${encodeURIComponent(reason)}`),
 };
 
 export const notificationApi = {

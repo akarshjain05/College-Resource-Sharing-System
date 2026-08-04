@@ -18,7 +18,7 @@ def create_order(*, amount_paise: int, receipt: str, notes: dict) -> dict:
     return _client.order.create({
         "amount": amount_paise,
         "currency": settings.RAZORPAY_CURRENCY,
-        "receipt": receipt,
+        "receipt": str(receipt)[:40],
         "payment_capture": 1,  # auto-capture on successful authorization
         "notes": notes,
     })

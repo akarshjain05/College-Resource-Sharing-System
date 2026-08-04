@@ -24,9 +24,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-    # No "ports:" mapping to the host -- only other containers on the Compose
-    # network need to reach Postgres. Keeping it off the public interface entirely
-    # is safer than relying on the VM's firewall alone.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+    networks:
+      - internal
 
   redis:
     image: redis:7-alpine
@@ -38,11 +42,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    networks:
+      - internal
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      network: host
+    image: crss_backend:latest
     container_name: crss_backend
     restart: unless-stopped
     command: sh -c "python prestart.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --timeout-keep-alive 65"
@@ -56,16 +69,26 @@ services:
       BACKEND_CORS_ORIGINS: '["https://${DOMAIN}"]'
     volumes:
       - crss_uploads:/app/uploads
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - internal
+      - external
 
   celery_worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      network: host
+    image: crss_backend:latest
     container_name: crss_celery_worker
     restart: unless-stopped
     command: celery -A app.tasks.celery_app worker --loglevel=info
@@ -77,51 +100,77 @@ services:
       ENVIRONMENT: production
     volumes:
       - crss_uploads:/app/uploads
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - internal
+      - external
 
   celery_beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      network: host
+    image: crss_backend:latest
     container_name: crss_celery_beat
     restart: unless-stopped
-    command: celery -A app.tasks.celery_app beat --loglevel=info
+    command: celery -A app.tasks.celery_app beat --loglevel=info -s /tmp/celerybeat-schedule
     env_file:
       - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       ENVIRONMENT: production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks:
+      - internal
 
   frontend:
     image: crss_frontend_prod
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
+      network: host
       args:
         VITE_API_BASE_URL: /api/v1
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     container_name: crss_frontend
     restart: unless-stopped
     environment:
-      - DOMAIN=${DOMAIN:-localhost}
+      - DOMAIN=${DOMAIN:-13-48-123-128.sslip.io}
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     depends_on:
       - backend
+    networks:
+      - internal
+      - external
 
   db_backup:
     image: prodrigestivill/postgres-backup-local
@@ -139,9 +188,16 @@ services:
       HEALTHCHECK_PORT: 8080
     volumes:
       - crss_db_backups:/backups
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - internal
 
 volumes:
   crss_postgres_data:
@@ -149,3 +205,8 @@ volumes:
   caddy_data:
   caddy_config:
   crss_db_backups:
+
+networks:
+  internal:
+    internal: true
+  external:

@@ -22,10 +22,11 @@ jobs:
             cd College-Resource-Sharing-System
             
             # 2. Pull the latest code from GitHub main branch
-            git fetch origin
+            rm -f .git/*.lock .git/refs/heads/*.lock .git/refs/remotes/origin/*.lock || true
+            git fetch origin --prune
             git reset --hard origin/main
             git clean -fdx -e .env
-            
+
             # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
             if [ $(sudo swapon --show | wc -l) -eq 0 ]; then
               echo "No swap file found. Creating a 2GB swap file to prevent out-of-memory errors..."
@@ -37,9 +38,23 @@ jobs:
             else
               echo "Swap file already exists."
             fi
-            
+
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
-            
-            # 4. Rebuild and restart the Docker containers with the new code
-            docker compose -f docker-compose.prod.yml up -d --build
+
+            # 3.8 Clean up old Docker build cache and unused images to prevent disk full / "no space left on device"
+            docker system prune -af || true
+            docker builder prune -af || true
+
+            # 4. Rebuild the Docker images first
+            docker compose -f docker-compose.prod.yml build backend
+            docker compose -f docker-compose.prod.yml build frontend
+
+            # 5. Stop and force-remove all existing containers immediately before starting
+            docker compose -f docker-compose.prod.yml down --remove-orphans -t 5 || true
+            docker rm -f $(docker ps -aq --filter "name=crss_") 2>/dev/null || true
+            docker rm -f crss_db crss_redis crss_backend crss_celery_worker crss_celery_beat crss_frontend crss_db_backup 2>/dev/null || true
+            docker rmi -f crss_backend:latest docker.io/library/crss_backend:latest crss_frontend_prod:latest 2>/dev/null || true
+
+            # 6. Start the new production containers
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans

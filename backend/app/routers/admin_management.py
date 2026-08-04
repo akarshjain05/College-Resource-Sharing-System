@@ -44,9 +44,14 @@ def update_user_role(
 
     old_role = target_user.role.value
     target_user.role = payload.role
-    target_user.can_moderate_complaints = payload.can_moderate_complaints
-    target_user.can_manage_users = payload.can_manage_users
-    target_user.can_resolve_damage_claims = payload.can_resolve_damage_claims
+    if payload.role == UserRole.ADMIN:
+        target_user.can_moderate_complaints = True
+        target_user.can_manage_users = True
+        target_user.can_resolve_damage_claims = True
+    else:
+        target_user.can_moderate_complaints = False
+        target_user.can_manage_users = False
+        target_user.can_resolve_damage_claims = False
     
     # Audit logging
     log = AuditLog(

@@ -170,7 +170,7 @@ def test_borrow_lifecycle_notifications(client, test_user, second_user, test_cat
     
     # Mock time passing so we can return
     from app.models.borrow import BorrowRequest
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timezone
     br_record = db_session.query(BorrowRequest).filter(BorrowRequest.id == uuid.UUID(req_id)).first()
     br_record.requested_start_date = datetime.now(timezone.utc) - timedelta(days=1)
     db_session.commit()
