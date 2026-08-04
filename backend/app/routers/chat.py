@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -10,12 +10,14 @@ from app.core.exceptions import NotFoundException, ForbiddenException
 from app.models.user import User
 from app.models.borrow import BorrowRequest
 from app.models.chat import ChatMessage
+from app.models.misc import Complaint
 from app.models.enums import NotificationType
 from app.schemas.chat import ChatMessageCreate, ChatMessageResponse
 from app.services.notification_service import create_notification
 from app.core.rate_limit import limiter
 from starlette.requests import Request
 from app.services.ws_manager import manager
+from app.utils.moderation import check_chat_message_content
 
 router = APIRouter(prefix="/borrow-requests/{request_id}/messages", tags=["Chat"])
 
@@ -45,6 +47,9 @@ def send_message(
     db: Session = Depends(get_db)
 ):
     br = _get_authorized_request(request_id, current_user, db)
+    
+    # Item 88: Message content moderation hook (blocks severe profanity/slurs & spam patterns)
+    check_chat_message_content(payload.body)
     
     msg = ChatMessage(
         borrow_request_id=br.id, 
@@ -96,3 +101,38 @@ def mark_read(
     db.commit()
     
     return {"status": "ok", "marked_read": len(unread_messages)}
+
+
+@router.post("/{message_id}/report", status_code=201)
+def report_message(
+    request_id: uuid.UUID,
+    message_id: uuid.UUID,
+    reason: str = Query("Inappropriate content"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Item 88: Allow a participant to report an abusive/harassing chat message to campus admins.
+    """
+    br = _get_authorized_request(request_id, current_user, db)
+    msg = db.query(ChatMessage).filter(
+        ChatMessage.id == message_id,
+        ChatMessage.borrow_request_id == br.id
+    ).first()
+    if not msg:
+        raise NotFoundException("Message not found")
+        
+    complaint = Complaint(
+        filed_by_id=current_user.id,
+        against_user_id=msg.sender_id,
+        borrow_request_id=br.id,
+        category="chat_abuse",
+        severity="high",
+        subject=f"Reported Chat Message #{msg.id}",
+        description=f"Reason: {reason}\nMessage body: '{msg.body}'"
+    )
+    db.add(complaint)
+    db.commit()
+    db.refresh(complaint)
+    return {"status": "reported", "complaint_id": str(complaint.id)}
+
