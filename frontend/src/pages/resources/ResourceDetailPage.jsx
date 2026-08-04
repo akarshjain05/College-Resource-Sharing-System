@@ -19,6 +19,7 @@ import {
 import { resourceApi, borrowApi, reviewApi, categoryApi, wishlistApi, getImageUrl } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
 import AvailabilityCalendar from "../../components/AvailabilityCalendar";
+import NotFoundPage from "../errors/NotFoundPage";
 
 
 
@@ -30,6 +31,7 @@ export default function ResourceDetailPage() {
   const [resource, setResource] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   // Dates state
   const [selectedDateRange, setSelectedDateRange] = useState({ start: null, end: null, error: null });
@@ -50,8 +52,12 @@ export default function ResourceDetailPage() {
         setBookings(availResp.data);
       })
       .catch((err) => {
-        toast.error("Could not fetch resource details.");
-        navigate("/");
+        if (err.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          toast.error("Could not fetch resource details.");
+          navigate("/");
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -66,6 +72,10 @@ export default function ResourceDetailPage() {
   useEffect(() => {
     load();
   }, [id]);
+
+  if (notFound) {
+    return <NotFoundPage message="This item doesn't exist or has been removed." />;
+  }
 
   if (loading || !resource) {
     return (

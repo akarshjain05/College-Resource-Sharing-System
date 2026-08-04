@@ -14,6 +14,7 @@ import {
 import { usersApi } from "../../api/endpoints";
 import ResourceCard from "../../components/ResourceCard";
 import StatCard from "../../components/StatCard";
+import NotFoundPage from "../errors/NotFoundPage";
 import { useAuth } from "../../context/AuthContext";
 
 export default function PublicProfilePage() {
@@ -39,7 +40,7 @@ export default function PublicProfilePage() {
         setStats(res.data.stats);
         setRecentReviews(res.data.recent_reviews || []);
       })
-      .catch((err) => setError(err.response?.data?.detail || "Failed to load user profile"))
+      .catch((err) => setError(err.response?.status === 404 ? "404" : err.response?.data?.detail || "Failed to load user profile"))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -56,6 +57,9 @@ export default function PublicProfilePage() {
   }
 
   if (error) {
+    if (error === "404") {
+      return <NotFoundPage message="This user profile doesn't exist or has been removed." />;
+    }
     return (
       <div className="max-w-xl mx-auto my-12 rounded-3xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-8 text-center text-red-600 dark:text-red-400">
         <p className="font-bold text-lg">{error}</p>
