@@ -56,6 +56,7 @@ services:
       dockerfile: Dockerfile
       network: host
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_backend
     restart: unless-stopped
     command: sh -c "python prestart.py && uvicorn app.main:app --host 0.0.0.0 --port 8000 --timeout-keep-alive 65"
@@ -85,6 +86,7 @@ services:
 
   celery_worker:
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_celery_worker
     restart: unless-stopped
     command: celery -A app.tasks.celery_app worker --loglevel=info
@@ -112,6 +114,7 @@ services:
 
   celery_beat:
     image: crss_backend:latest
+    pull_policy: never
     container_name: crss_celery_beat
     restart: unless-stopped
     command: celery -A app.tasks.celery_app beat --loglevel=info -s /tmp/celerybeat-schedule
@@ -135,7 +138,8 @@ services:
       - internal
 
   frontend:
-    image: crss_frontend_prod
+    image: crss_frontend_prod:latest
+    pull_policy: never
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
