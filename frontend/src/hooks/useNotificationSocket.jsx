@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { chatEventBus } from "../utils/chatEventBus";
 import { resolveNotificationLink } from "../utils/routeResolver";
+import { notificationApi } from "../api/endpoints";
 
 // The realtime notification WebSocket is served by the main backend itself
 // (see backend/app/routers/websocket.py), not a separate microservice --
@@ -35,13 +36,16 @@ const RECONNECT_MAX_MS = 30_000;
  * with exponential backoff so a brief network hiccup doesn't spam retries.
  */
 export function useNotificationSocket(onNotification, user) {
+  const navigate = useNavigate();
   const socketRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectDelayRef = useRef(RECONNECT_BASE_MS);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user?.id) return undefined;
+    if (!user) return;
+
+    const token = localStorage.getItem("crss_access_token");
+    if (!token) return;
 
     let cancelled = false;
 
@@ -61,6 +65,8 @@ export function useNotificationSocket(onNotification, user) {
       socket.onopen = () => {
         // Connected — reset backoff so the next disconnect starts fresh.
         reconnectDelayRef.current = RECONNECT_BASE_MS;
+        // Send token as first message after handshake for backward/forward compatibility
+        socket.send(JSON.stringify({ token }));
       };
 
       socket.onmessage = (event) => {
@@ -78,9 +84,22 @@ export function useNotificationSocket(onNotification, user) {
           toast((t) => (
             <div
               onClick={() => {
+                if (payload.id) {
+                  try {
+                    notificationApi.markRead(payload.id);
+                    window.dispatchEvent(new Event("refreshUnreadCount"));
+                  } catch (e) {
+                    // ignore
+                  }
+                }
                 const resolved = resolveNotificationLink(payload.link);
-                if (resolved) navigate(resolved);
-                else if (payload.type === "chat_message") navigate(`/borrow-requests`);
+                if (resolved && resolved !== "/borrow-requests") {
+                  navigate(resolved);
+                } else if (payload.type === "chat_message" && payload.borrow_request_id) {
+                  navigate(`/borrow-requests?id=${payload.borrow_request_id}&openChat=true`);
+                } else if (resolved) {
+                  navigate(resolved);
+                }
                 toast.dismiss(t.id);
               }}
               style={{
@@ -108,7 +127,7 @@ export function useNotificationSocket(onNotification, user) {
         }
       };
 
-      socket.onclose = (event) => {
+      socket.onclose = () => {
         if (cancelled) return;
 
         // Code 4401 = auth failure (bad/expired token).  Don't retry immediately —
