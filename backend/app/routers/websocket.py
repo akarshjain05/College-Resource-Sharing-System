@@ -11,12 +11,14 @@ OR as the first JSON message after the handshake instead of the Authorization
 header used elsewhere. Both styles are accepted for backward/forward compatibility.
 """
 import uuid
+import time
 from typing import Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 
 import app.core.database as core_db
+from app.core.config import settings
 from app.core.security import decode_token
 from app.models.user import User
 from app.services.ws_manager import manager
@@ -41,6 +43,21 @@ async def notifications_websocket(
     token: Optional[str] = Query(default=None),
 ):
     await websocket.accept()
+
+    # Item 87: Confirm WS origin checking against CORS allowed origins
+    origin = websocket.headers.get("origin")
+    if origin:
+        cors_origins = settings.BACKEND_CORS_ORIGINS
+        if isinstance(cors_origins, str):
+            cors_origins = [o.strip() for o in cors_origins.split(",")]
+        allowed = [o.rstrip("/") for o in cors_origins]
+        is_dev_local = (
+            settings.ENVIRONMENT == "development"
+            and (origin.startswith("http://localhost") or origin.startswith("http://127.0.0.1"))
+        )
+        if origin.rstrip("/") not in allowed and not is_dev_local:
+            await websocket.close(code=1008, reason="Invalid Origin")
+            return
 
     # --- Authenticate ---
     # Strategy 1: token supplied as a query parameter (?token=...).
@@ -73,10 +90,17 @@ async def notifications_websocket(
         return
 
     await manager.connect(user.id, websocket)
+    msg_timestamps = []
+    max_ws_messages_per_min = 30
     try:
         while True:
-            # Client doesn't need to send anything; we just keep the socket alive
-            # and use incoming pings/messages to detect disconnects.
+            # Item 85: Rate-limit any client->server messages over WS independently
             await websocket.receive_text()
+            now = time.time()
+            msg_timestamps = [ts for ts in msg_timestamps if now - ts < 60]
+            if len(msg_timestamps) >= max_ws_messages_per_min:
+                await websocket.close(code=1008, reason="Rate limit exceeded")
+                break
+            msg_timestamps.append(now)
     except WebSocketDisconnect:
         manager.disconnect(user.id, websocket)
