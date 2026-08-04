@@ -7,12 +7,25 @@
  * - "/borrow-requests?tab=incoming" => "/borrow-requests?tab=incoming"
  * - "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f" => "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f"
  */
-export function resolveNotificationLink(link) {
-    if (!link) return "/borrow-requests";
+export function resolveNotificationLink(link, notification = null) {
+    if (!link && !notification) return "/borrow-requests";
 
     let rawLink = link || "";
     const [pathPart, queryString] = rawLink.split("?");
     const params = new URLSearchParams(queryString || "");
+
+    // Check if notification is for a lender action (e.g. Payment Received, New borrow request, Return requested, Offer was accepted)
+    const isLenderAction = notification && (
+        notification.title?.toLowerCase().includes("payment received") ||
+        notification.message?.toLowerCase().includes("payment received") ||
+        notification.title?.toLowerCase().includes("new borrow request") ||
+        notification.title?.toLowerCase().includes("return requested") ||
+        notification.title?.toLowerCase().includes("offer was accepted")
+    );
+
+    if (isLenderAction && !params.has("tab")) {
+        params.set("tab", "lending");
+    }
 
     // Handle /borrow-requests/:id
     const borrowRequestMatch = pathPart.match(/^\/borrow-requests\/([a-f\d-]+)/i);

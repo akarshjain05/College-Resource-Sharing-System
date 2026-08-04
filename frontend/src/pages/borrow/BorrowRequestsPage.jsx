@@ -106,11 +106,22 @@ export default function BorrowRequestsPage() {
                     window.performance.getEntriesByType("navigation")[0].type === "reload";
 
     if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
-      let foundBooking = bookings.borrowing.find(b => b.id === urlId);
-      let newTab = "borrowing";
-      if (!foundBooking) {
+      const urlTab = searchParams.get("tab");
+      let foundBooking = null;
+      let newTab = urlTab === "lending" || urlTab === "incoming" ? "lending" : "borrowing";
+
+      if (newTab === "lending") {
         foundBooking = bookings.lending.find(b => b.id === urlId);
-        if (foundBooking) newTab = "lending";
+        if (!foundBooking) {
+          foundBooking = bookings.borrowing.find(b => b.id === urlId);
+          if (foundBooking) newTab = "borrowing";
+        }
+      } else {
+        foundBooking = bookings.borrowing.find(b => b.id === urlId);
+        if (!foundBooking) {
+          foundBooking = bookings.lending.find(b => b.id === urlId);
+          if (foundBooking) newTab = "lending";
+        }
       }
 
       if (foundBooking) {
@@ -131,6 +142,7 @@ export default function BorrowRequestsPage() {
         const newParams = new URLSearchParams(searchParams);
         newParams.delete("id");
         newParams.delete("openChat");
+        newParams.delete("tab");
         setSearchParams(newParams, { replace: true });
       }
     }
