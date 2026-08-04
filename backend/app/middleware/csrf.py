@@ -28,10 +28,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         # Bearer-token requests (the normal API path) are not vulnerable to CSRF
         # since browsers never attach Authorization headers automatically.
         is_bearer_request = request.headers.get("authorization", "").lower().startswith("bearer ")
+        is_auth_endpoint = "/auth/" in request.url.path
 
         if (
             request.method not in SAFE_METHODS
             and not is_bearer_request
+            and not is_auth_endpoint
             and existing_token is not None
         ):
             submitted_token = request.headers.get(CSRF_HEADER_NAME)
