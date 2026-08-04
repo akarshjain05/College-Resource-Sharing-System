@@ -446,12 +446,15 @@ export default function WantedPage() {
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Item Name</label>
+                    <div className="mb-1 flex items-center justify-between">
+                      <label className="font-bold text-slate-700 dark:text-slate-300">Item Name</label>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Locked to request</span>
+                    </div>
                     <input
                       type="text"
-                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                      readOnly
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 p-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 cursor-not-allowed outline-none select-none"
                       value={newOfferForm.title}
-                      onChange={(e) => setNewOfferForm({ ...newOfferForm, title: e.target.value })}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
