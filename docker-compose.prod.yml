@@ -84,10 +84,6 @@ services:
       - external
 
   celery_worker:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      network: host
     image: crss_backend:latest
     container_name: crss_celery_worker
     restart: unless-stopped
@@ -115,10 +111,6 @@ services:
       - external
 
   celery_beat:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-      network: host
     image: crss_backend:latest
     container_name: crss_celery_beat
     restart: unless-stopped
