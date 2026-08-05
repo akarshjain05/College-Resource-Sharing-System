@@ -164,15 +164,43 @@ def resolve_damage_claim(
         if borrower:
             borrower.trust_score -= payload.trust_penalty
 
-    # If claim is resolved invalid (borrower was innocent), restore their reputation
-    # by clearing the DAMAGED status on the borrow request
-    if payload.status == DamageClaimStatus.RESOLVED_INVALID:
+    # Handle refunds and status restoration for invalid/partial claims
+    if payload.status in (DamageClaimStatus.RESOLVED_INVALID, DamageClaimStatus.RESOLVED_PARTIAL):
         from app.models.borrow import BorrowRequest
         from app.models.enums import BorrowStatus
+        from app.models.payment import Payment
+        from app.models.enums import PaymentStatus
+        from app.services import payment_service
 
         br = db.query(BorrowRequest).filter(BorrowRequest.id == claim.borrow_request_id).first()
-        if br and br.status == BorrowStatus.DAMAGED:
-            br.status = BorrowStatus.RETURNED
+        if br:
+            if payload.status == DamageClaimStatus.RESOLVED_INVALID and br.status == BorrowStatus.DAMAGED:
+                br.status = BorrowStatus.RETURNED
+            
+            payment = db.query(Payment).filter(
+                Payment.borrow_request_id == br.id,
+                Payment.status == PaymentStatus.PAID
+            ).first()
+
+            if payment and (payment.refunded_amount or 0) == 0 and payment.razorpay_payment_id:
+                refund_amount_paise = 0
+                if payload.status == DamageClaimStatus.RESOLVED_INVALID:
+                    refund_amount_paise = int(payment.amount)
+                elif payload.status == DamageClaimStatus.RESOLVED_PARTIAL:
+                    final_cost_paise = int(payload.final_cost * 100)
+                    refund_amount_paise = max(0, int(payment.amount) - final_cost_paise)
+                
+                if refund_amount_paise > 0:
+                    try:
+                        refund_res = payment_service.refund_payment(
+                            payment_id=payment.razorpay_payment_id,
+                            amount_paise=refund_amount_paise,
+                            notes={"reason": f"Damage claim {claim.id} resolution"}
+                        )
+                        payment.status = PaymentStatus.REFUND_INITIATED
+                        payment.refund_id = refund_res.get("id")
+                    except Exception as e:
+                        print(f"Refund initiation failed: {e}")
 
     db.commit()
     db.refresh(claim)

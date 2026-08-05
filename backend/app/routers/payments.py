@@ -382,9 +382,12 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 def reconcile_payments_cron(request: Request, db: Session = Depends(get_db)):
     """Called periodically by an external cron to check on stale CREATED orders."""
     cron_secret = request.headers.get("X-Cron-Secret")
-    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY: # Or specific cron secret if one exists
-        # Actually I will use just a basic check or just log it
-        pass 
+    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY:
+        raise AppException(
+            "Unauthorized cron execution", 
+            status_code=401, 
+            error_code="UNAUTHORIZED"
+        )
     
     cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
     stale_payments = db.query(Payment).filter(

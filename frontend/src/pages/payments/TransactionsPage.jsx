@@ -392,7 +392,7 @@ export default function TransactionsPage() {
                               <Clock className="h-3 w-3" />
                               To Be Paid
                             </span>
-                          ) : tx.status === "PAID" ? (
+                          ) : tx.status === "paid" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300/60">
                               <CheckCircle2 className="h-3 w-3" />
                               Paid
