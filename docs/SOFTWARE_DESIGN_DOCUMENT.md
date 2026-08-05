@@ -40,7 +40,7 @@ Request → Router → (auth/role Dependency) → Pydantic Schema validation
 ```
 
 - **`app/models/`** — SQLAlchemy ORM classes. One file per bounded concept
-  (`user.py`, `resource.py`, `borrow.py`, `misc.py` for smaller supporting entities).
+  (`user.py`, `resource.py`, `borrow.py`, `need.py`, `complaint.py`, `misc.py` for smaller supporting entities).
   All models share `UUIDMixin` (UUID primary keys — safer to expose in URLs than
   sequential integers) and `TimestampMixin` (`created_at`/`updated_at`).
 - **`app/schemas/`** — Pydantic v2 models. Split into `*Create`, `*Update`, and
@@ -90,6 +90,12 @@ and only fires in reaction to a request — there's no mechanism for a scheduled
 job with no triggering request. Return reminders need to fire daily regardless of API
 traffic, so they're implemented as a Celery Beat-scheduled task running in a separate
 worker process, decoupled from the request/response cycle entirely.
+
+### 4.6 Reputation Scores Calculation
+Trust Score (for borrowing) and Sharing Score (for lending) are dynamically calculated based on completed borrows, returned conditions, and fulfillment of Campus Needs. This ensures scores reflect recent activity without needing frequent asynchronous updates.
+
+### 4.7 Dispute Management Workflow
+Complaints escalate into Disputes, allowing admins to view the full lifecycle of a transaction (request, approval, return, damage reports). Admin actions (like user suspension) are logged against the dispute for auditability.
 
 ## 5. Frontend Design
 

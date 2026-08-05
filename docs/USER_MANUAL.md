@@ -23,6 +23,12 @@ use the **Forgot password?** link to receive a reset email.
    results with the category and condition filters.
 3. Click any resource card to see full details, photos, owner info, and reviews.
 
+### Campus Needs / Wanted Board
+Can't find what you are looking for?
+1. Go to **Campus Needs** (or Wanted items).
+2. You can create a request for a specific resource you need.
+3. Other users can view your need and offer to lend the resource to you.
+
 ### Requesting to borrow
 1. On a resource's detail page, choose your desired **From** and **Until** dates.
 2. Optionally explain your purpose (helps the owner decide faster).
@@ -53,6 +59,12 @@ borrow of that specific item.
    accountability, not processed as a real payment.
 4. Click **Publish resource**. You can add photos afterward from the resource's page.
 
+### Editing a resource
+If you need to change details about your listed resource:
+1. Go to your resource's page.
+2. Click the **Edit** button.
+3. Update the necessary fields (title, description, etc.) and save your changes.
+
 ### Managing incoming requests
 Go to **Borrow Requests → Incoming requests** to see who wants to borrow your items.
 Click **Approve** or **Reject** (with an optional reason) on each pending request.
@@ -64,10 +76,15 @@ to mark it read, or use **Mark all read**.
 
 ## Your Profile
 Go to **My Profile** to update your name, department, course, year, bio, skills, and
-phone number, or to change your password. Your **trust score** and **sharing score**
-(visible on your dashboard) reflect your reliability as a borrower/lender over time.
+phone number, or to change your password.
+
+### Reputation Scores
+Your dashboard displays two distinct scores:
+* **Trust Score:** Reflects your reliability as a borrower (e.g., returning items on time, good condition).
+* **Sharing Score:** Reflects your contribution as a lender (e.g., listing items, fulfilling requests).
+These scores help other users decide whether to lend to or borrow from you.
 
 ## Filing a Complaint
 If something goes wrong with a borrow (a user is unresponsive, an item was
-misrepresented, etc.), use the complaint system to notify campus admins, who can review
-and respond to your report.
+misrepresented, etc.), go to the **Complaints** section to notify campus admins. 
+You can create a new support ticket and describe the issue. Admins will review the dispute and take appropriate actions, such as mediating the issue or suspending accounts if necessary.

@@ -52,7 +52,7 @@ export default function AppShell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
+    localStorage.getItem("share_neighbour_location") || "All Campus Locations"
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
@@ -60,7 +60,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru";
+      const newLoc = localStorage.getItem("share_neighbour_location") || "All Campus Locations";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
@@ -291,15 +291,7 @@ export default function AppShell() {
 
                   {/* Preset Locations */}
                   <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    {[
-                      "All Locations",
-                      "Koramangala, Bengaluru",
-                      "Indiranagar, Bengaluru",
-                      "HSR Layout, Bengaluru",
-                      "Hostel Block C, Room 204",
-                      "Robotics Lab, Block D",
-                      "Library Annex",
-                    ].map((loc) => (
+                    {["All Campus Locations", ...(user?.department ? [user.department] : []), ...(user?.course ? [user.course] : [])].map((loc) => (
                       <button
                         key={loc}
                         type="button"
