@@ -23,7 +23,7 @@ const parseLocalDate = (dateStr) => {
 };
 
 
-export default function AvailabilityCalendar({ bookings = [], selectedRange, onSelectRange, maxDays, availableFrom, availableTo }) {
+export default function AvailabilityCalendar({ bookings = [], selectedRange, onSelectRange, maxDays, availableFrom, availableTo, quantity = 1 }) {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
   const today = startOfDay(new Date());
 
@@ -36,9 +36,13 @@ export default function AvailabilityCalendar({ bookings = [], selectedRange, onS
 
   // Determine if a day is booked or out of availability bounds
   const isBooked = (day) => {
-    return bookings.some(b => 
-      isWithinInterval(day, { start: startOfDay(parseLocalDate(b.start)), end: startOfDay(parseLocalDate(b.end)) })
-    );
+    let count = 0;
+    for (const b of bookings) {
+      if (isWithinInterval(day, { start: startOfDay(parseLocalDate(b.start)), end: startOfDay(parseLocalDate(b.end)) })) {
+        count++;
+      }
+    }
+    return count >= quantity;
   };
 
   const isUnavailable = (day) => {

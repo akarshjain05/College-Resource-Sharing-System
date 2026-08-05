@@ -105,7 +105,7 @@ export default function BorrowRequestsPage() {
                     window.performance.getEntriesByType("navigation").length > 0 && 
                     window.performance.getEntriesByType("navigation")[0].type === "reload";
 
-    if (urlId && !isReload && (bookings.borrowing.length > 0 || bookings.lending.length > 0) && autoOpenedRef.current !== urlId) {
+    if (urlId && !isReload && !loading && autoOpenedRef.current !== urlId) {
       const urlTab = searchParams.get("tab");
       let foundBooking = null;
       let newTab = urlTab === "lending" || urlTab === "incoming" ? "lending" : "borrowing";
@@ -146,7 +146,7 @@ export default function BorrowRequestsPage() {
         setSearchParams(newParams, { replace: true });
       }
     }
-  }, [bookings, searchParams]);
+  }, [bookings, searchParams, loading]);
 
   const loadBookingsList = () => {
     setLoading(true);

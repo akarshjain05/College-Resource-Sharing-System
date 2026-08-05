@@ -275,6 +275,24 @@ def delete_resource(
         raise NotFoundException("Resource not found")
     if resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise ForbiddenException("You can only delete your own resources")
+        
+    from app.models.enums import BorrowStatus
+    from app.models.borrow import BorrowRequest
+    
+    active_statuses = [
+        BorrowStatus.REQUESTED, BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED,
+        BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED, BorrowStatus.LATE
+    ]
+    
+    active_bookings = db.query(BorrowRequest).filter(
+        BorrowRequest.resource_id == resource_id,
+        BorrowRequest.status.in_(active_statuses)
+    ).count()
+    
+    if active_bookings > 0:
+        from app.core.exceptions import BadRequestException
+        raise BadRequestException(f"Cannot delete resource with {active_bookings} active or pending bookings. Please cancel or complete them first.")
+        
     db.delete(resource)
     db.commit()
     return None
