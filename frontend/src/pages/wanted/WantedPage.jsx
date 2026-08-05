@@ -210,12 +210,7 @@ export default function WantedPage() {
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>
           <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Explore requests from students & offer solutions</p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95"
-        >
-          <Plus className="h-4 w-4" /> Post a Need
-        </button>
+
       </div>
 
       {loading ? (
