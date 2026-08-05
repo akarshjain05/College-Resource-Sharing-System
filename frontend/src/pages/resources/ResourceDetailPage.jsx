@@ -254,7 +254,7 @@ export default function ResourceDetailPage() {
               </h1>
               <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
                 <MapPin className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                <span>{resource.pickup_location || "Koramangala, Bengaluru"}</span>
+                <span>{resource.pickup_location || "Campus Location"}</span>
               </div>
             </div>
           </div>
