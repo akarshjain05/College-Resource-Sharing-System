@@ -4,10 +4,10 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { userApi, authApi } from "../../api/endpoints";
 import PasswordInput from "../../components/PasswordInput";
-import { User, Lock, ArrowLeft, Save, ShieldCheck, Mail } from "lucide-react";
+import { User, Lock, ArrowLeft, Save, ShieldCheck, Mail, AlertTriangle } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const [form, setForm] = useState({
     full_name: user?.full_name || "",
     department: user?.department || "",
@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const [passwords, setPasswords] = useState({ current_password: "", new_password: "", confirm_new_password: "" });
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const isGoogleAccount = user?.auth_provider === "google";
 
@@ -62,6 +63,19 @@ export default function ProfilePage() {
       toast.error(typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map(d => d.msg).join(", ") : "Could not change password."));
     } finally {
       setChangingPw(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("Are you absolutely sure you want to delete your account? This action cannot be undone and will anonymize all your data.")) return;
+    setDeleting(true);
+    try {
+      await userApi.deleteMyAccount();
+      toast.success("Account deleted successfully.");
+      logout();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Could not delete account.");
+      setDeleting(false);
     }
   };
 
@@ -268,6 +282,31 @@ export default function ProfilePage() {
           </button>
         </form>
       )}
+
+      {/* Form Card 3: Danger Zone */}
+      <div className="rounded-3xl border border-red-200/50 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20 p-6 md:p-8 space-y-5 shadow-sm mt-8">
+        <div className="border-b border-red-100 dark:border-red-900/50 pb-4 flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-500" />
+          <h2 className="font-display text-base font-extrabold text-red-900 dark:text-red-400">Danger Zone</h2>
+        </div>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div>
+            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Delete Account</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+              Permanently delete your account and anonymize your personal data. 
+              Any active resource listings will be removed from the catalog.
+            </p>
+          </div>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deleting}
+            className="w-full sm:w-auto whitespace-nowrap py-2.5 px-5 rounded-xl bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-sm active:scale-98"
+          >
+            {deleting ? "Deleting..." : "Delete Account"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
