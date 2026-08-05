@@ -1003,7 +1003,7 @@ export default function BorrowRequestsPage() {
                   request={book}
                   onReportIssue={(req) => {
                     setOpenChatId(null);
-                    window.location.href = `/complaints?borrow_request_id=${req.id}&resource_id=${req.resource_id || ''}&against_user_id=${req.lender_id || req.borrower_id || ''}&category=dispute`;
+                    window.location.href = `/complaints?borrow_request_id=${req.id}&resource_id=${req.resource?.id || ''}&against_user_id=${tab === 'borrowing' ? (req.lender?.id || '') : (req.borrower?.id || '')}&category=user_behavior`;
                   }}
                 />
               </div>

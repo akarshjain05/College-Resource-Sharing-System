@@ -36,6 +36,15 @@ class WantedCreate(BaseModel):
     end_date: date
 
 
+class WantedUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: Optional[SafeStr] = Field(None, min_length=2, max_length=100)
+    description: Optional[SafeStr] = Field(None, max_length=1000)
+    category_id: Optional[uuid.UUID] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+
 class WantedResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

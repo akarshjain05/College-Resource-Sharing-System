@@ -9,7 +9,7 @@ from app.core.exceptions import NotFoundException, ForbiddenException, AppExcept
 from app.models.user import User
 from app.models.wanted import WantedRequest
 from app.models.category import Category
-from app.schemas.wanted import WantedCreate, WantedResponse
+from app.schemas.wanted import WantedCreate, WantedUpdate, WantedResponse
 from app.models.enums import NotificationType
 
 router = APIRouter(prefix="/wanted", tags=["Wanted Requests"])
@@ -116,6 +116,37 @@ def my_wanted_requests(
     return [r for r in requests if r.user is not None and r.category is not None]
 
 
+@router.put("/{wanted_id}", response_model=WantedResponse)
+def update_wanted_request(
+    wanted_id: uuid.UUID,
+    payload: WantedUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    wanted = db.query(WantedRequest).filter(WantedRequest.id == wanted_id).first()
+    if not wanted:
+        raise NotFoundException("Wanted request not found")
+    if wanted.user_id != current_user.id:
+        raise ForbiddenException("Only the owner can edit this request")
+
+    if payload.start_date and payload.end_date:
+        if payload.end_date < payload.start_date:
+            raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+    elif payload.start_date:
+        if wanted.end_date and wanted.end_date < payload.start_date:
+            raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+    elif payload.end_date:
+        if wanted.start_date and payload.end_date < wanted.start_date:
+            raise AppException("End date cannot be before start date", status_code=status.HTTP_400_BAD_REQUEST)
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(wanted, field, value)
+    
+    db.commit()
+    db.refresh(wanted)
+    return wanted
+
+
 @router.post("/{wanted_id}/fulfill", response_model=WantedResponse)
 def fulfill_wanted_request(
     wanted_id: uuid.UUID,
@@ -191,7 +222,7 @@ def cancel_wanted_offer(
 
 
 from app.models.wanted import WantedRequest, WantedOffer
-from app.schemas.wanted import WantedCreate, WantedResponse, WantedOfferCreate, WantedOfferResponse
+from app.schemas.wanted import WantedCreate, WantedUpdate, WantedResponse, WantedOfferCreate, WantedOfferResponse
 from app.models.resource import Resource
 from app.models.borrow import BorrowRequest
 from app.models.enums import NotificationType, BorrowStatus, ResourceStatus

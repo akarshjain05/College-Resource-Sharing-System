@@ -47,6 +47,7 @@ export const userApi = {
 export const categoryApi = {
   list: () => api.get("/categories"),
   create: (payload) => api.post("/categories", payload),
+  update: (id, payload) => api.put(`/categories/${id}`, payload),
   remove: (id) => api.delete(`/categories/${id}`),
 };
 
@@ -103,6 +104,7 @@ export const wantedApi = {
   list: () => api.get("/wanted"),
   myNeeds: () => api.get("/wanted/me"),
   create: (data) => api.post("/wanted", data),
+  update: (id, payload) => api.put(`/wanted/${id}`, payload),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
   offer: (id, resourceId) => api.post(`/wanted/${id}/offer`, { resource_id: resourceId }),
   listOffers: (id) => api.get(`/wanted/${id}/offers`),
