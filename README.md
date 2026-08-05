@@ -98,6 +98,9 @@ docker compose exec backend pytest
 - WebSocket real-time notifications (in-app push, with graceful polling fallback)
 - CSRF middleware (defense-in-depth double-submit-cookie pattern)
 - Complaints/support ticket system with both user and admin UI
+- Campus Needs / Wanted board for users to request specific items
+- Trust/Sharing reputation scoring system
+- Edit capabilities for resources and categories
 - Full documentation set in `docs/` — SRS, design doc, ER diagram, DFDs, UML diagrams,
   API reference, testing report, user/admin manuals, installation & maintenance guides,
   presentation notes, viva Q&A, and a consolidated project report. Start at `docs/README.md`.
@@ -106,7 +109,7 @@ docker compose exec backend pytest
 
 All planned phases are complete. See `docs/PROJECT_REPORT.md` Chapter 11 for an honest
 accounting of what's deliberately out of scope for this iteration (native mobile apps,
-real payment processing, dark mode, a frontend automated test suite) versus what's fully
+real payment processing, a frontend automated test suite) versus what's fully
 implemented.
 
 **Important caveat on verification:** this project was built and syntax-verified in a

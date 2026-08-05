@@ -16,6 +16,7 @@
 | [MAINTENANCE_GUIDE.md](MAINTENANCE_GUIDE.md) | How to extend/maintain the codebase |
 | [PRESENTATION_NOTES.md](PRESENTATION_NOTES.md) | Suggested demo/viva flow |
 | [VIVA_QUESTIONS.md](VIVA_QUESTIONS.md) | Anticipated Q&A with answers |
+| [aws-deployment.md](aws-deployment.md) | AWS Deployment Guide |
 
 See also [`../deployment/DEPLOYMENT_GUIDE.md`](../deployment/DEPLOYMENT_GUIDE.md) for
 production deployment (Ubuntu VPS, Render, Railway), or

@@ -37,17 +37,18 @@ and borrow history, which other users may still need visibility into (e.g. "who 
 lend my camera to last semester").
 
 ### Categories tab (`/admin/categories`)
-Add or remove resource categories (Electronics, Lab Equipment, Sports Equipment, etc.).
-Deleting a category that still has resources assigned to it will fail at the database
-level (foreign key constraint) rather than silently orphaning those resources — reassign
-or delete the resources first if you need to remove a category.
+Add, edit, or remove resource categories (Electronics, Lab Equipment, Sports Equipment, etc.).
+- **Add**: Create a new category for users to list resources under.
+- **Edit**: Rename existing categories to better organize resources.
+- **Delete**: Remove a category. Deleting a category that still has resources assigned to it will fail at the database level (foreign key constraint) rather than silently orphaning those resources — reassign or delete the resources first if you need to remove a category.
 
-### Complaints tab (`/admin/complaints`)
-Every complaint filed by any user, most recent first. For each:
+### Complaints & Dispute Management tab (`/admin/complaints`)
+Every complaint filed by any user, most recent first. Admins can mediate disputes between borrowers and lenders. For each complaint:
 1. Change its **status** (open → in progress → resolved/closed) as you work it.
 2. Write an **admin response** — this is shown back to the user who filed it on their
    own Complaints page, so use it to communicate resolution, not just as an internal note.
-3. Click **Save**.
+3. Manage disputes by reviewing the history of the borrow transaction, reputation scores, and taking necessary actions (e.g., suspending a user).
+4. Click **Save**.
 
 ## Operational Notes
 
