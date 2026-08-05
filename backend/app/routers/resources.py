@@ -193,7 +193,7 @@ def get_resource(
 
 
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit("5/day")
 def create_resource(
     request: Request,
     payload: ResourceCreate,

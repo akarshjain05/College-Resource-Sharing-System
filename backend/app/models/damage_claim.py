@@ -29,6 +29,7 @@ class DamageClaim(Base, UUIDMixin, TimestampMixin):
     )
 
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    damage_evidence_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     estimated_cost: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), nullable=True)
 
     dispute_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

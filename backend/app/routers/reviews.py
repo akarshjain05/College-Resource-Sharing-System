@@ -26,40 +26,47 @@ def create_review(
     if not resource:
         raise NotFoundException("Resource not found")
 
-    # Count successful completed borrows (returned or damaged)
-    successful_borrows = (
+    # Ensure the borrow request belongs to the user and resource, and is completed
+    borrow_request = (
         db.query(BorrowRequest)
         .filter(
+            BorrowRequest.id == payload.borrow_request_id,
             BorrowRequest.resource_id == resource.id,
             BorrowRequest.borrower_id == current_user.id,
             BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED]),
         )
-        .count()
+        .first()
     )
-    if successful_borrows == 0:
+    if not borrow_request:
         raise AppException(
-            "You can only review resources you have borrowed previously",
+            "You can only review a resource after successfully borrowing it (invalid or incomplete borrow request)",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="NOT_ELIGIBLE",
         )
 
-    # Count reviews already written by this user for this resource
-    reviews_written = (
+    # Check if a review already exists for this borrow request by this user
+    existing_review = (
         db.query(Review)
         .filter(
-            Review.resource_id == resource.id,
+            Review.borrow_request_id == payload.borrow_request_id,
             Review.reviewer_id == current_user.id,
         )
-        .count()
+        .first()
     )
-    if reviews_written >= successful_borrows:
+    if existing_review:
         raise AppException(
-            "You can only leave one review per successful borrow",
+            "You have already reviewed this borrow transaction",
             status_code=status.HTTP_400_BAD_REQUEST,
-            error_code="NOT_ELIGIBLE",
+            error_code="ALREADY_REVIEWED",
         )
 
-    review = Review(resource_id=resource.id, reviewer_id=current_user.id, rating=payload.rating, comment=payload.comment)
+    review = Review(
+        resource_id=resource.id,
+        borrow_request_id=payload.borrow_request_id,
+        reviewer_id=current_user.id,
+        rating=payload.rating,
+        comment=payload.comment
+    )
     db.add(review)
     db.commit()
 

@@ -42,11 +42,11 @@ class ResourceUpdate(BaseModel):
     description: Optional[SafeStr] = Field(None, min_length=10, max_length=5000)
     condition: Optional[ResourceCondition] = None
     status: Optional[ResourceStatus] = None
-    quantity: Optional[int] = None
+    quantity: Optional[int] = Field(None, ge=1)
     pickup_location: Optional[SafeStr] = Field(None, max_length=200)
     tags: Optional[SafeStr] = Field(None, max_length=200)
-    deposit_amount: Optional[float] = None
-    max_borrow_days: Optional[int] = None
+    deposit_amount: Optional[float] = Field(None, ge=0)
+    max_borrow_days: Optional[int] = Field(None, ge=1, le=90)
     available_from: Optional[date] = None
     available_to: Optional[date] = None
     category_id: Optional[uuid.UUID] = None
