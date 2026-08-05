@@ -291,15 +291,7 @@ export default function AppShell() {
 
                   {/* Preset Locations */}
                   <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    {[
-                      "All Locations",
-                      "Koramangala, Bengaluru",
-                      "Indiranagar, Bengaluru",
-                      "HSR Layout, Bengaluru",
-                      "Hostel Block C, Room 204",
-                      "Robotics Lab, Block D",
-                      "Library Annex",
-                    ].map((loc) => (
+                    {["All Campus Locations", ...(user?.department ? [user.department] : []), ...(user?.course ? [user.course] : [])].map((loc) => (
                       <button
                         key={loc}
                         type="button"
