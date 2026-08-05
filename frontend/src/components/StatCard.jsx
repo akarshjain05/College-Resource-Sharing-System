@@ -24,8 +24,14 @@ export default function StatCard({ label, value, icon: Icon, accent = "primary",
         <div className="flex items-center gap-1.5 mt-0.5">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">{label}</p>
           {infoTooltip && (
-            <div className="group relative inline-flex" title={infoTooltip}>
+            <div className="group relative inline-flex">
               <Info className="h-3.5 w-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-help" />
+              <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 w-48 -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100 z-[100]">
+                <div className="rounded-xl bg-slate-900 dark:bg-white px-3 py-2 text-[10px] font-medium text-white dark:text-slate-900 shadow-xl text-center leading-relaxed whitespace-normal break-words">
+                  {infoTooltip}
+                </div>
+                <div className="absolute left-1/2 top-full h-2 w-2 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-slate-900 dark:bg-white"></div>
+              </div>
             </div>
           )}
         </div>

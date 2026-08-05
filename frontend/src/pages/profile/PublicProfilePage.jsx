@@ -112,7 +112,7 @@ export default function PublicProfilePage() {
                     className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
                   >
                     <Edit3 className="h-4 w-4" />
-                    <span>Edit Profile & Password</span>
+                    <span>Edit Profile</span>
                   </Link>
                 ) : (
                   <Link
