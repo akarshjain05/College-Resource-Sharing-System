@@ -11,6 +11,7 @@ from app.utils.validation import SafeStr
 
 class ReviewCreate(BaseModel):
     resource_id: uuid.UUID
+    borrow_request_id: uuid.UUID
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[SafeStr] = Field(None, max_length=1000)
 
