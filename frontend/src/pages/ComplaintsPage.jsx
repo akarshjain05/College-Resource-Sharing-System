@@ -439,9 +439,10 @@ export default function ComplaintsPage() {
                 Link Active / Past Borrow Request (Optional)
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.borrow_request_id}
                 onChange={(e) => handleBorrowRequestChange(e.target.value)}
+                disabled={!!initialBorrowRequestId}
               >
                 <option value="">-- None / General Complaint --</option>
                 {userBorrows.map((b) => (
@@ -460,9 +461,10 @@ export default function ComplaintsPage() {
                 Filed Against User {category === "admin_support" && "(Optional)"}
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.against_user_id}
                 onChange={(e) => setForm({ ...form, against_user_id: e.target.value })}
+                disabled={!!initialAgainstUserId || !!initialBorrowRequestId}
               >
                 <option value="">-- None / Platform Issue --</option>
                 {users.map((u) => (
@@ -478,9 +480,10 @@ export default function ComplaintsPage() {
                 Related Resource / Listing (Optional)
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.resource_id}
                 onChange={(e) => setForm({ ...form, resource_id: e.target.value })}
+                disabled={!!initialResourceId || !!initialBorrowRequestId}
               >
                 <option value="">-- None --</option>
                 {resources.map((r) => (
