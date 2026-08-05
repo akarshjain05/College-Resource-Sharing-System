@@ -293,6 +293,19 @@ def delete_resource(
         from app.core.exceptions import BadRequestException
         raise BadRequestException(f"Cannot delete resource with {active_bookings} active or pending bookings. Please cancel or complete them first.")
         
+    from app.models.wanted import WantedOffer
+    from app.models.wishlist import WishlistItem
+    from app.models.misc import Complaint
+
+    # 1. Delete associated wishlist items
+    db.query(WishlistItem).filter(WishlistItem.resource_id == resource_id).delete(synchronize_session=False)
+    
+    # 2. Delete associated wanted offers
+    db.query(WantedOffer).filter(WantedOffer.resource_id == resource_id).delete(synchronize_session=False)
+    
+    # 3. Nullify resource_id in complaints to preserve the complaint record
+    db.query(Complaint).filter(Complaint.resource_id == resource_id).update({"resource_id": None}, synchronize_session=False)
+
     db.delete(resource)
     db.commit()
     return None
