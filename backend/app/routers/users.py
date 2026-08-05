@@ -30,6 +30,43 @@ def update_my_profile(
     return current_user
 
 
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.models.resource import Resource
+    from app.models.enums import ResourceStatus
+    import uuid
+    
+    # True Anonymization (Right-to-Deletion)
+    current_user.full_name = "Deleted User"
+    current_user.email = f"deleted_{uuid.uuid4()}@deleted.local"
+    current_user.phone_number = None
+    current_user.student_id = None
+    current_user.department = None
+    current_user.course = None
+    current_user.year_of_study = None
+    current_user.bio = None
+    current_user.skills = None
+    current_user.profile_picture_url = None
+    current_user.hashed_password = None
+    current_user.google_id = None
+    current_user.fcm_token = None
+    
+    # Deactivate account access
+    current_user.is_active = False
+    
+    # Mark all owned resources as unavailable so they disappear from catalogue
+    db.query(Resource).filter(Resource.owner_id == current_user.id).update(
+        {"status": ResourceStatus.UNAVAILABLE}
+    )
+    
+    db.commit()
+    return
+
+
+
 @router.get("/directory/public", response_model=list[PublicUserResponse])
 def list_users_public(
     skip: int = Query(0, ge=0),

@@ -35,6 +35,7 @@ export const paymentApi = {
 export const userApi = {
   getMyProfile: () => api.get("/users/me"),
   updateMyProfile: (payload) => api.put("/users/me", payload),
+  deleteMyAccount: () => api.delete("/users/me"),
   getUser: (id) => api.get(`/users/${id}`),
   listUsers: (params) => api.get("/users", { params }),
   listPublicDirectory: () => api.get("/users/directory/public"),
