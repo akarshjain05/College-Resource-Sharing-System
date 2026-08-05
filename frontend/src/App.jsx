@@ -16,6 +16,7 @@ import MyListingsPage from "./pages/resources/MyListingsPage";
 import WishlistPage from "./pages/resources/WishlistPage";
 import ResourceDetailPage from "./pages/resources/ResourceDetailPage";
 import ResourceCreatePage from "./pages/resources/ResourceCreatePage";
+import ResourceEditPage from "./pages/resources/ResourceEditPage";
 import BorrowRequestsPage from "./pages/borrow/BorrowRequestsPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import PublicProfilePage from "./pages/profile/PublicProfilePage";
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/my-listings" element={<MyListingsPage />} />
             <Route path="/resources/new" element={<ResourceCreatePage />} />
+            <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
             <Route path="/borrow-requests" element={<BorrowRequestsPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />

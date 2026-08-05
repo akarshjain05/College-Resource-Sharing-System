@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock, Edit } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
@@ -8,7 +8,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 
 
 
-function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, acceptingId }) {
+function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, onEdit, acceptingId }) {
   if (!request) return null;
 
   // Deduplicate offers by offerer ID + resource title/id
@@ -125,17 +125,122 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800 pt-4 text-xs">
-          <button
-            onClick={() => onDelete(request.id)}
-            className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold hover:underline"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Delete Request
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => onEdit(request)}
+              className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 font-bold hover:underline"
+            >
+              <Edit className="h-3.5 w-3.5" /> Edit
+            </button>
+            <button
+              onClick={() => onDelete(request.id)}
+              className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold hover:underline"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete
+            </button>
+          </div>
 
           <button onClick={onClose} className="btn-secondary !py-2 !px-4 text-xs">
             Close Details
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EditWantedModal({ request, categories, onClose, onUpdate }) {
+  const [formData, setFormData] = useState({
+    title: request.title,
+    description: request.description || "",
+    category_id: request.category_id || request.category?.id || "",
+    start_date: request.start_date || "",
+    end_date: request.end_date || "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await onUpdate(request.id, formData);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Edit Need</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-slate-100">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">What are you looking for?</label>
+            <input
+              type="text"
+              required
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="col-span-1 md:col-span-2">
+              <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Category</label>
+              <select
+                required
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                value={formData.category_id}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+              >
+                <option value="">Select a category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed From</label>
+              <input
+                type="date"
+                required
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Needed Until</label>
+              <input
+                type="date"
+                required
+                min={formData.start_date}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Description</label>
+            <textarea
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none min-h-[90px]"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="submit" disabled={submitting} className="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 text-white py-2.5 text-xs font-bold shadow-sm">
+              {submitting ? "Saving..." : "Save Changes"}
+            </button>
+            <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -156,6 +261,7 @@ export default function MyNeedsPage() {
   const [formData, setFormData] = useState({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
   
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
+  const [editingNeed, setEditingNeed] = useState(null);
   const [modalOffers, setModalOffers] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
@@ -262,6 +368,20 @@ export default function MyNeedsPage() {
         }
       }
     });
+  };
+
+  const handleUpdateNeed = async (id, updatedData) => {
+    try {
+      await wantedApi.update(id, updatedData);
+      toast.success("Request updated!");
+      setEditingNeed(null);
+      if (selectedNeedForModal?.id === id) {
+        setSelectedNeedForModal((prev) => ({ ...prev, ...updatedData }));
+      }
+      loadData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to update request");
+    }
   };
 
   const openDetailsModal = async (request) => {
@@ -397,6 +517,17 @@ export default function MyNeedsPage() {
           onAcceptOffer={acceptOffer}
           onCancelOffer={handleCancelOffer}
           onDelete={handleDelete}
+          onEdit={(req) => setEditingNeed(req)}
+        />
+      )}
+
+      {/* Edit Need Modal */}
+      {editingNeed && (
+        <EditWantedModal
+          request={editingNeed}
+          categories={categories}
+          onClose={() => setEditingNeed(null)}
+          onUpdate={handleUpdateNeed}
         />
       )}
 

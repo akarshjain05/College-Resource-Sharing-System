@@ -15,6 +15,13 @@ class CategoryCreate(CategoryBase):
     pass
 
 
+class CategoryUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: Optional[str] = Field(None, min_length=2, max_length=100)
+    description: Optional[str] = None
+    icon: Optional[str] = None
+
+
 class CategoryResponse(CategoryBase):
     model_config = ConfigDict(from_attributes=True)
 
