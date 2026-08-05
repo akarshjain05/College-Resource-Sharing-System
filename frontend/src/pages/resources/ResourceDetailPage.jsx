@@ -416,6 +416,7 @@ export default function ResourceDetailPage() {
                     maxDays={resource.max_borrow_days}
                     availableFrom={resource.available_from}
                     availableTo={resource.available_to}
+                    quantity={resource.quantity}
                   />
                 </div>
                 <div className="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
