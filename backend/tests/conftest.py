@@ -7,6 +7,7 @@ in the models, so this is a faithful enough substitute for unit/API testing.
 import os
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-0123456789"
+os.environ["OTP_SECRET"] = "test-otp-secret-key-0123456789"
 
 import pytest
 from fastapi.testclient import TestClient
