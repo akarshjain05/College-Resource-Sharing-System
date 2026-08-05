@@ -185,18 +185,19 @@ export default function AppShell() {
       {/* SIDEBAR */}
       <aside className="hidden w-64 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 md:flex sticky top-0 h-screen z-20">
         {/* Brand Logo & Name */}
-        <div className="flex items-center gap-2.5 px-6 py-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 transition-all duration-300 hover:scale-105">
-            {/* Custom SVG logo matching mockup */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-6.5 w-6.5">
-              <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z" fill="currentColor" className="text-primary-600" />
+        <Link to="/explore" className="flex items-center gap-3 px-6 py-6 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-500 text-white shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 group-hover:scale-105 transition-all duration-300">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <span className="font-display text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none">ShareNeighbour</span>
-            <span className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold tracking-wider uppercase mt-0.5">Community Sharing</span>
+          <div className="flex flex-col truncate">
+            <span className="font-display text-[15px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight truncate">Campus Resource</span>
+            <span className="font-display text-[15px] font-extrabold text-primary-600 dark:text-primary-400 tracking-tight leading-tight truncate">Sharing</span>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
