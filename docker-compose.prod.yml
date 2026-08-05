@@ -8,8 +8,15 @@
 # Usage:
 #   docker compose -f docker-compose.prod.yml up -d --build
 
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   db:
+    logging: *default-logging
     image: postgres:16-alpine
     container_name: crss_db
     restart: unless-stopped
@@ -33,6 +40,7 @@ services:
       - internal
 
   redis:
+    logging: *default-logging
     image: redis:7-alpine
     container_name: crss_redis
     restart: unless-stopped
@@ -51,6 +59,7 @@ services:
       - internal
 
   backend:
+    logging: *default-logging
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -85,6 +94,7 @@ services:
       - external
 
   celery_worker:
+    logging: *default-logging
     image: crss_backend:latest
     pull_policy: never
     container_name: crss_celery_worker
@@ -113,6 +123,7 @@ services:
       - external
 
   celery_beat:
+    logging: *default-logging
     image: crss_backend:latest
     pull_policy: never
     container_name: crss_celery_beat
@@ -138,6 +149,7 @@ services:
       - internal
 
   frontend:
+    logging: *default-logging
     image: crss_frontend_prod:latest
     pull_policy: never
     build:
@@ -169,6 +181,7 @@ services:
       - external
 
   db_backup:
+    logging: *default-logging
     image: prodrigestivill/postgres-backup-local
     container_name: crss_db_backup
     restart: unless-stopped

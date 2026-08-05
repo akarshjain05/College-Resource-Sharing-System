@@ -16,7 +16,7 @@ celery_app = Celery(
     "crss",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
-    include=["app.tasks.reminders"],
+    include=["app.tasks.reminders", "app.tasks.monitoring"],
 )
 
 celery_app.conf.update(
@@ -35,5 +35,9 @@ celery_app.conf.beat_schedule = {
     "mark-overdue-borrows-daily": {
         "task": "app.tasks.reminders.mark_overdue_borrows_late",
         "schedule": crontab(hour=0, minute=5),  # every day at 00:05 UTC
+    },
+    "security-anomaly-checks-hourly": {
+        "task": "app.tasks.monitoring.check_security_anomalies",
+        "schedule": crontab(minute=0),  # top of every hour
     },
 }
