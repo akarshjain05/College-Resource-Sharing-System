@@ -126,7 +126,7 @@ function ItemBorrowersSection({ requests, onAction }) {
                   </div>
                   <div>
                     <Link
-                      to={`/users/${req.borrower?.id}`}
+                      to={`/users/${req.borrower?.roll_no || req.borrower?.id}`}
                       onClick={(e) => e.stopPropagation()}
                       className="font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600 dark:hover:text-primary-400"
                     >

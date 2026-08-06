@@ -66,3 +66,9 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     def __repr__(self) -> str:
         return f"<User {self.email} ({self.role})>"
+
+    @property
+    def roll_no(self) -> str:
+        if self.email:
+            return self.email.split("@")[0]
+        return ""

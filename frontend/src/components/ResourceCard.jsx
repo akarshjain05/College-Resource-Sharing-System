@@ -142,7 +142,7 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
           <p className="text-xs text-slate-500 dark:text-slate-400">
             by{" "}
             <Link
-              to={`/users/${resource.owner.id}`}
+              to={`/users/${resource.owner.roll_no || resource.owner.id}`}
               className="font-bold text-slate-800 dark:text-slate-200 hover:underline"
               onClick={(e) => e.stopPropagation()}
             >

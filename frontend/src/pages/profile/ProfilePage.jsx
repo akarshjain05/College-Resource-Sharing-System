@@ -84,7 +84,7 @@ export default function ProfilePage() {
       {/* Back Link & Header */}
       <div className="flex items-center justify-between">
         <Link
-          to={user?.id ? `/users/${user.id}` : "/resources"}
+          to={user?.id ? `/users/${user.roll_no || user.id}` : "/resources"}
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Public Profile

@@ -455,9 +455,9 @@ export default function BorrowRequestsPage() {
                       </h3>
                       <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
                         {tab === "borrowing" ? (
-                          <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
+                          <>Lender: {book.lender?.id ? <Link to={`/users/${book.lender.roll_no || book.lender.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.lender.full_name}</Link> : book.lender?.full_name}</>
                         ) : (
-                          <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
+                          <>Borrower: {book.borrower?.id ? <Link to={`/users/${book.borrower.roll_no || book.borrower.id}`} className="hover:underline hover:text-brand-500 cursor-pointer">{book.borrower.full_name}</Link> : book.borrower?.full_name}</>
                         )}
                       </p>
                     </div>

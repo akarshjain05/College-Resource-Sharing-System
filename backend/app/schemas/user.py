@@ -145,6 +145,7 @@ class UserResponse(UserBase):
     sharing_score: int = 0
     avg_response_seconds: Optional[int] = None
     created_at: datetime
+    roll_no: str
 
 
 class PasswordResetRequest(BaseModel):
@@ -175,5 +176,6 @@ class PublicUserResponse(BaseModel):
     trust_score: int
     sharing_score: int
     created_at: datetime
+    roll_no: str
     # We will let the router attach a list of public resources or history if needed,
     # or just keep it simple and return a separate field or let the frontend query resources by owner.

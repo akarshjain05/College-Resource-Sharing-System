@@ -49,7 +49,7 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
               {request.user?.full_name?.charAt(0) || "U"}
             </div>
             <div>
-              <Link to={`/users/${request.user?.id}`} className="font-bold text-slate-900 dark:text-white hover:underline">
+              <Link to={`/users/${request.user?.roll_no || request.user?.id}`} className="font-bold text-slate-900 dark:text-white hover:underline">
                 Requested by {request.user?.full_name}
               </Link>
               <p className="text-[10px] text-amber-500 font-bold">⭐ Trust Score: {request.user?.trust_score || 100}</p>
@@ -261,7 +261,7 @@ export default function WantedPage() {
                         </div>
                         <div>
                           <Link
-                            to={`/users/${r.user?.id}`}
+                            to={`/users/${r.user?.roll_no || r.user?.id}`}
                             onClick={(e) => e.stopPropagation()}
                             className="text-xs font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600"
                           >
