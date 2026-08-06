@@ -367,14 +367,27 @@ def reject_handover_resource(
     if br.status != BorrowStatus.HANDOVER_REQUESTED:
         raise AppException("Only pending handovers can be rejected", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    br.status = BorrowStatus.APPROVED
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    from app.services import payment_service
+
+    payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    if payment:
+        result = payment_service.refund_payment(
+            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            notes={"reason": "borrower_rejected_handover_cancelled"},
+        )
+        payment.status = PaymentStatus.REFUND_INITIATED
+        payment.refund_id = result["id"]
+
+    br.status = BorrowStatus.CANCELLED
     db.commit()
     db.refresh(br)
 
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
-        "Handover Rejected / Not Received",
-        f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name}. They reported not receiving it.",
+        "Handover Rejected / Booking Cancelled",
+        f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name} (reported not received). The booking has been cancelled and refunded.",
         link=f"/borrow-requests/{br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()

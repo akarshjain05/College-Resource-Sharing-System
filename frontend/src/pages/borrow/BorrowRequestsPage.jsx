@@ -230,6 +230,7 @@ export default function BorrowRequestsPage() {
             try {
               await borrowApi.reject(bookingId, "Not available right now");
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
@@ -248,13 +249,14 @@ export default function BorrowRequestsPage() {
       if (newStatus === "reject_handover" || newStatus === "not_received") {
         setConfirmDialog({
           title: "Not Received",
-          message: "Are you sure you want to mark this item as not received? This will notify the lender and decline the handover.",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender, cancel the booking, and refund your payment.",
           confirmText: "Mark Not Received",
           isDanger: true,
           onConfirm: async () => {
             try {
               await borrowApi.rejectHandover(bookingId);
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
@@ -273,6 +275,7 @@ export default function BorrowRequestsPage() {
             try {
               await borrowApi.cancel(bookingId);
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
@@ -838,10 +841,7 @@ export default function BorrowRequestsPage() {
                       <BellRing className="h-3.5 w-3.5" /> Nudge Owner
                     </button>
                     <button
-                      onClick={async () => {
-                        await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                        closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
-                      }}
+                      onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
                       className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
                       <Ban className="h-3.5 w-3.5" /> Cancel Request
@@ -863,10 +863,7 @@ export default function BorrowRequestsPage() {
                       </div>
                       <div className="flex-1">
                         <button
-                          onClick={async () => {
-                            await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
-                          }}
+                          onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
                           className="w-full btn-secondary !py-3 text-xs text-red-600 hover:bg-red-50 border-red-100 mt-2 flex items-center justify-center gap-1.5"
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Request
@@ -904,10 +901,7 @@ export default function BorrowRequestsPage() {
                       <Check className="h-3.5 w-3.5" /> Confirm Receipt
                     </button>
                     <button
-                      onClick={async () => {
-                        await handleStatusChange(selectedBookingForModal.id, "reject_handover");
-                        closeBookingModal({ ...selectedBookingForModal, status: "approved" });
-                      }}
+                      onClick={() => handleStatusChange(selectedBookingForModal.id, "reject_handover")}
                       className="btn-secondary flex-1 text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
                     >
                       <X className="h-3.5 w-3.5" /> Not Received
@@ -956,10 +950,7 @@ export default function BorrowRequestsPage() {
                       <Check className="h-3.5 w-3.5" /> Approve
                     </button>
                     <button
-                      onClick={async () => {
-                        await handleStatusChange(selectedBookingForModal.id, "rejected");
-                        closeBookingModal({ ...selectedBookingForModal, status: "rejected" });
-                      }}
+                      onClick={() => handleStatusChange(selectedBookingForModal.id, "rejected")}
                       className="flex-1 btn-secondary text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 dark:border-red-800 !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
                       <X className="h-3.5 w-3.5" /> Decline
@@ -974,10 +965,7 @@ export default function BorrowRequestsPage() {
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
                       </span>
                       <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                          closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
-                        }}
+                        onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
                         className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
                       >
                         <Ban className="h-3.5 w-3.5" /> Cancel Request
