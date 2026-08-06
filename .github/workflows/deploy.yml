@@ -47,15 +47,15 @@ jobs:
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
 
+            # 3.5 Build the new Docker images in the background (zero downtime during this 3-minute step)
+            docker compose -f docker-compose.prod.yml build backend frontend
+
             # 3.8 Stop and remove old containers, then clean up old Docker build cache and unused images
             docker compose -f docker-compose.prod.yml down --remove-orphans -t 5 || true
             docker rm -f $(docker ps -aq --filter "name=crss_") 2>/dev/null || true
             docker rm -f crss_db crss_redis crss_backend crss_celery_worker crss_celery_beat crss_frontend crss_db_backup 2>/dev/null || true
             docker system prune -af || true
             docker builder prune -af || true
-
-            # 4. Build the new Docker images
-            docker compose -f docker-compose.prod.yml build backend frontend
 
             # 5. Start the new production containers without attempting concurrent rebuilds
             docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans --no-build
