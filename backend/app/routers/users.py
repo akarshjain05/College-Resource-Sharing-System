@@ -119,7 +119,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     # Also fetch active resources this user is sharing
     shared_resources = (
         db.query(Resource)
-        .filter(Resource.owner_id == user_id)
+        .filter(Resource.owner_id == user.id)
         .order_by(Resource.created_at.desc())
         .limit(10)
         .all()
@@ -127,7 +127,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
 
     # Calculate stats
     borrower_requests = db.query(BorrowRequest).filter(
-        BorrowRequest.borrower_id == user_id, 
+        BorrowRequest.borrower_id == user.id, 
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
     ).all()
     
@@ -137,7 +137,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     avg_borrower_rating = sum(rated_as_borrower) / len(rated_as_borrower) if rated_as_borrower else 0
 
     lender_requests = db.query(BorrowRequest).filter(
-        BorrowRequest.lender_id == user_id,
+        BorrowRequest.lender_id == user.id,
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
     ).all()
     
@@ -157,7 +157,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     
     # Reviews where this user was the borrower (so the LENDER left the review)
     borrower_reviews = db.query(BorrowRequest).filter(
-        BorrowRequest.borrower_id == user_id,
+        BorrowRequest.borrower_id == user.id,
         BorrowRequest.borrower_review.isnot(None)
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
@@ -177,7 +177,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
 
     # Reviews where this user was the lender (so the BORROWER left the review)
     lender_reviews = db.query(BorrowRequest).filter(
-        BorrowRequest.lender_id == user_id,
+        BorrowRequest.lender_id == user.id,
         BorrowRequest.lender_review.isnot(None)
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
