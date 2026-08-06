@@ -31,6 +31,7 @@ import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
 
 import NotFoundPage from "./pages/errors/NotFoundPage";
+import ForbiddenPage from "./pages/errors/ForbiddenPage";
 
 export default function App() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
           </Route>
 
           <Route path="/" element={<Navigate to="/resources" replace />} />
+          <Route path="/403" element={<ForbiddenPage />} />
           <Route path="/404" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
