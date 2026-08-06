@@ -16,6 +16,7 @@ import MyListingsPage from "./pages/resources/MyListingsPage";
 import WishlistPage from "./pages/resources/WishlistPage";
 import ResourceDetailPage from "./pages/resources/ResourceDetailPage";
 import ResourceCreatePage from "./pages/resources/ResourceCreatePage";
+import ResourceEditPage from "./pages/resources/ResourceEditPage";
 import BorrowRequestsPage from "./pages/borrow/BorrowRequestsPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import PublicProfilePage from "./pages/profile/PublicProfilePage";
@@ -28,7 +29,9 @@ import AdminCategoriesPage from "./pages/admin/AdminCategoriesPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminBorrowsPage from "./pages/admin/AdminBorrowsPage";
 import AdminComplaintsPage from "./pages/admin/AdminComplaintsPage";
-import PaymentsPage from "./pages/PaymentsPage";
+
+import NotFoundPage from "./pages/errors/NotFoundPage";
+import ForbiddenPage from "./pages/errors/ForbiddenPage";
 
 export default function App() {
   return (
@@ -53,14 +56,15 @@ export default function App() {
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/my-listings" element={<MyListingsPage />} />
             <Route path="/resources/new" element={<ResourceCreatePage />} />
+            <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
-            <Route path="/borrow-requests" element={<BorrowRequestsPage />} />
+            <Route path="/my-bookings" element={<BorrowRequestsPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/payments" element={<TransactionsPage />} />
-            <Route path="/wanted" element={<WantedPage />} />
+            <Route path="/campus-needs" element={<WantedPage />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
-            <Route path="/payments" element={<PaymentsPage />} />
+
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/users/:userId" element={<PublicProfilePage />} />
 
@@ -82,7 +86,9 @@ export default function App() {
           </Route>
 
           <Route path="/" element={<Navigate to="/resources" replace />} />
-          <Route path="*" element={<Navigate to="/resources" replace />} />
+          <Route path="/403" element={<ForbiddenPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

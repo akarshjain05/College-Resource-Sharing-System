@@ -33,6 +33,7 @@ class DamageClaimResponse(BaseModel):
     id: uuid.UUID
     borrow_request_id: uuid.UUID
     description: str
+    damage_evidence_url: Optional[str] = None
     estimated_cost: Optional[float] = None
     dispute_reason: Optional[str] = None
     status: DamageClaimStatus

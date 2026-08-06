@@ -19,8 +19,8 @@ class BorrowRequestCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_dates(self):
-        if self.requested_end_date < self.requested_start_date:
-            raise ValueError("requested_end_date must be on or after requested_start_date")
+        if self.requested_end_date <= self.requested_start_date:
+            raise ValueError("requested_end_date must be strictly after requested_start_date")
         return self
 
 
@@ -37,6 +37,8 @@ class BorrowRequestReturn(BaseModel):
 class BorrowRequestConfirmReturn(BaseModel):
     borrower_rating: Optional[int] = Field(None, ge=1, le=5)
     borrower_review: Optional[SafeStr] = Field(None, max_length=1000)
+    damage_report: Optional[SafeStr] = Field(None, max_length=1000)
+    damage_evidence_url: Optional[str] = Field(None, max_length=500)
 
 
 class BorrowRequestResponse(BaseModel):

@@ -30,6 +30,43 @@ def update_my_profile(
     return current_user
 
 
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+def delete_my_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.models.resource import Resource
+    from app.models.enums import ResourceStatus
+    import uuid
+    
+    # True Anonymization (Right-to-Deletion)
+    current_user.full_name = "Deleted User"
+    current_user.email = f"deleted_{uuid.uuid4()}@deleted.local"
+    current_user.phone_number = None
+    current_user.student_id = None
+    current_user.department = None
+    current_user.course = None
+    current_user.year_of_study = None
+    current_user.bio = None
+    current_user.skills = None
+    current_user.profile_picture_url = None
+    current_user.hashed_password = None
+    current_user.google_id = None
+    current_user.fcm_token = None
+    
+    # Deactivate account access
+    current_user.is_active = False
+    
+    # Mark all owned resources as unavailable so they disappear from catalogue
+    db.query(Resource).filter(Resource.owner_id == current_user.id).update(
+        {"status": ResourceStatus.UNAVAILABLE}
+    )
+    
+    db.commit()
+    return
+
+
+
 @router.get("/directory/public", response_model=list[PublicUserResponse])
 def list_users_public(
     skip: int = Query(0, ge=0),
@@ -41,8 +78,13 @@ def list_users_public(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = db.query(User).filter(User.id == user_id).first()
+def get_user_profile(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        uid = uuid.UUID(user_id)
+        user = db.query(User).filter(User.id == uid).first()
+    except ValueError:
+        user = db.query(User).filter(User.email.ilike(f"%{user_id}%@%")).first()
+
     if not user:
         raise NotFoundException("User not found")
         
@@ -56,14 +98,19 @@ def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_
 
 
 @router.get("/{user_id}/public")
-def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     from app.schemas.user import PublicUserResponse
     from app.models.resource import Resource
     from app.schemas.resource import ResourceResponse
     from app.models.borrow import BorrowRequest
     from app.models.enums import BorrowStatus
     
-    user = db.query(User).filter(User.id == user_id).first()
+    try:
+        uid = uuid.UUID(user_id)
+        user = db.query(User).filter(User.id == uid).first()
+    except ValueError:
+        user = db.query(User).filter(User.email.ilike(f"%{user_id}%@%")).first()
+
     if not user:
         raise NotFoundException("User not found")
         
@@ -72,7 +119,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     # Also fetch active resources this user is sharing
     shared_resources = (
         db.query(Resource)
-        .filter(Resource.owner_id == user_id)
+        .filter(Resource.owner_id == user.id)
         .order_by(Resource.created_at.desc())
         .limit(10)
         .all()
@@ -80,7 +127,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
 
     # Calculate stats
     borrower_requests = db.query(BorrowRequest).filter(
-        BorrowRequest.borrower_id == user_id, 
+        BorrowRequest.borrower_id == user.id, 
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
     ).all()
     
@@ -90,7 +137,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     avg_borrower_rating = sum(rated_as_borrower) / len(rated_as_borrower) if rated_as_borrower else 0
 
     lender_requests = db.query(BorrowRequest).filter(
-        BorrowRequest.lender_id == user_id,
+        BorrowRequest.lender_id == user.id,
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
     ).all()
     
@@ -110,7 +157,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
     
     # Reviews where this user was the borrower (so the LENDER left the review)
     borrower_reviews = db.query(BorrowRequest).filter(
-        BorrowRequest.borrower_id == user_id,
+        BorrowRequest.borrower_id == user.id,
         BorrowRequest.borrower_review.isnot(None)
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
@@ -120,6 +167,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
             "role": "borrower",
             "reviewer_id": str(br.lender.id),
             "reviewer_name": br.lender.full_name,
+            "reviewer_roll_no": br.lender.roll_no,
             "rating": br.borrower_rating,
             "review": br.borrower_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
@@ -129,7 +177,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
 
     # Reviews where this user was the lender (so the BORROWER left the review)
     lender_reviews = db.query(BorrowRequest).filter(
-        BorrowRequest.lender_id == user_id,
+        BorrowRequest.lender_id == user.id,
         BorrowRequest.lender_review.isnot(None)
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
@@ -139,6 +187,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
             "role": "lender",
             "reviewer_id": str(br.borrower.id),
             "reviewer_name": br.borrower.full_name,
+            "reviewer_roll_no": br.borrower.roll_no,
             "rating": br.lender_rating,
             "review": br.lender_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,

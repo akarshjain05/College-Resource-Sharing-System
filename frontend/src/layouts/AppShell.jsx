@@ -34,12 +34,11 @@ import toast from "react-hot-toast";
 const NAV_ITEMS = [
   // { to: "/dashboard", label: "Explore Items", icon: Home },
   { to: "/resources", label: "Explore Items", icon: HelpCircle },
-  { to: "/wanted", label: "Campus Needs", icon: Globe },
+  { to: "/campus-needs", label: "Campus Needs", icon: Globe },
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
-  { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
+  { to: "/my-bookings", label: "My Bookings", icon: Calendar },
   { to: "/transactions", label: "Wallet & Payments", icon: Wallet },
-  { to: "/payments", label: "My Payments", icon: CreditCard },
   // { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
   // { to: "/profile", label: "My Profile", icon: User },
@@ -52,15 +51,36 @@ export default function AppShell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru"
+    localStorage.getItem(`crss_loc_${user?.id}`) || ""
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
   const locationDropdownRef = useRef(null);
 
+  const [savedLocations, setSavedLocations] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`crss_saved_locs_${user?.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    if (user?.id) {
+      const loc = localStorage.getItem(`crss_loc_${user.id}`);
+      if (loc) setSelectedLocation(loc);
+
+      try {
+        const saved = localStorage.getItem(`crss_saved_locs_${user.id}`);
+        if (saved) setSavedLocations(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem("share_neighbour_location") || "Koramangala, Bengaluru";
+      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
@@ -81,7 +101,14 @@ export default function AppShell() {
     if (!loc || !loc.trim()) return;
     const cleanLoc = loc.trim();
     setSelectedLocation(cleanLoc);
-    localStorage.setItem("share_neighbour_location", cleanLoc);
+    localStorage.setItem(`crss_loc_${user?.id}`, cleanLoc);
+    
+    setSavedLocations((prev) => {
+      const newList = [cleanLoc, ...prev.filter((l) => l !== cleanLoc)].slice(0, 5);
+      localStorage.setItem(`crss_saved_locs_${user?.id}`, JSON.stringify(newList));
+      return newList;
+    });
+
     setShowLocationDropdown(false);
     window.dispatchEvent(new Event("locationChanged"));
     toast.success(`Location set to: ${cleanLoc}`);
@@ -167,8 +194,8 @@ export default function AppShell() {
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
 
-      if (location.pathname !== "/wanted") {
-        navigate("/wanted");
+      if (location.pathname !== "/campus-needs") {
+        navigate("/campus-needs");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
@@ -185,18 +212,19 @@ export default function AppShell() {
       {/* SIDEBAR */}
       <aside className="hidden w-64 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 md:flex sticky top-0 h-screen z-20">
         {/* Brand Logo & Name */}
-        <div className="flex items-center gap-2.5 px-6 py-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400 transition-all duration-300 hover:scale-105">
-            {/* Custom SVG logo matching mockup */}
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-6.5 w-6.5">
-              <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z" fill="currentColor" className="text-primary-600" />
+        <Link to="/explore" className="flex items-center gap-3 px-6 py-6 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-500 text-white shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 group-hover:scale-105 transition-all duration-300">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" />
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <span className="font-display text-lg font-bold text-slate-900 dark:text-white tracking-tight leading-none">ShareNeighbour</span>
-            <span className="text-[10px] text-primary-600 dark:text-primary-400 font-semibold tracking-wider uppercase mt-0.5">Community Sharing</span>
+          <div className="flex flex-col truncate">
+            <span className="font-display text-[15px] font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight truncate">Campus Resource</span>
+            <span className="font-display text-[15px] font-extrabold text-primary-600 dark:text-primary-400 tracking-tight leading-tight truncate">Sharing</span>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
@@ -212,7 +240,7 @@ export default function AppShell() {
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
-                {to === "/borrow-requests" && user && (
+                {to === "/my-bookings" && user && (
                   <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
                     Active
                   </span>
@@ -238,7 +266,7 @@ export default function AppShell() {
         {/* Bottom Profile Summary */}
         <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-900/50">
           <div className="flex items-center justify-between gap-2 px-1">
-            <Link to={user?.id ? `/users/${user.id}` : "/profile"} className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 -ml-1.5 transition-colors cursor-pointer group">
+            <Link to={user?.id ? `/users/${user.roll_no || user.id}` : "/profile"} className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 -ml-1.5 transition-colors cursor-pointer group">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
                 {(user?.full_name?.charAt(0) || "U").toUpperCase()}
               </div>
@@ -277,46 +305,61 @@ export default function AppShell() {
                 title="Select location"
               >
                 <MapPin className="h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-                <span className="max-w-[130px] sm:max-w-[200px] truncate font-bold">{selectedLocation}</span>
+                <span className="max-w-[130px] sm:max-w-[200px] truncate font-bold">{selectedLocation || "All Campus Locations"}</span>
                 <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${showLocationDropdown ? "rotate-180" : ""}`} />
               </button>
 
               {/* LOCATION DROPDOWN MENU */}
               {showLocationDropdown && (
                 <div className="absolute left-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
-                  <div className="mb-2 px-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Select Community Location</p>
+                  <div className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedLocation("");
+                        localStorage.removeItem(`crss_loc_${user?.id}`);
+                        setShowLocationDropdown(false);
+                        window.dispatchEvent(new Event("locationChanged"));
+                      }}
+                      className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${!selectedLocation
+                        ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        }`}
+                    >
+                      <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${!selectedLocation ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
+                      <span className="truncate">All Campus Locations</span>
+                    </button>
                   </div>
+                  {savedLocations.length > 0 && (
+                    <div className="mb-2">
+                      <div className="mb-1.5 px-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Saved Locations</p>
+                      </div>
+                      <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                        {savedLocations.map((loc) => (
+                          <button
+                            key={loc}
+                            type="button"
+                            onClick={() => handleSelectLocation(loc)}
+                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedLocation === loc
+                              ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                              }`}
+                          >
+                            <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${selectedLocation === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
+                            <span className="truncate">{loc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                  {/* Preset Locations */}
-                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    {[
-                      "All Locations",
-                      "Koramangala, Bengaluru",
-                      "Indiranagar, Bengaluru",
-                      "HSR Layout, Bengaluru",
-                      "Hostel Block C, Room 204",
-                      "Robotics Lab, Block D",
-                      "Library Annex",
-                    ].map((loc) => (
-                      <button
-                        key={loc}
-                        type="button"
-                        onClick={() => handleSelectLocation(loc)}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedLocation === loc
-                          ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                          }`}
-                      >
-                        <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${selectedLocation === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
-                        <span className="truncate">{loc}</span>
-                      </button>
-                    ))}
+                  <div className="mb-2 px-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Add a Location</p>
                   </div>
 
                   {/* Custom Location Input */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 px-1">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5">Custom Location</p>
+                  <div className="px-1">
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();

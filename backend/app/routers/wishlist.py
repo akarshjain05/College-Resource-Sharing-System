@@ -50,6 +50,10 @@ def add_to_wishlist(
     if resource.owner_id == current_user.id:
         raise AppException("You cannot wishlist your own resource", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_ACTION")
 
+    current_count = db.query(WishlistItem).filter(WishlistItem.user_id == current_user.id).count()
+    if current_count >= 50:
+        raise AppException("You can only have up to 50 items in your wishlist", status_code=status.HTTP_400_BAD_REQUEST, error_code="WISHLIST_FULL")
+
     item = WishlistItem(user_id=current_user.id, resource_id=resource_id)
     try:
         db.add(item)

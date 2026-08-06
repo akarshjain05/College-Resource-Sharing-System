@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import api from "../api/client";
 import { userApi, resourceApi, borrowApi } from "../api/endpoints";
+import { useAuth } from "../context/AuthContext";
 
 import ResolutionCard from "../components/ResolutionCard";
 
@@ -201,6 +202,7 @@ function ComplaintDetailsModal({ complaint, onClose }) {
 }
 
 export default function ComplaintsPage() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const initialBorrowRequestId = searchParams.get("borrow_request_id") || "";
   const initialAgainstUserId = searchParams.get("against_user_id") || "";
@@ -260,17 +262,33 @@ export default function ComplaintsPage() {
         const combined = [...myReqs, ...incReqs];
         setUserBorrows(combined);
 
+        // If initialAgainstUserId is provided but not in directory (e.g. from a past interaction),
+        // we should try to extract them from the borrow requests or just add a fallback option.
+        let updatedUsers = userRes.status === "fulfilled" ? [...(userRes.value.data || [])] : [];
+        
         // If borrow_request_id passed, auto populate related resource & against user if available
         if (initialBorrowRequestId && combined.length > 0) {
           const match = combined.find(b => b.id === initialBorrowRequestId);
           if (match) {
+            const againstId = match.lender?.id === user?.id ? match.borrower?.id : match.lender?.id;
+            const targetUserObj = match.lender?.id === user?.id ? match.borrower : match.lender;
+            
+            // Add user to the dropdown if they are not already there
+            if (targetUserObj && againstId && !updatedUsers.find(u => u.id === againstId)) {
+              updatedUsers.push({ id: againstId, full_name: targetUserObj.full_name || "Unknown User", email: "From Borrow Request" });
+            }
+
             setForm(prev => ({
               ...prev,
-              resource_id: match.resource_id || prev.resource_id,
-              against_user_id: match.lender_id || match.borrower_id || prev.against_user_id
+              resource_id: match.resource?.id || prev.resource_id,
+              against_user_id: againstId || prev.against_user_id
             }));
           }
+        } else if (initialAgainstUserId && !updatedUsers.find(u => u.id === initialAgainstUserId)) {
+             updatedUsers.push({ id: initialAgainstUserId, full_name: "Selected User", email: "From Context" });
         }
+        
+        setUsers(updatedUsers);
       })
       .finally(() => setLoading(false));
   };
@@ -281,11 +299,12 @@ export default function ComplaintsPage() {
   const handleBorrowRequestChange = (borrowId) => {
     const selectedBorrow = userBorrows.find(b => b.id === borrowId);
     if (selectedBorrow) {
+      const againstId = selectedBorrow.lender?.id === user?.id ? selectedBorrow.borrower?.id : selectedBorrow.lender?.id;
       setForm(prev => ({
         ...prev,
         borrow_request_id: borrowId,
-        resource_id: selectedBorrow.resource_id || prev.resource_id,
-        against_user_id: selectedBorrow.lender_id || selectedBorrow.borrower_id || prev.against_user_id,
+        resource_id: selectedBorrow.resource?.id || prev.resource_id,
+        against_user_id: againstId || prev.against_user_id,
         subject: prev.subject || `Dispute for Borrow Request: ${selectedBorrow.resource?.title || "Item"}`
       }));
     } else {
@@ -439,9 +458,10 @@ export default function ComplaintsPage() {
                 Link Active / Past Borrow Request (Optional)
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.borrow_request_id}
                 onChange={(e) => handleBorrowRequestChange(e.target.value)}
+                disabled={!!initialBorrowRequestId}
               >
                 <option value="">-- None / General Complaint --</option>
                 {userBorrows.map((b) => (
@@ -460,9 +480,10 @@ export default function ComplaintsPage() {
                 Filed Against User {category === "admin_support" && "(Optional)"}
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.against_user_id}
                 onChange={(e) => setForm({ ...form, against_user_id: e.target.value })}
+                disabled={!!initialAgainstUserId || !!initialBorrowRequestId}
               >
                 <option value="">-- None / Platform Issue --</option>
                 {users.map((u) => (
@@ -478,9 +499,10 @@ export default function ComplaintsPage() {
                 Related Resource / Listing (Optional)
               </label>
               <select
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-50 dark:disabled:bg-slate-900"
                 value={form.resource_id}
                 onChange={(e) => setForm({ ...form, resource_id: e.target.value })}
+                disabled={!!initialResourceId || !!initialBorrowRequestId}
               >
                 <option value="">-- None --</option>
                 {resources.map((r) => (

@@ -184,8 +184,8 @@ and a troubleshooting table.
 CRSS demonstrates a complete, deployable answer to a genuinely common campus problem:
 turning scattered, idle personal and departmental property into a searchable, trackable,
 moderated shared pool. The system covers the full lifecycle a real deployment would need
-— accounts and roles, listing and discovery, a stateful borrow workflow with
-accountability hooks (reviews, trust scores, complaints), real-time and email
+— accounts and roles, listing and discovery (including a Campus Needs / Wanted board), a stateful borrow workflow with
+accountability hooks (reviews, reputation scores, complaints, dispute management), editing capabilities for users and admins, real-time and email
 notification, and admin oversight — while remaining honest about what's intentionally
 out of scope for this iteration.
 
@@ -193,7 +193,7 @@ out of scope for this iteration.
 - Native mobile apps (the responsive web frontend covers mobile browsers today, but not
   push notifications when the browser tab is closed)
 - Real payment-gateway-backed deposits, rather than tracked-but-informal deposit amounts
-- Dark mode and further accessibility passes (keyboard navigation audit, screen-reader
+- Accessibility passes (keyboard navigation audit, screen-reader
   labeling)
 - A frontend automated test suite (Vitest + React Testing Library)
 - An in-app "promote user to admin" flow with audit logging, replacing the current

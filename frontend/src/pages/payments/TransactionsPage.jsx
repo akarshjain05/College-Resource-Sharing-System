@@ -17,7 +17,7 @@ import {
   Search,
   IndianRupee,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { paymentApi, getImageUrl } from "../../api/endpoints";
 import PayNowButton from "../../components/PayNowButton";
@@ -36,6 +36,7 @@ export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState("all"); // "all", "credit", "debit", "pending"
   const [searchQuery, setSearchQuery] = useState("");
   const [showTerms, setShowTerms] = useState(false);
+  const navigate = useNavigate();
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -354,10 +355,11 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  className={`group bg-white dark:bg-slate-900 border rounded-2xl p-4 sm:p-5 transition shadow-sm hover:shadow-md ${
+                  onClick={() => navigate(`/my-bookings?id=${tx.borrow_request_id}&tab=${isCredit ? "lending" : "borrowing"}`)}
+                  className={`group bg-white dark:bg-slate-900 border rounded-2xl p-4 sm:p-5 transition shadow-sm hover:shadow-md cursor-pointer ${
                     isPending
-                      ? "border-amber-300 dark:border-amber-700/60 bg-amber-50/20 dark:bg-amber-950/10"
-                      : "border-slate-200 dark:border-slate-800"
+                      ? "border-amber-300 dark:border-amber-700/60 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40"
+                      : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -379,12 +381,11 @@ export default function TransactionsPage() {
                       {/* Text details */}
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Link
-                            to={`/borrow-requests`}
-                            className="font-bold text-slate-900 dark:text-white hover:text-blue-600 text-base sm:text-lg transition"
+                          <span
+                            className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 text-base sm:text-lg transition"
                           >
                             {tx.item_title}
-                          </Link>
+                          </span>
 
                           {/* Status Badge */}
                           {isPending ? (
@@ -392,7 +393,7 @@ export default function TransactionsPage() {
                               <Clock className="h-3 w-3" />
                               To Be Paid
                             </span>
-                          ) : tx.status === "PAID" ? (
+                          ) : tx.status === "paid" ? (
                             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300/60">
                               <CheckCircle2 className="h-3 w-3" />
                               Paid
@@ -443,7 +444,7 @@ export default function TransactionsPage() {
                           {isPending ? "" : isCredit ? "+ " : "- "}
                           {formatRupees(
                             isCredit
-                              ? tx.rent_amount
+                              ? tx.total_amount
                               : tx.rent_amount + Math.max(0, tx.deposit_amount - tx.refunded_amount)
                           )}
                         </p>
@@ -454,7 +455,7 @@ export default function TransactionsPage() {
 
                       {/* Pay Now Button for pending items */}
                       {isPending ? (
-                        <div className="mt-2">
+                        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                           <PayNowButton
                             borrowRequest={{
                               id: tx.borrow_request_id,

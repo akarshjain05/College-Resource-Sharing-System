@@ -18,6 +18,8 @@ from fastapi import WebSocket
 logger = logging.getLogger("crss")
 
 
+MAX_CONNECTIONS_PER_USER = 5
+
 class ConnectionManager:
     def __init__(self) -> None:
         self._connections: Dict[str, Set[WebSocket]] = {}
@@ -28,7 +30,16 @@ class ConnectionManager:
 
     async def connect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
         key = str(user_id)
-        self._connections.setdefault(key, set()).add(websocket)
+        sockets = self._connections.setdefault(key, set())
+        # Item 86: Cap concurrent WebSocket connections per user
+        if len(sockets) >= MAX_CONNECTIONS_PER_USER:
+            oldest_ws = next(iter(sockets))
+            sockets.discard(oldest_ws)
+            try:
+                await oldest_ws.close(code=1008, reason="Connection limit exceeded")
+            except Exception:
+                pass
+        sockets.add(websocket)
         from app.services.presence_service import set_user_presence
         set_user_presence(key, "online")
 

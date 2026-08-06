@@ -49,7 +49,7 @@ export default function ResourceCreatePage() {
     condition: "good",
     daily_price: 150,
     deposit_amount: 500,
-    location: localStorage.getItem("share_neighbour_location") || "",
+    location: localStorage.getItem(`crss_loc_${user?.id}`) || "",
     available_from: "",
     available_to: "",
   });
@@ -162,7 +162,7 @@ export default function ResourceCreatePage() {
       savedMocks = JSON.parse(rawMocks);
     } else {
       savedMocks = {
-        "Koramangala, Bengaluru": []
+        "Campus Location": []
       };
     }
 
@@ -365,7 +365,7 @@ export default function ResourceCreatePage() {
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.location}
                   onChange={update("location")}
-                  placeholder="e.g. Koramangala, Bengaluru"
+                  placeholder="e.g. Hostel Block A"
                 />
               </div>
             </div>
@@ -639,7 +639,7 @@ export default function ResourceCreatePage() {
                     condition: "good",
                     daily_price: 100,
                     deposit_amount: 300,
-                    location: localStorage.getItem("share_neighbour_location") || "",
+                    location: localStorage.getItem(`crss_loc_${user?.id}`) || "",
                   });
                 }}
                 className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 py-3.5 text-xs font-bold rounded-2xl transition-all"

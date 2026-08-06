@@ -142,7 +142,7 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
           <p className="text-xs text-slate-500 dark:text-slate-400">
             by{" "}
             <Link
-              to={`/users/${resource.owner.id}`}
+              to={`/users/${resource.owner.roll_no || resource.owner.id}`}
               className="font-bold text-slate-800 dark:text-slate-200 hover:underline"
               onClick={(e) => e.stopPropagation()}
             >
@@ -153,8 +153,8 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
 
         {/* Rating badge & Borrows */}
         <div className="flex items-center gap-2 pt-1">
-          <span className="flex items-center gap-1 rounded-md bg-emerald-600 px-1.5 py-0.5 text-[10px] font-extrabold text-white">
-            {Number(resource.average_rating || 5).toFixed(1)}
+          <span className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white ${Number(resource.average_rating) > 0 ? "bg-emerald-600" : "bg-slate-400"}`}>
+            {Number(resource.average_rating) > 0 ? Number(resource.average_rating).toFixed(1) : "New"}
             <Star className="h-3 w-3 fill-white text-white" />
           </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{resource.total_borrows || 0} borrows</span>

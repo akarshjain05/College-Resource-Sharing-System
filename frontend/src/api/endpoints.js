@@ -35,6 +35,7 @@ export const paymentApi = {
 export const userApi = {
   getMyProfile: () => api.get("/users/me"),
   updateMyProfile: (payload) => api.put("/users/me", payload),
+  deleteMyAccount: () => api.delete("/users/me"),
   getUser: (id) => api.get(`/users/${id}`),
   listUsers: (params) => api.get("/users", { params }),
   listPublicDirectory: () => api.get("/users/directory/public"),
@@ -46,6 +47,7 @@ export const userApi = {
 export const categoryApi = {
   list: () => api.get("/categories"),
   create: (payload) => api.post("/categories", payload),
+  update: (id, payload) => api.put(`/categories/${id}`, payload),
   remove: (id) => api.delete(`/categories/${id}`),
 };
 
@@ -87,6 +89,8 @@ export const chatApi = {
   list: (requestId) => api.get(`/borrow-requests/${requestId}/messages`),
   send: (requestId, payload) => api.post(`/borrow-requests/${requestId}/messages`, payload),
   markRead: (requestId) => api.patch(`/borrow-requests/${requestId}/messages/read`),
+  report: (requestId, messageId, reason = "Inappropriate content") =>
+    api.post(`/borrow-requests/${requestId}/messages/${messageId}/report?reason=${encodeURIComponent(reason)}`),
 };
 
 export const notificationApi = {
@@ -100,6 +104,7 @@ export const wantedApi = {
   list: () => api.get("/wanted"),
   myNeeds: () => api.get("/wanted/me"),
   create: (data) => api.post("/wanted", data),
+  update: (id, payload) => api.put(`/wanted/${id}`, payload),
   fulfill: (id) => api.post(`/wanted/${id}/fulfill`),
   offer: (id, resourceId) => api.post(`/wanted/${id}/offer`, { resource_id: resourceId }),
   listOffers: (id) => api.get(`/wanted/${id}/offers`),

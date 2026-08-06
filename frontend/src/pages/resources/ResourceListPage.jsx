@@ -13,6 +13,7 @@ export default function ResourceListPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [condition, setCondition] = useState("");
   const [status, setStatus] = useState("");
@@ -26,13 +27,18 @@ export default function ResourceListPage() {
     categoryApi.list().then(({ data }) => setCategories(data));
   }, []);
 
-
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
     setLoading(true);
     resourceApi
       .list({
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         category_id: categoryId || undefined,
         condition: condition || undefined,
         status: status || undefined,
@@ -53,7 +59,7 @@ export default function ResourceListPage() {
         console.log("Database list call failed", err);
       })
       .finally(() => setLoading(false));
-  }, [search, categoryId, condition, status, minRating, sortBy, sortDir, page, categories]);
+  }, [debouncedSearch, categoryId, condition, status, minRating, sortBy, sortDir, page, categories]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 

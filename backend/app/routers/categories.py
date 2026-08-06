@@ -9,7 +9,7 @@ from app.core.deps import require_admin
 from app.core.exceptions import NotFoundException, ConflictException
 from app.models.category import Category
 from app.models.user import User
-from app.schemas.category import CategoryCreate, CategoryResponse
+from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
 
 router = APIRouter(prefix="/categories", tags=["Categories"])
 
@@ -58,6 +58,32 @@ def create_category(
         raise ConflictException("A category with this name already exists")
     category = Category(**payload.model_dump(), slug=slug)
     db.add(category)
+    db.commit()
+    db.refresh(category)
+    return category
+
+
+@router.put("/{category_id}", response_model=CategoryResponse)
+def update_category(
+    category_id: uuid.UUID,
+    payload: CategoryUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    category = db.query(Category).filter(Category.id == category_id).first()
+    if not category:
+        raise NotFoundException("Category not found")
+    
+    update_data = payload.model_dump(exclude_unset=True)
+    if "name" in update_data and update_data["name"] != category.name:
+        new_slug = slugify(update_data["name"])
+        if db.query(Category).filter(Category.slug == new_slug, Category.id != category.id).first():
+            raise ConflictException("A category with this name already exists")
+        category.slug = new_slug
+
+    for field, value in update_data.items():
+        setattr(category, field, value)
+    
     db.commit()
     db.refresh(category)
     return category

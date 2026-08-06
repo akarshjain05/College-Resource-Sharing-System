@@ -1,6 +1,7 @@
 from typing import Optional
 
 from sqlalchemy import ForeignKey, Text, Integer, Boolean, String, Enum as SAEnum
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +16,9 @@ class Review(Base, UUIDMixin, TimestampMixin):
     resource_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False
     )
+    borrow_request_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=True
+    )
     reviewer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)  # 1-5
     comment: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -22,6 +26,10 @@ class Review(Base, UUIDMixin, TimestampMixin):
     resource: Mapped["Resource"] = relationship("Resource", back_populates="reviews")
     reviewer: Mapped["User"] = relationship(
         "User", back_populates="reviews_written", foreign_keys=[reviewer_id]
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint('borrow_request_id', 'reviewer_id', name='uq_review_borrow_request_reviewer'),
     )
 
 

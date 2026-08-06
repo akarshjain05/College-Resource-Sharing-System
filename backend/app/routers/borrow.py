@@ -362,7 +362,13 @@ def cancel_borrow_request(
 ):
     query = _borrow_query(db).filter(BorrowRequest.id == request_id)
     if current_user.role != UserRole.ADMIN:
-        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                BorrowRequest.borrower_id == current_user.id,
+                BorrowRequest.lender_id == current_user.id
+            )
+        )
     br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
@@ -391,12 +397,14 @@ def cancel_borrow_request(
     db.commit()
 
     status_text = "approved borrow request" if was_approved else "borrow request"
+    notify_user_id = br.borrower_id if current_user.id == lender_id else lender_id
+    
     create_notification(
         db,
-        lender_id,
+        notify_user_id,
         NotificationType.SYSTEM,
         "Borrow request cancelled",
-        f"{current_user.full_name} cancelled their {status_text} for '{resource_title}'.",
+        f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
         link=f"/borrow-requests/{req_id}",
     )
 
@@ -493,7 +501,27 @@ def confirm_return_resource(
 
     resource = br.resource
     resource_title = resource.title if resource else "item"
-    is_damaged = bool(br.damage_report)
+
+    # A damage claim can be initiated by the borrower's report OR the lender's report
+    lender_reported_damage = bool(payload.damage_report)
+    borrower_reported_damage = bool(br.damage_report)
+    is_damaged = lender_reported_damage or borrower_reported_damage
+
+    if lender_reported_damage:
+        if not payload.damage_evidence_url:
+            raise AppException("Photo evidence (damage_evidence_url) is required to file a damage claim", status_code=status.HTTP_400_BAD_REQUEST, error_code="EVIDENCE_REQUIRED")
+        
+        # Rate-limit checks: max 2 claims against the same borrower in 30 days
+        from datetime import timedelta
+        from app.models.damage_claim import DamageClaim
+        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        recent_claims = db.query(DamageClaim).filter(
+            DamageClaim.filed_by_id == current_user.id,
+            DamageClaim.against_user_id == br.borrower_id,
+            DamageClaim.created_at >= thirty_days_ago
+        ).count()
+        if recent_claims >= 2:
+            raise AppException("You have filed too many recent damage claims against this user. Please contact support.", status_code=status.HTTP_429_TOO_MANY_REQUESTS, error_code="RATE_LIMIT_EXCEEDED")
 
     br.status = BorrowStatus.DAMAGED if is_damaged else BorrowStatus.RETURNED
     br.borrower_rating = payload.borrower_rating
@@ -550,7 +578,8 @@ def confirm_return_resource(
             borrow_request_id=br.id,
             filed_by_id=current_user.id,
             against_user_id=br.borrower_id,
-            description=br.damage_report,
+            description=payload.damage_report or br.damage_report,
+            damage_evidence_url=payload.damage_evidence_url,
             status=DamageClaimStatus.OPEN,
         )
         db.add(claim)
@@ -571,7 +600,7 @@ def confirm_return_resource(
     )
 
     if resource:
-        wishlisters = db.query(WishlistItem).filter(WishlistItem.resource_id == resource.id).all()
+        wishlisters = db.query(WishlistItem).filter(WishlistItem.resource_id == resource.id).limit(100).all()
         for item in wishlisters:
             create_notification(
                 db, item.user_id, NotificationType.SYSTEM,

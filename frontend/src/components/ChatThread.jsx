@@ -63,6 +63,15 @@ export default function ChatThread({ request, onReportIssue }) {
     }
   };
 
+  const handleReportMessage = async (msgId) => {
+    try {
+      await chatApi.report(request.id, msgId, "Abuse/Harassment");
+      toast.success("Message reported to admin moderators");
+    } catch (err) {
+      toast.error("Failed to report message");
+    }
+  };
+
   const renderMessageContent = (msg) => {
     const isComplaintUpdate = msg.body?.includes("[COMPLAINT_UPDATE]");
     const isComplaintFiled = msg.body?.includes("[COMPLAINT_FILED]");
@@ -142,16 +151,28 @@ export default function ChatThread({ request, onReportIssue }) {
             return (
               <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div 
-                  className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+                  className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm relative group ${
                     isMe 
                       ? "bg-primary-600 text-white rounded-br-sm" 
                       : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-sm"
                   }`}
                 >
                   {renderMessageContent(msg)}
-                  <p className={`text-[9px] mt-1 text-right ${isMe ? "text-primary-200" : "text-slate-400 dark:text-slate-400"}`}>
-                    {format(new Date(msg.created_at), "h:mm a")}
-                  </p>
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    {!isMe ? (
+                      <button
+                        type="button"
+                        onClick={() => handleReportMessage(msg.id)}
+                        className="text-[9px] text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Report message"
+                      >
+                        Report
+                      </button>
+                    ) : <span />}
+                    <p className={`text-[9px] text-right ${isMe ? "text-primary-200" : "text-slate-400 dark:text-slate-400"}`}>
+                      {format(new Date(msg.created_at), "h:mm a")}
+                    </p>
+                  </div>
                 </div>
               </div>
             );
@@ -168,6 +189,7 @@ export default function ChatThread({ request, onReportIssue }) {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
+            maxLength={1000}
             className="flex-1 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-4 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
             disabled={sending}
           />

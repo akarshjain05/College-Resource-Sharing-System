@@ -24,6 +24,8 @@ In scope:
 - Role-based accounts and campus profile data
 - Notifications (in-app, real-time via WebSocket, and email)
 - Reviews, complaints, and admin moderation
+- Campus Needs / Wanted items
+- Reputation scoring (Trust and Sharing scores)
 - Admin analytics dashboard
 
 Out of scope (for this build):
@@ -107,6 +109,7 @@ Each requirement is tagged `FR-<area>-<n>` and maps to an implemented API endpoi
   course, year, bio, skills, phone, profile picture).
 - **FR-PROF-2**: A user shall be able to change their password after providing their
   current password.
+- **FR-PROF-3**: The system shall track and display a user's Reputation Scores (Trust Score and Sharing Score) based on their borrowing and lending history.
 
 ### 3.3 Resource Management
 - **FR-RES-1**: A user shall be able to list a resource with title, description, category,
@@ -153,10 +156,15 @@ Each requirement is tagged `FR-<area>-<n>` and maps to an implemented API endpoi
   a subject and description.
 - **FR-COMP-2**: An admin shall be able to list all complaints, change their status
   (open/in-progress/resolved/closed), and attach a response.
+- **FR-COMP-3**: An admin shall be able to mediate disputes by reviewing user borrow history and reputation scores, taking corrective actions like suspension if needed.
 
-### 3.8 Admin Functions
+### 3.8 Campus Needs / Wanted Board
+- **FR-NEED-1**: A user shall be able to post a request for a specific resource they need but cannot find on the platform.
+- **FR-NEED-2**: Other users shall be able to view these needs and offer to lend the requested item.
+
+### 3.9 Admin Functions
 - **FR-ADM-1**: An admin shall be able to list all users, and suspend/unsuspend an account.
-- **FR-ADM-2**: An admin shall be able to create and delete resource categories.
+- **FR-ADM-2**: An admin shall be able to create, edit, and delete resource categories.
 - **FR-ADM-3**: An admin shall be able to view platform-wide analytics: total users,
   resources, borrows, pending requests, active borrows, most-borrowed categories,
   top contributors, and department usage.

@@ -87,7 +87,13 @@ def get_my_transactions(
         item_title = getattr(br.resource, "title", "Unknown Resource") if br.resource else "Unknown Resource"
         image_url = None
         if br.resource and br.resource.images and len(br.resource.images) > 0:
-            image_url = br.resource.images[0]
+            first_img = br.resource.images[0]
+            if hasattr(first_img, "image_url"):
+                image_url = first_img.image_url
+            elif isinstance(first_img, str):
+                image_url = first_img
+            else:
+                image_url = str(getattr(first_img, "url", "")) or None
 
         if p:
             tx_type = "CREDIT" if is_lender else "DEBIT"
@@ -296,7 +302,7 @@ def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signatur
             "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }),
-        link=f"/borrow-requests/{br.id}",
+        link=f"/borrow-requests/{br.id}?tab=lending",
     )
     create_notification(
         db, br.borrower_id, NotificationType.PAYMENT_SUCCESS,
@@ -309,7 +315,7 @@ def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signatur
             "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }),
-        link=f"/borrow-requests/{br.id}",
+        link=f"/borrow-requests/{br.id}?tab=borrowing",
     )
     if payment.payer.email:
         background_tasks.add_task(
@@ -376,9 +382,12 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 def reconcile_payments_cron(request: Request, db: Session = Depends(get_db)):
     """Called periodically by an external cron to check on stale CREATED orders."""
     cron_secret = request.headers.get("X-Cron-Secret")
-    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY: # Or specific cron secret if one exists
-        # Actually I will use just a basic check or just log it
-        pass 
+    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY:
+        raise AppException(
+            "Unauthorized cron execution", 
+            status_code=401, 
+            error_code="UNAUTHORIZED"
+        )
     
     cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
     stale_payments = db.query(Payment).filter(

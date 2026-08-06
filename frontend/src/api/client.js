@@ -36,6 +36,10 @@ const processQueue = (error, token = null) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error.response?.data?.detail && Array.isArray(error.response.data.detail)) {
+      error.response.data.detail = error.response.data.detail.map((d) => d.msg).join(", ");
+    }
+    
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes("/auth/login")) {
@@ -69,6 +73,7 @@ api.interceptors.response.use(
         const status = refreshError.response?.status;
         if (status === 401 || status === 400) {
           localStorage.removeItem("crss_access_token");
+          window.dispatchEvent(new Event("crss:auth-unauthorized"));
           // No need to remove crss_refresh_token as it's a cookie managed by backend
           window.location.href = "/login";
         }

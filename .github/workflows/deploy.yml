@@ -22,10 +22,11 @@ jobs:
             cd College-Resource-Sharing-System
             
             # 2. Pull the latest code from GitHub main branch
-            git fetch origin
+            rm -f .git/*.lock .git/refs/heads/*.lock .git/refs/remotes/origin/*.lock || true
+            git fetch origin --prune
             git reset --hard origin/main
             git clean -fdx -e .env
-            
+
             # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
             if [ $(sudo swapon --show | wc -l) -eq 0 ]; then
               echo "No swap file found. Creating a 2GB swap file to prevent out-of-memory errors..."
@@ -37,14 +38,19 @@ jobs:
             else
               echo "Swap file already exists."
             fi
-            
+
             # 3. Export variables from your existing .env file to preserve your HTTPS/Domain setup
             export $(grep -v '^#' .env | xargs)
-            
-            # 3.8 Clean up old Docker build cache and unused images to prevent disk full / "no space left on device"
+
+            # 3.8 Stop and remove old containers, then clean up old Docker build cache and unused images
+            docker compose -f docker-compose.prod.yml down --remove-orphans -t 5 || true
+            docker rm -f $(docker ps -aq --filter "name=crss_") 2>/dev/null || true
+            docker rm -f crss_db crss_redis crss_backend crss_celery_worker crss_celery_beat crss_frontend crss_db_backup 2>/dev/null || true
             docker system prune -af || true
             docker builder prune -af || true
 
-            # 4. Rebuild and restart the Docker containers with the new code
-            docker compose -f docker-compose.prod.yml down --remove-orphans || true
-            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+            # 4. Build the new Docker images
+            docker compose -f docker-compose.prod.yml build backend frontend
+
+            # 5. Start the new production containers without attempting concurrent rebuilds
+            docker compose -f docker-compose.prod.yml up -d --force-recreate --remove-orphans --no-build

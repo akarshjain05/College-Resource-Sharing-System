@@ -9,7 +9,7 @@ ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
 
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci && (npm audit --audit-level=high || true)
 COPY . .
 RUN npm run build
 

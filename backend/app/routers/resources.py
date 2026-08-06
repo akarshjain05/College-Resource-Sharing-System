@@ -193,7 +193,7 @@ def get_resource(
 
 
 @router.post("", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
-@limiter.limit("5/minute")
+@limiter.limit("5/day")
 def create_resource(
     request: Request,
     payload: ResourceCreate,
@@ -275,6 +275,37 @@ def delete_resource(
         raise NotFoundException("Resource not found")
     if resource.owner_id != current_user.id and current_user.role != UserRole.ADMIN:
         raise ForbiddenException("You can only delete your own resources")
+        
+    from app.models.enums import BorrowStatus
+    from app.models.borrow import BorrowRequest
+    
+    active_statuses = [
+        BorrowStatus.REQUESTED, BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED,
+        BorrowStatus.ACTIVE, BorrowStatus.RETURN_REQUESTED, BorrowStatus.LATE
+    ]
+    
+    active_bookings = db.query(BorrowRequest).filter(
+        BorrowRequest.resource_id == resource_id,
+        BorrowRequest.status.in_(active_statuses)
+    ).count()
+    
+    if active_bookings > 0:
+        from app.core.exceptions import BadRequestException
+        raise BadRequestException(f"Cannot delete resource with {active_bookings} active or pending bookings. Please cancel or complete them first.")
+        
+    from app.models.wanted import WantedOffer
+    from app.models.wishlist import WishlistItem
+    from app.models.misc import Complaint
+
+    # 1. Delete associated wishlist items
+    db.query(WishlistItem).filter(WishlistItem.resource_id == resource_id).delete(synchronize_session=False)
+    
+    # 2. Delete associated wanted offers
+    db.query(WantedOffer).filter(WantedOffer.resource_id == resource_id).delete(synchronize_session=False)
+    
+    # 3. Nullify resource_id in complaints to preserve the complaint record
+    db.query(Complaint).filter(Complaint.resource_id == resource_id).update({"resource_id": None}, synchronize_session=False)
+
     db.delete(resource)
     db.commit()
     return None

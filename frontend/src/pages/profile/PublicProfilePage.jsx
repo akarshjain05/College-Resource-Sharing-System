@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
   TrendingUp,
@@ -14,10 +14,12 @@ import {
 import { usersApi } from "../../api/endpoints";
 import ResourceCard from "../../components/ResourceCard";
 import StatCard from "../../components/StatCard";
+import NotFoundPage from "../errors/NotFoundPage";
 import { useAuth } from "../../context/AuthContext";
 
 export default function PublicProfilePage() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [sharedResources, setSharedResources] = useState([]);
@@ -34,12 +36,17 @@ export default function PublicProfilePage() {
     usersApi
       .getPublicProfile(userId)
       .then((res) => {
-        setProfile(res.data.user);
+        const user = res.data.user;
+        if (user.roll_no && userId !== user.roll_no && userId.length > 20) {
+          navigate(`/users/${user.roll_no}`, { replace: true });
+          return;
+        }
+        setProfile(user);
         setSharedResources(res.data.shared_resources || []);
         setStats(res.data.stats);
         setRecentReviews(res.data.recent_reviews || []);
       })
-      .catch((err) => setError(err.response?.data?.detail || "Failed to load user profile"))
+      .catch((err) => setError(err.response?.status === 404 ? "404" : err.response?.data?.detail || "Failed to load user profile"))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -56,14 +63,7 @@ export default function PublicProfilePage() {
   }
 
   if (error) {
-    return (
-      <div className="max-w-xl mx-auto my-12 rounded-3xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-8 text-center text-red-600 dark:text-red-400">
-        <p className="font-bold text-lg">{error}</p>
-        <Link to="/resources" className="inline-block mt-4 text-sm font-bold text-primary-600 hover:underline">
-          Return to Explore Items
-        </Link>
-      </div>
-    );
+    return <NotFoundPage message="This user profile doesn't exist or has been removed." />;
   }
 
   if (!profile) return null;
@@ -118,7 +118,7 @@ export default function PublicProfilePage() {
                     className="inline-flex items-center gap-2 rounded-2xl bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
                   >
                     <Edit3 className="h-4 w-4" />
-                    <span>Edit Profile & Password</span>
+                    <span>Edit Profile</span>
                   </Link>
                 ) : (
                   <Link
@@ -254,7 +254,7 @@ export default function PublicProfilePage() {
                       <div className="flex items-center gap-2">
                         {r.reviewer_id ? (
                           <Link
-                            to={`/users/${r.reviewer_id}`}
+                            to={`/users/${r.reviewer_roll_no || r.reviewer_id}`}
                             className="font-bold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
                           >
                             {r.reviewer_name}

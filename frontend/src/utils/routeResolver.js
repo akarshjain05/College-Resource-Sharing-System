@@ -8,26 +8,24 @@
  * - "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f" => "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f"
  */
 export function resolveNotificationLink(link, notification = null) {
-    if (!link && !notification) return "/borrow-requests?tab=lending&subTab=cancelled";
+    if (!link && !notification) return "/my-bookings";
 
     let rawLink = link || "";
-
-    const notifType = (notification?.type || "").toLowerCase();
-    const title = (notification?.title || "").toLowerCase();
-    const message = (notification?.message || "").toLowerCase();
-
-    // Check if notification is related to rejection or cancellation
-    const isRejectedOrCancelled =
-        notifType === "borrow_rejected" ||
-        title.includes("rejected") ||
-        title.includes("declined") ||
-        title.includes("cancelled") ||
-        message.includes("rejected") ||
-        message.includes("declined") ||
-        message.includes("cancelled");
-
     const [pathPart, queryString] = rawLink.split("?");
     const params = new URLSearchParams(queryString || "");
+
+    // Check if notification is for a lender action (e.g. Payment Received, New borrow request, Return requested, Offer was accepted)
+    const isLenderAction = notification && (
+        notification.title?.toLowerCase().includes("payment received") ||
+        notification.message?.toLowerCase().includes("payment received") ||
+        notification.title?.toLowerCase().includes("new borrow request") ||
+        notification.title?.toLowerCase().includes("return requested") ||
+        notification.title?.toLowerCase().includes("offer was accepted")
+    );
+
+    if (isLenderAction && !params.has("tab")) {
+        params.set("tab", "lending");
+    }
 
     // Handle /borrow-requests/:id
     const borrowRequestMatch = pathPart.match(/^\/borrow-requests\/([a-f\d-]+)/i);
@@ -35,20 +33,15 @@ export function resolveNotificationLink(link, notification = null) {
         params.set("id", borrowRequestMatch[1]);
     }
 
-    if (isRejectedOrCancelled) {
-        if (!params.has("tab")) params.set("tab", "lending");
-        if (!params.has("subTab")) params.set("subTab", "cancelled");
-    }
-
     // Handle /damage-claims/:id -> /borrow-requests
     const damageClaimMatch = pathPart.match(/^\/damage-claims\/([a-f\d-]+)/i);
     if (damageClaimMatch) {
-        return `/borrow-requests?${params.toString()}`;
+        return `/my-bookings?${params.toString()}`;
     }
 
-    if (pathPart.startsWith("/borrow-requests") || borrowRequestMatch || isRejectedOrCancelled) {
-        return `/borrow-requests?${params.toString()}`;
+    if (pathPart.startsWith("/borrow-requests") || borrowRequestMatch) {
+        return `/my-bookings?${params.toString()}`;
     }
 
-    return rawLink || "/borrow-requests?tab=lending&subTab=cancelled";
+    return rawLink || "/my-bookings";
 }

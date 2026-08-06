@@ -126,7 +126,7 @@ function ItemBorrowersSection({ requests, onAction }) {
                   </div>
                   <div>
                     <Link
-                      to={`/users/${req.borrower?.id}`}
+                      to={`/users/${req.borrower?.roll_no || req.borrower?.id}`}
                       onClick={(e) => e.stopPropagation()}
                       className="font-bold text-slate-850 dark:text-slate-100 hover:underline hover:text-primary-600 dark:hover:text-primary-400"
                     >
@@ -373,11 +373,17 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
             </Link>
           </div>
           <div className="flex gap-2">
+            <Link
+              to={`/resources/${item.id}/edit`}
+              className="btn-primary !py-2 !px-4 text-xs inline-flex items-center gap-1"
+            >
+              <Edit className="h-3.5 w-3.5" /> Edit
+            </Link>
             <button
               onClick={(e) => onDelete(item.id, e)}
               className="btn-secondary !py-2 !px-4 text-xs !bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-100 dark:!bg-red-950/40 dark:!text-red-400 dark:!border-red-800"
             >
-              Delete Listing
+              Delete
             </button>
             <button
               onClick={onClose}
