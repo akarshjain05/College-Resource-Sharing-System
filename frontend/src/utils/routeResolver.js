@@ -20,7 +20,11 @@ export function resolveNotificationLink(link, notification = null) {
         notification.message?.toLowerCase().includes("payment received") ||
         notification.title?.toLowerCase().includes("new borrow request") ||
         notification.title?.toLowerCase().includes("return requested") ||
-        notification.title?.toLowerCase().includes("offer was accepted")
+        notification.title?.toLowerCase().includes("offer was accepted") ||
+        notification.title?.toLowerCase().includes("waiting for handover") ||
+        notification.title?.toLowerCase().includes("waiting on your response") ||
+        notification.title?.toLowerCase().includes("handover confirmed") ||
+        notification.title?.toLowerCase().includes("handover rejected")
     );
 
     if (isLenderAction && !params.has("tab")) {
