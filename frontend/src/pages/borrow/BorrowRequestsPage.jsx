@@ -483,6 +483,10 @@ export default function BorrowRequestsPage() {
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
                       ) : book.payment?.status === "paid" ? (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
+                      ) : ["rejected", "cancelled"].includes(book.status?.toLowerCase()) ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                          {book.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
                       )}
@@ -773,12 +777,22 @@ export default function BorrowRequestsPage() {
                       <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
                     ) : selectedBookingForModal.payment?.status === "paid" ? (
                       <span className="inline-flex items-center rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
+                    ) : ["rejected", "cancelled"].includes(selectedBookingForModal.status?.toLowerCase()) ? (
+                      <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                        {selectedBookingForModal.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
+                      </span>
                     ) : (
                       <span className="inline-flex items-center rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
                     )}
                   </div>
-                  {(selectedBookingForModal.total_amount || 0) > 0 && selectedBookingForModal.payment?.status !== "paid" && (
+                  {(selectedBookingForModal.total_amount || 0) > 0 && selectedBookingForModal.payment?.status !== "paid" && !["rejected", "cancelled"].includes(selectedBookingForModal.status?.toLowerCase()) && (
                     <p className="text-[9px] text-red-500 dark:text-red-400 mt-1 font-semibold">Payment pending — complete payment to confirm booking</p>
+                  )}
+                  {selectedBookingForModal.status?.toLowerCase() === "rejected" && (
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">Owner cancelled your request</p>
+                  )}
+                  {selectedBookingForModal.status?.toLowerCase() === "cancelled" && (
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">This request was cancelled</p>
                   )}
                   {selectedBookingForModal.payment?.status === "paid" && selectedBookingForModal.payment?.paid_at && (
                     <p className="text-[9px] text-emerald-600 dark:text-emerald-400 mt-1 font-semibold">
@@ -795,180 +809,208 @@ export default function BorrowRequestsPage() {
                 </div>
               </div>
 
-              {/* Action Buttons row */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-                <div className="flex flex-wrap gap-2">
+              {/* Action Buttons Section */}
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+                {/* Primary Action Row — status-specific actions */}
+                {/* Borrower: Pay Now (full width) */}
+                {!isLenderModal && selectedBookingForModal.status === "approved" && (
+                  (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
+                    <div>
+                      <PayNowButton 
+                         borrowRequest={selectedBookingForModal} 
+                         onPaid={() => {
+                            setSelectedBookingForModal(null);
+                            if (typeof loadBookingsList === 'function') loadBookingsList();
+                         }} 
+                      />
+                    </div>
+                  ) : !modalIsStarted ? (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <User className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Waiting for owner to hand over</span>
+                    </div>
+                  )
+                )}
+
+                {/* Lender: Waiting for payment / Handover */}
+                {isLenderModal && selectedBookingForModal.status === "approved" && (
+                  (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Waiting for borrower to complete payment</span>
+                    </div>
+                  ) : modalIsExpired ? (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
+                      <Calendar className="h-3.5 w-3.5 text-red-500" />
+                      <span className="text-[11px] font-bold text-red-500">Lending window expired</span>
+                    </div>
+                  ) : modalIsStarted ? (
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "handover");
+                        closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
+                      }}
+                      className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                    </button>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
+                    </div>
+                  )
+                )}
+
+                {/* Lender: Approve / Decline for requested */}
+                {isLenderModal && selectedBookingForModal.status === "requested" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "approved");
+                        closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                      }}
+                      className="flex-1 btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Approve
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "rejected");
+                        closeBookingModal({ ...selectedBookingForModal, status: "rejected" });
+                      }}
+                      className="flex-1 btn-secondary text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 dark:border-red-800 !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <X className="h-3.5 w-3.5" /> Decline
+                    </button>
+                  </div>
+                )}
+
+                {/* Lender: Confirm Return */}
+                {isLenderModal && selectedBookingForModal.status === "return_requested" && (
                   <button
                     onClick={() => {
                       const bId = selectedBookingForModal.id;
-                      closeBookingModal();
-                      setOpenChatId(bId);
+                      setSelectedBookingForModal(null);
+                      setReviewingId(bId);
+                      setReviewAction("confirm_return");
                     }}
-                    className="btn-secondary !py-2 !px-3 text-xs flex items-center gap-1.5"
+                    className="w-full btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2.5 text-xs flex items-center justify-center gap-1.5"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" /> Message
+                    <Check className="h-3.5 w-3.5" /> Confirm Return
                   </button>
-                  {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
-                    <a
-                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource_id || ''}&against_user_id=${selectedBookingForModal.lender_id || selectedBookingForModal.borrower_id || ''}&category=dispute`}
-                      className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5"
+                )}
+
+                {/* Lender: Item with borrower info */}
+                {isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
+                  <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-[11px] font-bold text-slate-400">Item is currently with borrower</span>
+                  </div>
+                )}
+
+                {/* Borrower: Nudge / Cancel for requested */}
+                {!isLenderModal && selectedBookingForModal.status === "requested" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
+                      className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
-                      <AlertCircle className="h-3.5 w-3.5" /> Report Issue
-                    </a>
-                  )}
-                </div>
+                      <BellRing className="h-3.5 w-3.5" /> Nudge Owner
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+                      }}
+                      className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <Ban className="h-3.5 w-3.5" /> Cancel Request
+                    </button>
+                  </div>
+                )}
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* Lender Actions */}
-                  {isLenderModal && selectedBookingForModal.status === "requested" && (
-                    <>
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "approved");
-                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
-                        }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Approve
-                      </button>
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "rejected");
-                          closeBookingModal({ ...selectedBookingForModal, status: "rejected" });
-                        }}
-                        className="btn-secondary text-red-600 border-red-200 hover:bg-red-50 !py-2 text-xs flex items-center gap-1"
-                      >
-                        <X className="h-3.5 w-3.5" /> Decline
-                      </button>
-                    </>
-                  )}
+                {/* Borrower: Confirm/Reject Handover */}
+                {!isLenderModal && selectedBookingForModal.status === "handover_requested" && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
+                        closeBookingModal({ ...selectedBookingForModal, status: "active" });
+                      }}
+                      className="flex-1 btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                    >
+                      <Check className="h-3.5 w-3.5" /> Confirm Receipt
+                    </button>
+                    <button
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "reject_handover");
+                        closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                      }}
+                      className="flex-1 btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2.5 text-xs flex items-center justify-center gap-1.5 font-bold"
+                    >
+                      <X className="h-3.5 w-3.5" /> Not Received
+                    </button>
+                  </div>
+                )}
 
-                  {isLenderModal && selectedBookingForModal.status === "approved" && (
-                    (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
-                      </span>
-                    ) : modalIsExpired ? (
-                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
-                      </span>
-                    ) : modalIsStarted ? (
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
-                        }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                      </button>
-                    ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}
-                      </span>
-                    )
-                  )}
-
-                  {isLenderModal && selectedBookingForModal.status === "return_requested" && (
+                {/* Borrower: Return Item */}
+                {!isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
+                  modalIsStarted ? (
                     <button
                       onClick={() => {
                         const bId = selectedBookingForModal.id;
                         setSelectedBookingForModal(null);
                         setReviewingId(bId);
-                        setReviewAction("confirm_return");
+                        setReviewAction("return");
                       }}
-                      className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs flex items-center gap-1"
+                      className="w-full btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
-                      <Check className="h-3.5 w-3.5" /> Confirm Return
+                      <RotateCcw className="h-3.5 w-3.5" /> Return Item
                     </button>
-                  )}
-
-                  {/* Borrower Actions */}
-                  {!isLenderModal && selectedBookingForModal.status === "requested" && (
-                    <>
-                      <button
-                        onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
-                        className="btn-secondary !py-2 text-xs flex items-center gap-1"
-                      >
-                        <BellRing className="h-3.5 w-3.5" /> Nudge Owner
-                      </button>
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                          closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
-                        }}
-                        className="btn-secondary !py-2 text-xs flex items-center gap-1"
-                      >
-                        <Ban className="h-3.5 w-3.5" /> Cancel Request
-                      </button>
-                    </>
-                  )}
-
-                  {!isLenderModal && selectedBookingForModal.status === "approved" && (
-                    (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
-                      <div className="w-full flex-col items-center">
-                        <PayNowButton 
-                           borrowRequest={selectedBookingForModal} 
-                           onPaid={() => {
-                              setSelectedBookingForModal(null);
-                              if (typeof loadBookingsList === 'function') loadBookingsList();
-                           }} 
-                        />
-                      </div>
-                    ) : !modalIsStarted ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                      </span>
-                    ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                      </span>
-                    )
-                  )}
-
-                  {!isLenderModal && selectedBookingForModal.status === "handover_requested" && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "confirm_handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "active" });
-                        }}
-                        className="btn-primary !py-2 text-xs flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Confirm Receipt
-                      </button>
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "reject_handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
-                        }}
-                        className="btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2 text-xs flex items-center gap-1 font-bold"
-                      >
-                        <X className="h-3.5 w-3.5" /> Not Received
-                      </button>
+                  ) : (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Return unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
                     </div>
-                  )}
+                  )
+                )}
 
-                  {!isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
-                    modalIsStarted ? (
-                      <button
-                        onClick={() => {
-                          const bId = selectedBookingForModal.id;
-                          setSelectedBookingForModal(null);
-                          setReviewingId(bId);
-                          setReviewAction("return");
-                        }}
-                        className="btn-primary !bg-brass-500 hover:!bg-brass-700 !py-2 text-xs flex items-center gap-1"
+                {/* Borrower: Return pending */}
+                {!isLenderModal && selectedBookingForModal.status === "return_requested" && (
+                  <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="text-[11px] font-bold text-slate-400">Return pending confirmation</span>
+                  </div>
+                )}
+
+                {/* Bottom Row — Message + Report Issue (left) | Close Details (right) */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        const bId = selectedBookingForModal.id;
+                        closeBookingModal();
+                        setOpenChatId(bId);
+                      }}
+                      className="btn-secondary !py-2 !px-3 text-xs flex items-center gap-1.5"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> Message
+                    </button>
+                    {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
+                      <a
+                        href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource_id || ''}&against_user_id=${selectedBookingForModal.lender_id || selectedBookingForModal.borrower_id || ''}&category=dispute`}
+                        className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-950/30 flex items-center gap-1.5"
                       >
-                        <RotateCcw className="h-3.5 w-3.5" /> Return Item
-                      </button>
-                    ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}
-                      </span>
-                    )
-                  )}
-
+                        <AlertCircle className="h-3.5 w-3.5" /> Report Issue
+                      </a>
+                    )}
+                  </div>
                   <button
                     onClick={() => closeBookingModal()}
                     className="btn-secondary !py-2 !px-4 text-xs"
