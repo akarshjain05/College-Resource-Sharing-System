@@ -37,7 +37,7 @@ export default function PublicProfilePage() {
       .getPublicProfile(userId)
       .then((res) => {
         const user = res.data.user;
-        if (user.roll_no && userId !== user.roll_no && userId === user.id) {
+        if (user.roll_no && userId !== user.roll_no && userId.length > 20) {
           navigate(`/users/${user.roll_no}`, { replace: true });
           return;
         }
