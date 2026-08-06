@@ -148,6 +148,22 @@ export default function BorrowRequestsPage() {
     }
   }, [bookings, searchParams, loading]);
 
+  // Mirrors the backend's `_compute_amounts` in payments.py. `deposit_paid` is never
+  // written by the backend (always 0), and the old formula also silently dropped the
+  // rental fee — so the amount shown here didn't match what Razorpay Checkout charged.
+  // Once a payment order exists, its stored total is the source of truth; before that,
+  // we estimate using the same days x 5%-of-deposit formula the backend uses.
+  const computeTotalAmountRupees = (r) => {
+    if (r.payment) return (r.payment.total_amount || 0) / 100;
+    const depositVal = r.resource?.deposit_amount || 0;
+    if (!depositVal) return 0;
+    const start = new Date(r.requested_start_date);
+    const end = new Date(r.requested_end_date);
+    const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
+    const dailyPrice = Math.floor(depositVal * 0.05);
+    return dailyPrice * days + depositVal;
+  };
+
   const loadBookingsList = () => {
     setLoading(true);
 
@@ -166,7 +182,7 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
+          total_amount: computeTotalAmountRupees(r),
           status: r.status,
           lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
           borrower: { id: r.borrower?.id, full_name: "You" },
@@ -182,7 +198,7 @@ export default function BorrowRequestsPage() {
           },
           requested_start_date: r.requested_start_date,
           requested_end_date: r.requested_end_date,
-          total_amount: (r.deposit_paid || 0) + (r.resource?.deposit_amount || 0),
+          total_amount: computeTotalAmountRupees(r),
           status: r.status,
           lender: { id: r.lender?.id, full_name: "You" },
           borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
