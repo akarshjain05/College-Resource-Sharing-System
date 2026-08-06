@@ -52,7 +52,7 @@ export default function AppShell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations"
+    localStorage.getItem(`crss_loc_${user?.id}`) || ""
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
@@ -60,7 +60,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations";
+      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
@@ -278,7 +278,7 @@ export default function AppShell() {
                 title="Select location"
               >
                 <MapPin className="h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-                <span className="max-w-[130px] sm:max-w-[200px] truncate font-bold">{selectedLocation}</span>
+                <span className="max-w-[130px] sm:max-w-[200px] truncate font-bold">{selectedLocation || "Add a location"}</span>
                 <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${showLocationDropdown ? "rotate-180" : ""}`} />
               </button>
 
@@ -286,30 +286,11 @@ export default function AppShell() {
               {showLocationDropdown && (
                 <div className="absolute left-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="mb-2 px-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Select Community Location</p>
-                  </div>
-
-                  {/* Preset Locations */}
-                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    {["All Campus Locations", ...(user?.department ? [user.department] : []), ...(user?.course ? [user.course] : [])].map((loc) => (
-                      <button
-                        key={loc}
-                        type="button"
-                        onClick={() => handleSelectLocation(loc)}
-                        className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedLocation === loc
-                          ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-                          }`}
-                      >
-                        <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${selectedLocation === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
-                        <span className="truncate">{loc}</span>
-                      </button>
-                    ))}
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Add a Location</p>
                   </div>
 
                   {/* Custom Location Input */}
-                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 px-1">
-                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1.5">Custom Location</p>
+                  <div className="px-1">
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
