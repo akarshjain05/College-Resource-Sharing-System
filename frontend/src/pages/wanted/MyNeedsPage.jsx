@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock, Edit } from "lucide-react";
+import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock, Edit, Copy } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
@@ -8,7 +8,7 @@ import ConfirmModal from "../../components/ConfirmModal";
 
 
 
-function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, onEdit, acceptingId }) {
+function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOffer, onDelete, onEdit, onRepost, acceptingId }) {
   if (!request) return null;
 
   // Deduplicate offers by offerer ID + resource title/id
@@ -131,6 +131,12 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
               className="inline-flex items-center gap-1 text-primary-600 dark:text-primary-400 font-bold hover:underline"
             >
               <Edit className="h-3.5 w-3.5" /> Edit
+            </button>
+            <button
+              onClick={() => onRepost(request)}
+              className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
+            >
+              <Copy className="h-3.5 w-3.5" /> Repost
             </button>
             <button
               onClick={() => onDelete(request.id)}
@@ -384,6 +390,18 @@ export default function MyNeedsPage() {
     }
   };
 
+  const handleRepost = (req) => {
+    setFormData({
+      title: req.title,
+      description: req.description || "",
+      category_id: req.category_id || req.category?.id || "",
+      start_date: today,
+      end_date: tomorrow
+    });
+    setSelectedNeedForModal(null);
+    setShowModal(true);
+  };
+
   const openDetailsModal = async (request) => {
     setSelectedNeedForModal(request);
     try {
@@ -513,6 +531,7 @@ export default function MyNeedsPage() {
           onCancelOffer={handleCancelOffer}
           onDelete={handleDelete}
           onEdit={(req) => setEditingNeed(req)}
+          onRepost={handleRepost}
         />
       )}
 
