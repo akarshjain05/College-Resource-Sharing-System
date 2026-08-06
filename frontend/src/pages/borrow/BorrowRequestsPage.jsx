@@ -99,13 +99,7 @@ export default function BorrowRequestsPage() {
     const urlId = searchParams.get("id");
     const isOpenChat = searchParams.get("openChat") === "true";
 
-    // Don't auto-open on page refresh (user hit F5/Cmd+R)
-    const isReload = window.performance && 
-                    window.performance.getEntriesByType && 
-                    window.performance.getEntriesByType("navigation").length > 0 && 
-                    window.performance.getEntriesByType("navigation")[0].type === "reload";
-
-    if (urlId && !isReload && !loading && autoOpenedRef.current !== urlId) {
+    if (urlId && !loading && autoOpenedRef.current !== urlId) {
       const urlTab = searchParams.get("tab");
       let foundBooking = null;
       let newTab = urlTab === "lending" || urlTab === "incoming" ? "lending" : "borrowing";
@@ -258,6 +252,9 @@ export default function BorrowRequestsPage() {
               toast.success("Updated successfully");
               setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
+              if (selectedBookingForModal?.id === bookingId) {
+                closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+              }
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
             }
@@ -277,6 +274,9 @@ export default function BorrowRequestsPage() {
               toast.success("Updated successfully");
               setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
+              if (selectedBookingForModal?.id === bookingId) {
+                closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+              }
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
             }
@@ -603,8 +603,8 @@ export default function BorrowRequestsPage() {
                   )}
                   {tab === "lending" && book.status === "approved" && (
                     (!book.payment || book.payment.status !== "paid") && book.total_amount > 0 ? (
-                      <div className="w-full flex justify-between items-center gap-2">
-                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <>
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                           <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
                         </span>
                         <button
@@ -613,7 +613,7 @@ export default function BorrowRequestsPage() {
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Request
                         </button>
-                      </div>
+                      </>
                     ) : isExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
@@ -841,7 +841,9 @@ export default function BorrowRequestsPage() {
                       <BellRing className="h-3.5 w-3.5" /> Nudge Owner
                     </button>
                     <button
-                      onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                      }}
                       className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
                       <Ban className="h-3.5 w-3.5" /> Cancel Request
@@ -863,7 +865,9 @@ export default function BorrowRequestsPage() {
                       </div>
                       <div className="flex-1">
                         <button
-                          onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                          }}
                           className="w-full btn-secondary !py-3 text-xs text-red-600 hover:bg-red-50 border-red-100 mt-2 flex items-center justify-center gap-1.5"
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Request
@@ -901,7 +905,9 @@ export default function BorrowRequestsPage() {
                       <Check className="h-3.5 w-3.5" /> Confirm Receipt
                     </button>
                     <button
-                      onClick={() => handleStatusChange(selectedBookingForModal.id, "reject_handover")}
+                      onClick={async () => {
+                        await handleStatusChange(selectedBookingForModal.id, "reject_handover");
+                      }}
                       className="btn-secondary flex-1 text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
                     >
                       <X className="h-3.5 w-3.5" /> Not Received
@@ -965,7 +971,9 @@ export default function BorrowRequestsPage() {
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
                       </span>
                       <button
-                        onClick={() => handleStatusChange(selectedBookingForModal.id, "cancelled")}
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
                         className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
                       >
                         <Ban className="h-3.5 w-3.5" /> Cancel Request
