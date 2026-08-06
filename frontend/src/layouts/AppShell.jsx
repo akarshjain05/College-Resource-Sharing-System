@@ -52,7 +52,7 @@ export default function AppShell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem("share_neighbour_location") || "All Campus Locations"
+    localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations"
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
@@ -60,7 +60,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem("share_neighbour_location") || "All Campus Locations";
+      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
@@ -81,7 +81,7 @@ export default function AppShell() {
     if (!loc || !loc.trim()) return;
     const cleanLoc = loc.trim();
     setSelectedLocation(cleanLoc);
-    localStorage.setItem("share_neighbour_location", cleanLoc);
+    localStorage.setItem(`crss_loc_${user?.id}`, cleanLoc);
     setShowLocationDropdown(false);
     window.dispatchEvent(new Event("locationChanged"));
     toast.success(`Location set to: ${cleanLoc}`);
