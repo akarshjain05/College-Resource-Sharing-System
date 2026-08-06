@@ -78,8 +78,13 @@ def list_users_public(
 
 
 @router.get("/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    user = db.query(User).filter(User.id == user_id).first()
+def get_user_profile(user_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    try:
+        uid = uuid.UUID(user_id)
+        user = db.query(User).filter(User.id == uid).first()
+    except ValueError:
+        user = db.query(User).filter(User.email.ilike(f"{user_id}@%")).first()
+
     if not user:
         raise NotFoundException("User not found")
         
@@ -93,14 +98,19 @@ def get_user_profile(user_id: uuid.UUID, db: Session = Depends(get_db), current_
 
 
 @router.get("/{user_id}/public")
-def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
+def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     from app.schemas.user import PublicUserResponse
     from app.models.resource import Resource
     from app.schemas.resource import ResourceResponse
     from app.models.borrow import BorrowRequest
     from app.models.enums import BorrowStatus
     
-    user = db.query(User).filter(User.id == user_id).first()
+    try:
+        uid = uuid.UUID(user_id)
+        user = db.query(User).filter(User.id == uid).first()
+    except ValueError:
+        user = db.query(User).filter(User.email.ilike(f"{user_id}@%")).first()
+
     if not user:
         raise NotFoundException("User not found")
         
@@ -157,6 +167,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
             "role": "borrower",
             "reviewer_id": str(br.lender.id),
             "reviewer_name": br.lender.full_name,
+            "reviewer_roll_no": br.lender.roll_no,
             "rating": br.borrower_rating,
             "review": br.borrower_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,
@@ -176,6 +187,7 @@ def get_public_profile(user_id: uuid.UUID, db: Session = Depends(get_db)):
             "role": "lender",
             "reviewer_id": str(br.borrower.id),
             "reviewer_name": br.borrower.full_name,
+            "reviewer_roll_no": br.borrower.roll_no,
             "rating": br.lender_rating,
             "review": br.lender_review,
             "date": br.actual_return_date.isoformat() if br.actual_return_date else None,

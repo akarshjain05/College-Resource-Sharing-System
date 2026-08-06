@@ -248,7 +248,7 @@ export default function PublicProfilePage() {
                       <div className="flex items-center gap-2">
                         {r.reviewer_id ? (
                           <Link
-                            to={`/users/${r.reviewer_id}`}
+                            to={`/users/${r.reviewer_roll_no || r.reviewer_id}`}
                             className="font-bold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
                           >
                             {r.reviewer_name}
