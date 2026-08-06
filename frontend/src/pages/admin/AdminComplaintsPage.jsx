@@ -306,7 +306,9 @@ export default function AdminComplaintsPage() {
       toast.success("Complaint resolution saved successfully");
       load();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not update complaint.");
+      const detail = err.response?.data?.detail;
+      const msg = Array.isArray(detail) ? detail[0]?.msg : (detail || "Could not update complaint.");
+      toast.error(typeof msg === 'string' ? msg : "An unexpected error occurred");
     }
   };
 
