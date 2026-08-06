@@ -520,6 +520,12 @@ export default function BorrowRequestsPage() {
                               else load();
                            }} 
                         />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs w-full mt-2 text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Request
+                        </button>
                       </div>
                     ) : !isStarted ? (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
@@ -586,9 +592,17 @@ export default function BorrowRequestsPage() {
                   )}
                   {tab === "lending" && book.status === "approved" && (
                     (!book.payment || book.payment.status !== "paid") && book.total_amount > 0 ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Request
+                        </button>
+                      </div>
                     ) : isExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
@@ -847,9 +861,20 @@ export default function BorrowRequestsPage() {
 
                   {isLenderModal && selectedBookingForModal.status === "approved" && (
                     (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> Waiting for borrower to complete payment
+                        </span>
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+                          }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Request
+                        </button>
+                      </div>
                     ) : modalIsExpired ? (
                       <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
@@ -916,6 +941,15 @@ export default function BorrowRequestsPage() {
                               if (typeof loadBookingsList === 'function') loadBookingsList();
                            }} 
                         />
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+                          }}
+                          className="btn-secondary !py-2 text-xs w-full mt-2 text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Request
+                        </button>
                       </div>
                     ) : !modalIsStarted ? (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">

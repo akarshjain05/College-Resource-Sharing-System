@@ -93,10 +93,10 @@ export function useNotificationSocket(onNotification, user) {
                   }
                 }
                 const resolved = resolveNotificationLink(payload.link, payload);
-                if (resolved && resolved !== "/borrow-requests") {
+                if (resolved && resolved !== "/my-bookings") {
                   navigate(resolved);
                 } else if (payload.type === "chat_message" && payload.borrow_request_id) {
-                  navigate(`/borrow-requests?id=${payload.borrow_request_id}&openChat=true`);
+                  navigate(`/my-bookings?id=${payload.borrow_request_id}&openChat=true`);
                 } else if (resolved) {
                   navigate(resolved);
                 }

@@ -8,7 +8,7 @@
  * - "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f" => "/resources/3eb07f0f-8703-4e4b-97b7-56e632b7194f"
  */
 export function resolveNotificationLink(link, notification = null) {
-    if (!link && !notification) return "/borrow-requests";
+    if (!link && !notification) return "/my-bookings";
 
     let rawLink = link || "";
     const [pathPart, queryString] = rawLink.split("?");
@@ -36,12 +36,12 @@ export function resolveNotificationLink(link, notification = null) {
     // Handle /damage-claims/:id -> /borrow-requests
     const damageClaimMatch = pathPart.match(/^\/damage-claims\/([a-f\d-]+)/i);
     if (damageClaimMatch) {
-        return `/borrow-requests?${params.toString()}`;
+        return `/my-bookings?${params.toString()}`;
     }
 
     if (pathPart.startsWith("/borrow-requests") || borrowRequestMatch) {
-        return `/borrow-requests?${params.toString()}`;
+        return `/my-bookings?${params.toString()}`;
     }
 
-    return rawLink || "/borrow-requests";
+    return rawLink || "/my-bookings";
 }

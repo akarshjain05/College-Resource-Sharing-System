@@ -362,7 +362,13 @@ def cancel_borrow_request(
 ):
     query = _borrow_query(db).filter(BorrowRequest.id == request_id)
     if current_user.role != UserRole.ADMIN:
-        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                BorrowRequest.borrower_id == current_user.id,
+                BorrowRequest.lender_id == current_user.id
+            )
+        )
     br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
@@ -391,12 +397,14 @@ def cancel_borrow_request(
     db.commit()
 
     status_text = "approved borrow request" if was_approved else "borrow request"
+    notify_user_id = br.borrower_id if current_user.id == lender_id else lender_id
+    
     create_notification(
         db,
-        lender_id,
+        notify_user_id,
         NotificationType.SYSTEM,
         "Borrow request cancelled",
-        f"{current_user.full_name} cancelled their {status_text} for '{resource_title}'.",
+        f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
         link=f"/borrow-requests/{req_id}",
     )
 

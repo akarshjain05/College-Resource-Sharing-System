@@ -58,10 +58,10 @@ export default function App() {
             <Route path="/resources/new" element={<ResourceCreatePage />} />
             <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
-            <Route path="/borrow-requests" element={<BorrowRequestsPage />} />
+            <Route path="/my-bookings" element={<BorrowRequestsPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/payments" element={<TransactionsPage />} />
-            <Route path="/wanted" element={<WantedPage />} />
+            <Route path="/campus-needs" element={<WantedPage />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
 
