@@ -37,7 +37,7 @@ const NAV_ITEMS = [
   { to: "/campus-needs", label: "Campus Needs", icon: Globe },
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
-  { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
+  { to: "/my-bookings", label: "My Bookings", icon: Calendar },
   { to: "/transactions", label: "Wallet & Payments", icon: Wallet },
   // { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
@@ -240,7 +240,7 @@ export default function AppShell() {
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
-                {to === "/borrow-requests" && user && (
+                {to === "/my-bookings" && user && (
                   <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
                     Active
                   </span>

@@ -139,7 +139,7 @@ export default function ResourceDetailPage() {
         purpose: "I need this item for a few days."
       });
       toast.success("Borrow request sent to owner!");
-      navigate("/borrow-requests");
+      navigate("/my-bookings");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to submit request");
     } finally {

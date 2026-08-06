@@ -355,7 +355,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  onClick={() => navigate(`/borrow-requests?id=${tx.borrow_request_id}&tab=${isCredit ? "lending" : "borrowing"}`)}
+                  onClick={() => navigate(`/my-bookings?id=${tx.borrow_request_id}&tab=${isCredit ? "lending" : "borrowing"}`)}
                   className={`group bg-white dark:bg-slate-900 border rounded-2xl p-4 sm:p-5 transition shadow-sm hover:shadow-md cursor-pointer ${
                     isPending
                       ? "border-amber-300 dark:border-amber-700/60 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40"
