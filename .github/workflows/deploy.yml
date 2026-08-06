@@ -5,6 +5,11 @@ on:
     branches:
       - main  # Triggers when you push to the 'main' branch
 
+concurrency:
+  group: deploy-ec2
+  cancel-in-progress: true
+
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
