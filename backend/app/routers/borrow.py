@@ -68,6 +68,32 @@ def create_borrow_request(
         resource.quantity_available
     ):
         raise AppException("Those dates overlap an existing approved borrow", status_code=status.HTTP_400_BAD_REQUEST, error_code="DATE_CONFLICT")
+        
+    # Check if borrower already has an overlapping active/pending request
+    overlapping_br = (
+        db.query(BorrowRequest)
+        .filter(
+            BorrowRequest.resource_id == resource.id,
+            BorrowRequest.borrower_id == current_user.id,
+            BorrowRequest.status.in_([
+                BorrowStatus.REQUESTED,
+                BorrowStatus.APPROVED,
+                BorrowStatus.HANDOVER_REQUESTED,
+                BorrowStatus.ACTIVE,
+                BorrowStatus.RETURN_REQUESTED,
+                BorrowStatus.LATE
+            ]),
+            BorrowRequest.requested_start_date <= payload.requested_end_date,
+            BorrowRequest.requested_end_date >= payload.requested_start_date,
+        )
+        .first()
+    )
+    if overlapping_br:
+        raise AppException(
+            "You already have an active or pending request for this item during these dates",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            error_code="DUPLICATE_REQUEST"
+        )
 
     borrow_request = BorrowRequest(
         resource_id=resource.id,
