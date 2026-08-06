@@ -59,9 +59,11 @@ export default function App() {
             <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
             <Route path="/my-bookings" element={<BorrowRequestsPage />} />
+            <Route path="/borrow-requests" element={<Navigate to="/my-bookings" replace />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/payments" element={<TransactionsPage />} />
             <Route path="/campus-needs" element={<WantedPage />} />
+            <Route path="/wanted" element={<Navigate to="/campus-needs" replace />} />
             <Route path="/my-needs" element={<MyNeedsPage />} />
             <Route path="/complaints" element={<ComplaintsPage />} />
 
