@@ -34,7 +34,7 @@ import toast from "react-hot-toast";
 const NAV_ITEMS = [
   // { to: "/dashboard", label: "Explore Items", icon: Home },
   { to: "/resources", label: "Explore Items", icon: HelpCircle },
-  { to: "/wanted", label: "Campus Needs", icon: Globe },
+  { to: "/campus-needs", label: "Campus Needs", icon: Globe },
   { to: "/my-needs", label: "My Needs", icon: MessageSquare },
   { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
@@ -194,8 +194,8 @@ export default function AppShell() {
       // Notify pages that wanted request is posted
       window.dispatchEvent(new Event("wantedCreated"));
 
-      if (location.pathname !== "/wanted") {
-        navigate("/wanted");
+      if (location.pathname !== "/campus-needs") {
+        navigate("/campus-needs");
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");

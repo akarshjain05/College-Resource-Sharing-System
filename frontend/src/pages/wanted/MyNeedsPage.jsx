@@ -317,7 +317,7 @@ export default function MyNeedsPage() {
       setShowModal(false);
       setFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
       window.dispatchEvent(new Event("wantedCreated"));
-      navigate("/wanted");
+      navigate("/campus-needs");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");
     }
