@@ -58,6 +58,15 @@ export default function AppShell() {
   const [customLocationInput, setCustomLocationInput] = useState("");
   const locationDropdownRef = useRef(null);
 
+  const [savedLocations, setSavedLocations] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`crss_saved_locs_${user?.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   useEffect(() => {
     const handleLocationChange = () => {
       const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "";
@@ -82,6 +91,13 @@ export default function AppShell() {
     const cleanLoc = loc.trim();
     setSelectedLocation(cleanLoc);
     localStorage.setItem(`crss_loc_${user?.id}`, cleanLoc);
+    
+    setSavedLocations((prev) => {
+      const newList = [cleanLoc, ...prev.filter((l) => l !== cleanLoc)].slice(0, 5);
+      localStorage.setItem(`crss_saved_locs_${user?.id}`, JSON.stringify(newList));
+      return newList;
+    });
+
     setShowLocationDropdown(false);
     window.dispatchEvent(new Event("locationChanged"));
     toast.success(`Location set to: ${cleanLoc}`);
@@ -285,6 +301,30 @@ export default function AppShell() {
               {/* LOCATION DROPDOWN MENU */}
               {showLocationDropdown && (
                 <div className="absolute left-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                  {savedLocations.length > 0 && (
+                    <div className="mb-2">
+                      <div className="mb-1.5 px-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Saved Locations</p>
+                      </div>
+                      <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                        {savedLocations.map((loc) => (
+                          <button
+                            key={loc}
+                            type="button"
+                            onClick={() => handleSelectLocation(loc)}
+                            className={`flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-colors ${selectedLocation === loc
+                              ? "bg-primary-50 dark:bg-primary-950/50 text-primary-700 dark:text-primary-400 font-bold border border-primary-200 dark:border-primary-800"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                              }`}
+                          >
+                            <MapPin className={`h-3.5 w-3.5 flex-shrink-0 ${selectedLocation === loc ? "text-primary-600 dark:text-primary-400" : "text-slate-400"}`} />
+                            <span className="truncate">{loc}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-2 px-1">
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Add a Location</p>
                   </div>
