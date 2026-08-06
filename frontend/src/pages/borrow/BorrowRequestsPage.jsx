@@ -250,6 +250,9 @@ export default function BorrowRequestsPage() {
               await borrowApi.rejectHandover(bookingId);
               toast.success("Updated successfully");
               if (typeof loadBookingsList === 'function') loadBookingsList();
+              if (selectedBookingForModal?.id === bookingId) {
+                closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+              }
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
             }
@@ -268,6 +271,9 @@ export default function BorrowRequestsPage() {
               await borrowApi.cancel(bookingId);
               toast.success("Updated successfully");
               if (typeof loadBookingsList === 'function') loadBookingsList();
+              if (selectedBookingForModal?.id === bookingId) {
+                closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+              }
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
             }
@@ -816,7 +822,6 @@ export default function BorrowRequestsPage() {
                     <button
                       onClick={async () => {
                         await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                        closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
                       }}
                       className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
@@ -841,7 +846,6 @@ export default function BorrowRequestsPage() {
                         <button
                           onClick={async () => {
                             await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
                           }}
                           className="w-full btn-secondary !py-3 text-xs text-red-600 hover:bg-red-50 border-red-100 mt-2 flex items-center justify-center gap-1.5"
                         >
@@ -882,7 +886,6 @@ export default function BorrowRequestsPage() {
                     <button
                       onClick={async () => {
                         await handleStatusChange(selectedBookingForModal.id, "reject_handover");
-                        closeBookingModal({ ...selectedBookingForModal, status: "approved" });
                       }}
                       className="btn-secondary flex-1 text-rose-600 border-rose-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 dark:border-rose-800 !py-2.5 text-xs flex items-center justify-center gap-1 font-bold"
                     >
@@ -952,7 +955,6 @@ export default function BorrowRequestsPage() {
                       <button
                         onClick={async () => {
                           await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                          closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
                         }}
                         className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
                       >
