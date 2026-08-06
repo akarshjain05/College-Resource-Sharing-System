@@ -39,7 +39,6 @@ const NAV_ITEMS = [
   { to: "/my-listings", label: "My Listings", icon: Package },
   { to: "/borrow-requests", label: "My Bookings", icon: Calendar },
   { to: "/transactions", label: "Wallet & Payments", icon: Wallet },
-  { to: "/payments", label: "My Payments", icon: CreditCard },
   // { to: "/resources/new", label: "List an Item", icon: PlusCircle },
   { to: "/complaints", label: "Complaints", icon: AlertTriangle },
   // { to: "/profile", label: "My Profile", icon: User },
