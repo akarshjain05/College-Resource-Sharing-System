@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
   TrendingUp,
@@ -19,6 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function PublicProfilePage() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [sharedResources, setSharedResources] = useState([]);
@@ -35,7 +36,12 @@ export default function PublicProfilePage() {
     usersApi
       .getPublicProfile(userId)
       .then((res) => {
-        setProfile(res.data.user);
+        const user = res.data.user;
+        if (user.roll_no && userId !== user.roll_no && userId === user.id) {
+          navigate(`/users/${user.roll_no}`, { replace: true });
+          return;
+        }
+        setProfile(user);
         setSharedResources(res.data.shared_resources || []);
         setStats(res.data.stats);
         setRecentReviews(res.data.recent_reviews || []);
