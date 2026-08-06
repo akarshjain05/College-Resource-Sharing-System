@@ -224,6 +224,7 @@ export default function BorrowRequestsPage() {
             try {
               await borrowApi.reject(bookingId, "Not available right now");
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
             } catch (err) {
               toast.error(err.response?.data?.detail || "Action failed");
@@ -242,13 +243,14 @@ export default function BorrowRequestsPage() {
       if (newStatus === "reject_handover" || newStatus === "not_received") {
         setConfirmDialog({
           title: "Not Received",
-          message: "Are you sure you want to mark this item as not received? This will notify the lender and decline the handover.",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender, cancel the booking, and refund your payment.",
           confirmText: "Mark Not Received",
           isDanger: true,
           onConfirm: async () => {
             try {
               await borrowApi.rejectHandover(bookingId);
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
               if (selectedBookingForModal?.id === bookingId) {
                 closeBookingModal({ ...selectedBookingForModal, status: "approved" });
@@ -270,6 +272,7 @@ export default function BorrowRequestsPage() {
             try {
               await borrowApi.cancel(bookingId);
               toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
               if (typeof loadBookingsList === 'function') loadBookingsList();
               if (selectedBookingForModal?.id === bookingId) {
                 closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
@@ -317,7 +320,7 @@ export default function BorrowRequestsPage() {
   const getFilteredBookings = () => {
     const list = bookings[tab] || [];
 
-    return list.filter(b => {
+    const filtered = list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
         return ["requested", "pending", "approved"].includes(status);
@@ -333,6 +336,24 @@ export default function BorrowRequestsPage() {
       }
       return true;
     });
+
+    if (subTab === "cancelled") {
+      // Deduplicate: If there is both a CANCELLED and a REJECTED request for the same resource and dates,
+      // hide the duplicate auto-rejected one so the user only sees their cancellation.
+      return filtered.filter(item => {
+        if (item.status.toLowerCase() !== "rejected") return true;
+        const hasCancelledDuplicate = filtered.some(other => 
+          other.id !== item.id &&
+          other.resource.id === item.resource.id &&
+          other.requested_start_date === item.requested_start_date &&
+          other.requested_end_date === item.requested_end_date &&
+          other.status.toLowerCase() === "cancelled"
+        );
+        return !hasCancelledDuplicate;
+      });
+    }
+
+    return filtered;
   };
 
   const activeList = getFilteredBookings();
@@ -935,10 +956,7 @@ export default function BorrowRequestsPage() {
                       <Check className="h-3.5 w-3.5" /> Approve
                     </button>
                     <button
-                      onClick={async () => {
-                        await handleStatusChange(selectedBookingForModal.id, "rejected");
-                        closeBookingModal({ ...selectedBookingForModal, status: "rejected" });
-                      }}
+                      onClick={() => handleStatusChange(selectedBookingForModal.id, "rejected")}
                       className="flex-1 btn-secondary text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 dark:border-red-800 !py-2.5 text-xs flex items-center justify-center gap-1.5"
                     >
                       <X className="h-3.5 w-3.5" /> Decline
