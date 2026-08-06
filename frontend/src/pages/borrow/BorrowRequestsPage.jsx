@@ -317,7 +317,7 @@ export default function BorrowRequestsPage() {
   const getFilteredBookings = () => {
     const list = bookings[tab] || [];
 
-    return list.filter(b => {
+    const filtered = list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
         return ["requested", "pending", "approved"].includes(status);
@@ -333,6 +333,24 @@ export default function BorrowRequestsPage() {
       }
       return true;
     });
+
+    if (subTab === "cancelled") {
+      // Deduplicate: If there is both a CANCELLED and a REJECTED request for the same resource and dates,
+      // hide the duplicate auto-rejected one so the user only sees their cancellation.
+      return filtered.filter(item => {
+        if (item.status.toLowerCase() !== "rejected") return true;
+        const hasCancelledDuplicate = filtered.some(other => 
+          other.id !== item.id &&
+          other.resource.id === item.resource.id &&
+          other.requested_start_date === item.requested_start_date &&
+          other.requested_end_date === item.requested_end_date &&
+          other.status.toLowerCase() === "cancelled"
+        );
+        return !hasCancelledDuplicate;
+      });
+    }
+
+    return filtered;
   };
 
   const activeList = getFilteredBookings();
