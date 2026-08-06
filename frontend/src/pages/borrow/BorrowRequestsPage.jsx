@@ -530,9 +530,17 @@ export default function BorrowRequestsPage() {
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </span>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                          className="btn-secondary !py-1.5 !px-2.5 text-[10px] flex items-center gap-1"
+                        >
+                          <BellRing className="h-3 w-3" /> Nudge
+                        </button>
+                      </div>
                     )
                   )}
                   {tab === "borrowing" && book.status === "handover_requested" && (
@@ -830,9 +838,15 @@ export default function BorrowRequestsPage() {
                       <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                      <User className="h-3.5 w-3.5 text-slate-400" />
+                    <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                       <span className="text-[11px] font-bold text-slate-400">Waiting for owner to hand over</span>
+                      <button
+                        onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
+                        className="btn-secondary !py-1.5 !px-3 text-[10px] flex items-center gap-1 flex-shrink-0"
+                      >
+                        <BellRing className="h-3 w-3" /> Nudge Owner
+                      </button>
                     </div>
                   )
                 )}
