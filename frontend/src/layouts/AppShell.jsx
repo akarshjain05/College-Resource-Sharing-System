@@ -67,6 +67,18 @@ export default function AppShell() {
   });
 
   useEffect(() => {
+    if (user?.id) {
+      const loc = localStorage.getItem(`crss_loc_${user.id}`);
+      if (loc) setSelectedLocation(loc);
+
+      try {
+        const saved = localStorage.getItem(`crss_saved_locs_${user.id}`);
+        if (saved) setSavedLocations(JSON.parse(saved));
+      } catch (e) {}
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
     const handleLocationChange = () => {
       const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "";
       setSelectedLocation(newLoc);
