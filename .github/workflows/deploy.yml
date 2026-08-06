@@ -3,8 +3,7 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - main
-      - akarsh
+      - main  # Triggers when you push to the 'main' branch
 
 concurrency:
   group: deploy-ec2
@@ -27,10 +26,10 @@ jobs:
             # 1. Go into the project directory
             cd College-Resource-Sharing-System
             
-            # 2. Pull the latest code from GitHub for the pushed branch
+            # 2. Pull the latest code from GitHub main branch
             rm -f .git/*.lock .git/refs/heads/*.lock .git/refs/remotes/origin/*.lock || true
             git fetch origin --prune
-            git reset --hard origin/${{ github.ref_name }}
+            git reset --hard origin/main
             git clean -fdx -e .env
 
             # 2.5 Ensure the EC2 instance has a Swap file so npm install/build doesn't crash it
