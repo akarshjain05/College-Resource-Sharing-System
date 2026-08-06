@@ -122,11 +122,20 @@ class UserUpdate(BaseModel):
     full_name: Optional[SafeStr] = Field(None, max_length=150)
     department: Optional[SafeStr] = Field(None, max_length=100)
     course: Optional[SafeStr] = Field(None, max_length=100)
-    year_of_study: Optional[int] = None
+    year_of_study: Optional[int] = Field(None, ge=1, le=6)
     bio: Optional[SafeStr] = Field(None, max_length=1000)
     skills: Optional[SafeStr] = Field(None, max_length=500)
     phone_number: Optional[SafeStr] = Field(None, max_length=20)
     profile_picture_url: Optional[str] = Field(None, max_length=500)
+
+    @model_validator(mode="before")
+    @classmethod
+    def empty_strings_to_none(cls, data: dict) -> dict:
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if isinstance(v, str) and v.strip() == "":
+                    data[k] = None
+        return data
 
 
 class UserResponse(UserBase):
