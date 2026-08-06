@@ -49,7 +49,7 @@ export default function ResourceCreatePage() {
     condition: "good",
     daily_price: 150,
     deposit_amount: 500,
-    location: localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "",
+    location: localStorage.getItem(`crss_loc_${user?.id}`) || "",
     available_from: "",
     available_to: "",
   });
@@ -639,7 +639,7 @@ export default function ResourceCreatePage() {
                     condition: "good",
                     daily_price: 100,
                     deposit_amount: 300,
-                    location: localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "",
+                    location: localStorage.getItem(`crss_loc_${user?.id}`) || "",
                   });
                 }}
                 className="w-full bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 py-3.5 text-xs font-bold rounded-2xl transition-all"

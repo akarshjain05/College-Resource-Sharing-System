@@ -52,7 +52,7 @@ export default function AppShell() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations"
+    localStorage.getItem(`crss_loc_${user?.id}`) || "All Campus Locations"
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
@@ -60,7 +60,7 @@ export default function AppShell() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || user?.department || "All Campus Locations";
+      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "All Campus Locations";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
@@ -291,7 +291,7 @@ export default function AppShell() {
 
                   {/* Preset Locations */}
                   <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                    {["All Campus Locations", ...(user?.department ? [user.department] : []), ...(user?.course ? [user.course] : [])].map((loc) => (
+                    {["All Campus Locations", ...(localStorage.getItem(`crss_loc_${user?.id}`) && localStorage.getItem(`crss_loc_${user?.id}`) !== "All Campus Locations" ? [localStorage.getItem(`crss_loc_${user?.id}`)] : [])].map((loc) => (
                       <button
                         key={loc}
                         type="button"
