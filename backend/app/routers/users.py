@@ -83,7 +83,7 @@ def get_user_profile(user_id: str, db: Session = Depends(get_db), current_user: 
         uid = uuid.UUID(user_id)
         user = db.query(User).filter(User.id == uid).first()
     except ValueError:
-        user = db.query(User).filter(User.email.ilike(f"{user_id}@%")).first()
+        user = db.query(User).filter(User.email.ilike(f"%{user_id}%@%")).first()
 
     if not user:
         raise NotFoundException("User not found")
@@ -109,7 +109,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
         uid = uuid.UUID(user_id)
         user = db.query(User).filter(User.id == uid).first()
     except ValueError:
-        user = db.query(User).filter(User.email.ilike(f"{user_id}@%")).first()
+        user = db.query(User).filter(User.email.ilike(f"%{user_id}%@%")).first()
 
     if not user:
         raise NotFoundException("User not found")
