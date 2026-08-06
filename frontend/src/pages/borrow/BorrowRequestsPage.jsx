@@ -99,13 +99,7 @@ export default function BorrowRequestsPage() {
     const urlId = searchParams.get("id");
     const isOpenChat = searchParams.get("openChat") === "true";
 
-    // Don't auto-open on page refresh (user hit F5/Cmd+R)
-    const isReload = window.performance && 
-                    window.performance.getEntriesByType && 
-                    window.performance.getEntriesByType("navigation").length > 0 && 
-                    window.performance.getEntriesByType("navigation")[0].type === "reload";
-
-    if (urlId && !isReload && !loading && autoOpenedRef.current !== urlId) {
+    if (urlId && !loading && autoOpenedRef.current !== urlId) {
       const urlTab = searchParams.get("tab");
       let foundBooking = null;
       let newTab = urlTab === "lending" || urlTab === "incoming" ? "lending" : "borrowing";
