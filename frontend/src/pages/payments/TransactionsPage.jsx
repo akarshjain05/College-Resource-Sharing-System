@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Search,
   IndianRupee,
+  X,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -35,6 +36,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all"); // "all", "credit", "debit", "pending"
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showTerms, setShowTerms] = useState(false);
   const navigate = useNavigate();
 
@@ -355,7 +357,7 @@ export default function TransactionsPage() {
               return (
                 <div
                   key={tx.id}
-                  onClick={() => navigate(`/my-bookings?id=${tx.borrow_request_id}&tab=${isCredit ? "lending" : "borrowing"}`)}
+                  onClick={() => setSelectedTransaction(tx)}
                   className={`group bg-white dark:bg-slate-900 border rounded-2xl p-4 sm:p-5 transition shadow-sm hover:shadow-md cursor-pointer ${
                     isPending
                       ? "border-amber-300 dark:border-amber-700/60 bg-amber-50/20 dark:bg-amber-950/10 hover:bg-amber-50/40"
@@ -495,6 +497,79 @@ export default function TransactionsPage() {
           )}
         </div>
       </div>
+
+      {/* Transaction Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+            <button
+              onClick={() => setSelectedTransaction(null)}
+              className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="text-center mb-6 mt-2">
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Transaction Details</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {selectedTransaction.item_title}
+              </p>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-3 text-sm">
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Status</span>
+                <span className="font-bold text-slate-900 dark:text-white capitalize">
+                  {selectedTransaction.status || selectedTransaction.borrow_status}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Type</span>
+                <span className={`font-bold ${selectedTransaction.transaction_type === "CREDIT" ? "text-emerald-600" : "text-rose-600"}`}>
+                  {selectedTransaction.transaction_type}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Party</span>
+                <span className="font-bold text-slate-900 dark:text-white text-right max-w-[150px] truncate">
+                  {selectedTransaction.other_party_name}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700/50">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Amount</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  ₹{(selectedTransaction.total_amount / 100).toFixed(2)}
+                </span>
+              </div>
+              {selectedTransaction.razorpay_payment_id && (
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Txn ID</span>
+                  <span className="font-mono text-xs font-bold text-slate-900 dark:text-white">
+                    {selectedTransaction.razorpay_payment_id}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={() => navigate(`/my-bookings?id=${selectedTransaction.borrow_request_id}&tab=${selectedTransaction.transaction_type === "CREDIT" ? "lending" : "borrowing"}`)}
+                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-2.5 text-sm font-bold shadow-sm transition-colors"
+              >
+                View Order
+              </button>
+              <button
+                onClick={() => setSelectedTransaction(null)}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl py-2.5 text-sm font-bold transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
