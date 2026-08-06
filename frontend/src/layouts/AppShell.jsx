@@ -240,11 +240,7 @@ export default function AppShell() {
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
-                {to === "/my-bookings" && user && (
-                  <span className={`ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
-                    Active
-                  </span>
-                )}
+                
               </Link>
             );
           })}
