@@ -25,7 +25,7 @@ router = APIRouter(prefix="/resources", tags=["Resources"])
 @router.get("", response_model=ResourceListResponse)
 def list_resources(
     db: Session = Depends(get_db),
-    search: Optional[str] = Query(None, description="Search title/description/tags"),
+    search: Optional[str] = Query(None, description="Search title/description/tags/owner"),
     category_id: Optional[uuid.UUID] = None,
     condition: Optional[ResourceCondition] = None,
     status_filter: Optional[ResourceStatus] = Query(None, alias="status"),
@@ -48,7 +48,12 @@ def list_resources(
     if search:
         like = f"%{search}%"
         query = query.filter(
-            or_(Resource.title.ilike(like), Resource.description.ilike(like), Resource.tags.ilike(like))
+            or_(
+                Resource.title.ilike(like), 
+                Resource.description.ilike(like), 
+                Resource.tags.ilike(like),
+                Resource.owner.has(User.full_name.ilike(like))
+            )
         )
     if category_id:
         query = query.filter(Resource.category_id == category_id)

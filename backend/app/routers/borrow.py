@@ -431,7 +431,7 @@ def cancel_borrow_request(
         NotificationType.SYSTEM,
         "Borrow request cancelled",
         f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
-        link=f"/borrow-requests/{req_id}",
+        link=f"/borrow-requests/{req_id}?tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
     )
 
     return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
