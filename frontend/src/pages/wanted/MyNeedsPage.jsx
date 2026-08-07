@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock, Edit, Copy } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
+import { EmptyState } from "../../components/EmptyState";
+import { appCallbacks } from "../../utils/appCallbacks";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmModal from "../../components/ConfirmModal";
 
@@ -322,7 +324,7 @@ export default function MyNeedsPage() {
       toast.success("Wanted request posted!");
       setShowModal(false);
       setFormData({ title: "", description: "", category_id: "", start_date: today, end_date: tomorrow });
-      window.dispatchEvent(new Event("wantedCreated"));
+      appCallbacks.trigger("wantedCreated");
       navigate("/wanted");
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to post request");

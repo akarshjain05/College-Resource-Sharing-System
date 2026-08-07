@@ -15,6 +15,14 @@ from app.utils.file_upload import save_upload_file
 
 router = APIRouter(prefix="/uploads", tags=["File Uploads"])
 
+__all__ = [
+    "router",
+    "upload_profile_picture",
+    "upload_resource_image",
+    "delete_resource_image",
+    "set_primary_resource_image",
+]
+
 
 @router.post("/profile-picture", response_model=UserResponse)
 def upload_profile_picture(

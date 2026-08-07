@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authApi } from "../api/endpoints";
+import { appCallbacks } from "../utils/appCallbacks";
 
 const AuthContext = createContext(null);
 
@@ -32,10 +33,7 @@ export function AuthProvider({ children }) {
       setUser(null);
       localStorage.removeItem("crss_access_token");
     };
-    window.addEventListener("crss:auth-unauthorized", handleUnauthorized);
-    return () => {
-      window.removeEventListener("crss:auth-unauthorized", handleUnauthorized);
-    };
+    return appCallbacks.register("auth-unauthorized", handleUnauthorized);
   }, [loadUser]);
 
   const login = async (email, password) => {

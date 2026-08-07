@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, MapPin, AlertCircle } from "lucide-react";
 import { chatApi } from "../api/endpoints";
-import { chatEventBus } from "../utils/chatEventBus";
+import { chatMessageRouter } from "../utils/chatMessageRouter";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import { format } from "date-fns";
@@ -33,8 +33,11 @@ export default function ChatThread({ request, onReportIssue }) {
   useEffect(() => {
     fetchMessages();
 
-    const unsubscribe = chatEventBus.subscribe(request.id, (newMsg) => {
-      setMessages(prev => [...prev, newMsg]);
+    const unsubscribe = chatMessageRouter.registerHandler(request.id, (newMsg) => {
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
       chatApi.markRead(request.id).catch(() => {});
     });
 

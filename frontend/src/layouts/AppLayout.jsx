@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { appCallbacks } from "../utils/appCallbacks";
 import { useEffect, useState, useRef } from "react";
 import {
   Home,
@@ -130,8 +131,7 @@ export default function AppLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    window.addEventListener("refreshUnreadCount", fetchUnreadCount);
-    return () => window.removeEventListener("refreshUnreadCount", fetchUnreadCount);
+    return appCallbacks.register("refreshUnreadCount", fetchUnreadCount);
   }, []);
 
   useNotificationSocket(() => {

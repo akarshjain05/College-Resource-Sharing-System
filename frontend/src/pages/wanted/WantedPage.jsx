@@ -4,6 +4,7 @@ import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, 
 import { Link, useNavigate } from "react-router-dom";
 import { wantedApi, categoryApi, resourceApi } from "../../api/endpoints";
 import { useAuth } from "../../context/AuthContext";
+import { appCallbacks } from "../../utils/appCallbacks";
 
 function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
   if (!request) return null;
@@ -129,10 +130,7 @@ export default function WantedPage() {
       loadData();
     };
 
-    window.addEventListener("wantedCreated", handleWantedCreated);
-    return () => {
-      window.removeEventListener("wantedCreated", handleWantedCreated);
-    };
+    return appCallbacks.register("wantedCreated", handleWantedCreated);
   }, [user]);
 
   const handleSubmit = async (e) => {

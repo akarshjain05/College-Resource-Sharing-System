@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { appCallbacks } from "../utils/appCallbacks";
 import {
   Bell,
   BellOff,
@@ -65,7 +67,7 @@ export default function NotificationsPage() {
         setNotifications(dbNotifs);
       })
       .catch((err) => {
-        console.log("Failed to load notifications", err);
+        // Silently ignore loading failures or show a toast if needed
       })
       .finally(() => setLoading(false));
   };
@@ -80,12 +82,12 @@ export default function NotificationsPage() {
     try {
       await notificationApi.markAllRead();
     } catch (e) {
-      console.log("Failed to mark all read", e);
+      // Ignore error
     }
 
     toast.success("All notifications marked as read");
     loadNotifications();
-    window.dispatchEvent(new Event("refreshUnreadCount"));
+    appCallbacks.trigger("refreshUnreadCount");
   };
 
   const handleMarkOne = async (n) => {
@@ -96,7 +98,7 @@ export default function NotificationsPage() {
         }
       }
     } catch (e) {
-      console.log("Failed to mark read", e);
+      // Ignore error
     }
 
     const resolvedLink = resolveNotificationLink(n.link, n);
@@ -105,18 +107,18 @@ export default function NotificationsPage() {
     } else {
       loadNotifications(); // Refresh to show is_read=true state
     }
-    window.dispatchEvent(new Event("refreshUnreadCount"));
+    appCallbacks.trigger("refreshUnreadCount");
   };
 
   const handleDeleteAll = async () => {
     try {
       await notificationApi.clearAll();
     } catch (e) {
-      console.log("Failed to clear notifications", e);
+      // Ignore error
     }
     toast.success("All notifications cleared");
     setNotifications([]);
-    window.dispatchEvent(new Event("refreshUnreadCount"));
+    appCallbacks.trigger("refreshUnreadCount");
   };
 
   // Helper to render notification category icons matching designs (from feature branch)
