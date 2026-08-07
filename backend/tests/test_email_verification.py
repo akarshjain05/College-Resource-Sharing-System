@@ -189,7 +189,7 @@ def test_previous_otp_invalid_after_resend(client):
         assert new_verify.status_code == 200
 
 
-def test_unverified_account_cannot_login(client):
+def test_unverified_account_can_login_but_cannot_perform_write_actions(client, test_category):
     with patch("app.routers.auth.send_brevo_otp_email", new_callable=AsyncMock) as mock_brevo:
         mock_brevo.return_value = True
         client.post(
@@ -202,13 +202,45 @@ def test_unverified_account_cannot_login(client):
             },
         )
 
-        # 13. Unverified account cannot complete normal login
+        # 13. Unverified account can complete normal login
         login_resp = client.post(
             "/api/v1/auth/login",
             data={"username": "unverified@svnit.ac.in", "password": "Password123!"},
         )
-        assert login_resp.status_code == 403
-        assert login_resp.json()["error_code"] == "EMAIL_VERIFICATION_REQUIRED"
+        assert login_resp.status_code == 200
+        token = login_resp.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Try to post a listing -> should return 403
+        post_resp = client.post(
+            "/api/v1/resources",
+            headers=headers,
+            json={
+                "title": "Unverified Listing",
+                "description": "Should fail",
+                "condition": "good",
+                "quantity": 1,
+                "category_id": str(test_category.id),
+                "max_borrow_days": 7,
+                "deposit_amount": 0,
+            }
+        )
+        assert post_resp.status_code == 403
+        assert "verify your email" in post_resp.json()["detail"]
+
+        # Try to request borrow -> should return 403
+        borrow_resp = client.post(
+            "/api/v1/borrow-requests",
+            headers=headers,
+            json={
+                "resource_id": str(test_category.id), # random resource id placeholder
+                "requested_start_date": "2026-08-08",
+                "requested_end_date": "2026-08-10",
+                "purpose": "Testing",
+            }
+        )
+        assert borrow_resp.status_code == 403
+        assert "verify your email" in borrow_resp.json()["detail"]
 
 
 def test_brevo_failure_does_not_verify_account(client, db_session):

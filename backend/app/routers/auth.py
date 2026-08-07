@@ -38,6 +38,7 @@ from app.schemas.user import (
     VerifySignupOtpRequest,
     ResendSignupOtpRequest,
     ResendSignupOtpResponse,
+    VerifyEmailChangeRequest,
 )
 from app.services.email_service import send_verification_email, send_password_reset_email, send_brevo_otp_email
 from app.services.otp_service import (
@@ -239,12 +240,6 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
     if redis_client:
         redis_client.delete(lockout_key)
         
-    if not user.is_verified:
-        raise AppException(
-            "Email verification is required before logging in.",
-            status_code=status.HTTP_403_FORBIDDEN,
-            error_code="EMAIL_VERIFICATION_REQUIRED",
-        )
     if not user.is_active or user.is_suspended:
         raise AppException("Account is inactive or suspended", status_code=status.HTTP_403_FORBIDDEN, error_code="ACCOUNT_DISABLED")
 
@@ -502,3 +497,60 @@ def reset_password(request: Request, payload: PasswordResetConfirm, db: Session 
     db.commit()
     revoke_all_refresh_tokens(str(user.id))
     return None
+
+
+@router.post("/request-verification", response_model=SignupOtpResponse)
+@limiter.limit("5/minute")
+async def request_verification(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Allows a logged-in but unverified user to request a verification OTP to their email."""
+    if current_user.is_verified:
+        raise AppException("Email is already verified", status_code=status.HTTP_400_BAD_REQUEST, error_code="ALREADY_VERIFIED")
+
+    otp = generate_otp()
+    challenge_id, expires_in = store_signup_otp(current_user.email, otp)
+
+    sent = await send_brevo_otp_email(current_user.email, current_user.full_name, otp)
+    if not sent:
+        delete_otp_challenge(challenge_id, current_user.email)
+        raise AppException(
+            "Failed to send verification email. Please try again later.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="BREVO_SEND_FAILED",
+        )
+
+    return SignupOtpResponse(
+        message="Verification code sent",
+        requires_verification=True,
+        challenge_id=challenge_id,
+        expires_in=expires_in,
+    )
+
+
+@router.post("/verify-email-change", response_model=UserResponse)
+@limiter.limit("10/minute")
+def verify_email_change(
+    request: Request,
+    payload: VerifyEmailChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if not payload.otp or len(payload.otp) != 6 or not payload.otp.isdigit():
+        raise AppException("Invalid OTP format. Must be 6 digits.", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_OTP")
+
+    verified_email = verify_signup_otp(payload.challenge_id, payload.otp)
+
+    if current_user.unverified_email != verified_email:
+        raise AppException("Verification email does not match requested email change.", status_code=status.HTTP_400_BAD_REQUEST, error_code="EMAIL_MISMATCH")
+
+    # Confirm the email change
+    current_user.email = verified_email
+    current_user.unverified_email = None
+    current_user.is_verified = True
+    current_user.email_verified_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(current_user)
+    return current_user

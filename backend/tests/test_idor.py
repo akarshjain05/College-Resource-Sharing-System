@@ -35,20 +35,36 @@ def request_borrow(client, headers, resource_id):
     )
 
 
-def test_idor_borrow_request_cancel(client, test_user, second_user, test_category):
+def test_idor_borrow_request_cancel(client, db_session, test_user, second_user, test_category):
     """
-    Test that User A (owner) cannot cancel User B's borrow request.
+    Test that a third-party user (not owner, not borrower) cannot cancel another user's borrow request.
     """
+    from app.models.user import User
+    from app.core.security import hash_password
+    from app.models.enums import UserRole
+
     owner_headers = auth_headers(client, test_user.email, "Password123!")
     borrower_headers = auth_headers(client, second_user.email, "Password123!")
+
+    # Create a third-party attacker user
+    attacker = User(
+        full_name="Third Attacker",
+        email="attacker@svnit.ac.in",
+        hashed_password=hash_password("Password123!"),
+        role=UserRole.STUDENT,
+        is_verified=True,
+    )
+    db_session.add(attacker)
+    db_session.commit()
+    attacker_headers = auth_headers(client, "attacker@svnit.ac.in", "Password123!")
 
     resource = create_resource(client, owner_headers, str(test_category.id))
     req_resp = request_borrow(client, borrower_headers, resource["id"])
     assert req_resp.status_code == 201
     request_id = req_resp.json()["id"]
 
-    # Owner tries to cancel the borrower's request
-    cancel_resp = client.post(f"/api/v1/borrow-requests/{request_id}/cancel", headers=owner_headers)
+    # Attacker tries to cancel the borrower's request
+    cancel_resp = client.post(f"/api/v1/borrow-requests/{request_id}/cancel", headers=attacker_headers)
     assert cancel_resp.status_code in (403, 404)
 
 

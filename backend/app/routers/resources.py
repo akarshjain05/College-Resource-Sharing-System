@@ -6,7 +6,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_active_verified_user
 from app.core.exceptions import NotFoundException, ForbiddenException
 from app.models.enums import ResourceCondition, ResourceStatus, UserRole, BorrowStatus
 from app.models.resource import Resource, ResourceImage
@@ -203,7 +203,7 @@ def create_resource(
     request: Request,
     payload: ResourceCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = Resource(
