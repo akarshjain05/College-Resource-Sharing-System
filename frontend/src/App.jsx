@@ -44,31 +44,29 @@ export default function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/notifications" element={<NotificationsPage />} />
+          <Route element={<AppLayout />}>
+            {/* Public routes */}
             <Route path="/resources" element={<ResourceListPage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-            <Route path="/my-listings" element={<MyListingsPage />} />
-            <Route path="/resources/new" element={<ResourceCreatePage />} />
-            <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
-            <Route path="/my-bookings" element={<BorrowRequestsPage />} />
-            <Route path="/borrow-requests" element={<Navigate to="/my-bookings" replace />} />
-            <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/payments" element={<TransactionsPage />} />
             <Route path="/wanted" element={<WantedPage />} />
-            <Route path="/campus-needs" element={<Navigate to="/wanted" replace />} />
-            <Route path="/my-needs" element={<MyNeedsPage />} />
-            <Route path="/complaints" element={<ComplaintsPage />} />
-
-            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/users/:userId" element={<PublicProfilePage />} />
+
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/notifications" element={<NotificationsPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/my-listings" element={<MyListingsPage />} />
+              <Route path="/resources/new" element={<ResourceCreatePage />} />
+              <Route path="/resources/:id/edit" element={<ResourceEditPage />} />
+              <Route path="/my-bookings" element={<BorrowRequestsPage />} />
+              <Route path="/borrow-requests" element={<Navigate to="/my-bookings" replace />} />
+              <Route path="/transactions" element={<TransactionsPage />} />
+              <Route path="/payments" element={<TransactionsPage />} />
+              <Route path="/my-needs" element={<MyNeedsPage />} />
+              <Route path="/campus-needs" element={<Navigate to="/wanted" replace />} />
+              <Route path="/complaints" element={<ComplaintsPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
 
             <Route
               path="/admin"

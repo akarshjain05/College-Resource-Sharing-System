@@ -51,7 +51,7 @@ export default function AppLayout() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [selectedLocation, setSelectedLocation] = useState(
-    localStorage.getItem(`crss_loc_${user?.id}`) || ""
+    localStorage.getItem(user?.id ? `crss_loc_${user.id}` : "crss_loc_guest") || ""
   );
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [customLocationInput, setCustomLocationInput] = useState("");
@@ -59,7 +59,8 @@ export default function AppLayout() {
 
   const [savedLocations, setSavedLocations] = useState(() => {
     try {
-      const saved = localStorage.getItem(`crss_saved_locs_${user?.id}`);
+      const key = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+      const saved = localStorage.getItem(key);
       return saved ? JSON.parse(saved) : [];
     } catch (e) {
       return [];
@@ -67,25 +68,27 @@ export default function AppLayout() {
   });
 
   useEffect(() => {
-    if (user?.id) {
-      const loc = localStorage.getItem(`crss_loc_${user.id}`);
-      if (loc) setSelectedLocation(loc);
+    const keyLoc = user?.id ? `crss_loc_${user.id}` : "crss_loc_guest";
+    const keySaved = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+    
+    const loc = localStorage.getItem(keyLoc);
+    if (loc) setSelectedLocation(loc);
 
-      try {
-        const saved = localStorage.getItem(`crss_saved_locs_${user.id}`);
-        if (saved) setSavedLocations(JSON.parse(saved));
-      } catch (e) {}
-    }
+    try {
+      const saved = localStorage.getItem(keySaved);
+      if (saved) setSavedLocations(JSON.parse(saved));
+    } catch (e) {}
   }, [user?.id]);
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const newLoc = localStorage.getItem(`crss_loc_${user?.id}`) || "";
+      const key = user?.id ? `crss_loc_${user.id}` : "crss_loc_guest";
+      const newLoc = localStorage.getItem(key) || "";
       setSelectedLocation(newLoc);
     };
     window.addEventListener("locationChanged", handleLocationChange);
     return () => window.removeEventListener("locationChanged", handleLocationChange);
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -101,11 +104,13 @@ export default function AppLayout() {
     if (!loc || !loc.trim()) return;
     const cleanLoc = loc.trim();
     setSelectedLocation(cleanLoc);
-    localStorage.setItem(`crss_loc_${user?.id}`, cleanLoc);
+    const keyLoc = user?.id ? `crss_loc_${user.id}` : "crss_loc_guest";
+    const keySaved = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+    localStorage.setItem(keyLoc, cleanLoc);
     
     setSavedLocations((prev) => {
       const newList = [cleanLoc, ...prev.filter((l) => l !== cleanLoc)].slice(0, 5);
-      localStorage.setItem(`crss_saved_locs_${user?.id}`, JSON.stringify(newList));
+      localStorage.setItem(keySaved, JSON.stringify(newList));
       return newList;
     });
 
@@ -115,6 +120,7 @@ export default function AppLayout() {
   };
 
   const fetchUnreadCount = () => {
+    if (!user) return;
     notificationApi
       .list()
       .then(({ data }) => {
@@ -228,19 +234,34 @@ export default function AppLayout() {
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
-            const isActive = location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to));
+            const isProtected = to !== "/resources" && to !== "/wanted";
+            const isLocked = isProtected && !user;
+            const isActive = !isLocked && (location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to)));
             return (
               <Link
                 key={to}
-                to={to}
+                to={isLocked ? "/login" : to}
+                onClick={(e) => {
+                  if (isLocked) {
+                    e.preventDefault();
+                    toast.error(`Please login to access ${label}`);
+                    navigate("/login", { state: { from: { pathname: to } } });
+                  }
+                }}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 ${isActive
                   ? "bg-primary-600 text-white shadow-md shadow-primary-600/10 hover:bg-primary-700"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                  : isLocked
+                    ? "text-slate-400 dark:text-slate-600 hover:bg-slate-50/30 dark:hover:bg-slate-800/20"
+                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
-                
+                {isLocked && (
+                  <span className="ml-auto inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    🔒 Lock
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -259,27 +280,49 @@ export default function AppLayout() {
           )}
         </nav>
 
-        {/* Bottom Profile Summary */}
+        {/* Bottom Profile Summary or Join CTA */}
         <div className="border-t border-slate-100 dark:border-slate-800 p-4 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="flex items-center justify-between gap-2 px-1">
-            <Link to={user?.id ? `/users/${user.roll_no || user.id}` : "/profile"} className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 -ml-1.5 transition-colors cursor-pointer group">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
-                {(user?.full_name?.charAt(0) || "U").toUpperCase()}
+          {!user ? (
+            <div className="space-y-2.5">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 text-center">
+                Want to borrow or lend resources?
+              </p>
+              <div className="flex gap-2">
+                <Link
+                  to="/login"
+                  className="flex-1 text-center py-2 px-3 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs transition-all shadow-sm active:scale-95"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  className="flex-1 text-center py-2 px-3 rounded-xl border border-slate-250 dark:border-slate-750 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-355 font-bold text-xs transition-all shadow-sm active:scale-95"
+                >
+                  Join
+                </Link>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{user?.full_name || "Neighbor User"}</p>
-                <p className="truncate text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">{user?.role || "Member"}</p>
-              </div>
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 transition-all shadow-sm active:scale-95"
-              title="Sign out"
-              aria-label="Sign out"
-            >
-              <LogOut className="h-4.5 w-4.5" />
-            </button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-2 px-1">
+              <Link to={user?.id ? `/users/${user.roll_no || user.id}` : "/profile"} className="flex items-center gap-2.5 min-w-0 flex-1 rounded-lg hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 -ml-1.5 transition-colors cursor-pointer group">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-500 to-indigo-500 text-sm font-bold text-white shadow-sm group-hover:scale-105 transition-transform">
+                  {(user?.full_name?.charAt(0) || "U").toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{user?.full_name || "Neighbor User"}</p>
+                  <p className="truncate text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">{user?.role || "Member"}</p>
+                </div>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500 hover:text-red-500 dark:text-slate-400 dark:hover:text-red-400 transition-all shadow-sm active:scale-95"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4.5 w-4.5" />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -289,7 +332,7 @@ export default function AppLayout() {
           {/* Welcome Text & Location Selector */}
           <div className="flex items-center gap-3">
             <span className="hidden md:inline-block text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Hello, <span className="text-slate-800 dark:text-white font-bold">{user?.full_name?.split(" ")[0] || "Neighbor"}</span> 👋
+              Hello, <span className="text-slate-800 dark:text-white font-bold">{user?.full_name?.split(" ")[0] || "Guest"}</span> 👋
             </span>
 
             {/* LOCATION SELECTOR IN HEADER NAVBAR */}
@@ -371,7 +414,14 @@ export default function AppLayout() {
           <div className="flex items-center gap-4">
             {/* Quick Listing CTA */}
             <button
-              onClick={() => setShowPostNeedModal(true)}
+              onClick={() => {
+                if (!user) {
+                  toast.error("Please login to post a need");
+                  navigate("/login", { state: { from: location } });
+                  return;
+                }
+                setShowPostNeedModal(true);
+              }}
               className="inline-flex items-center gap-1.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 text-xs font-bold transition-all shadow-sm hover:shadow-md hover:scale-102 active:scale-98"
             >
               <PlusCircle className="h-4 w-4" />
@@ -380,7 +430,14 @@ export default function AppLayout() {
 
             {/* Wishlist Link in Navbar */}
             <Link
-              to="/wishlist"
+              to={user ? "/wishlist" : "/login"}
+              onClick={(e) => {
+                if (!user) {
+                  e.preventDefault();
+                  toast.error("Please login to view wishlist");
+                  navigate("/login", { state: { from: { pathname: "/wishlist" } } });
+                }
+              }}
               className={`relative rounded-2xl border p-2.5 transition-all active:scale-95 shadow-xs ${
                 location.pathname === "/wishlist"
                   ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
@@ -395,7 +452,14 @@ export default function AppLayout() {
             <div className="relative flex items-center">
               <button
                 type="button"
-                onClick={() => navigate("/notifications")}
+                onClick={() => {
+                  if (!user) {
+                    toast.error("Please login to view notifications");
+                    navigate("/login", { state: { from: { pathname: "/notifications" } } });
+                    return;
+                  }
+                  navigate("/notifications");
+                }}
                 className="relative rounded-2xl border border-slate-200 hover:border-slate-350 dark:border-slate-800 dark:hover:border-slate-700 p-2.5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all active:scale-95 shadow-xs"
                 title="View Notifications"
               >

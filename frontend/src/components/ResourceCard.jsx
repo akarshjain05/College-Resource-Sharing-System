@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Star, MapPin, Heart } from "lucide-react";
 import { getImageUrl, wishlistApi, resourceApi } from "../api/endpoints";
@@ -14,6 +14,7 @@ const CONDITION_LABEL = {
 
 export default function ResourceCard({ resource, onWishlistUpdate }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const primaryImage = resource.images?.find((img) => img.is_primary) || resource.images?.[0];
   const [isWishlisted, setIsWishlisted] = useState(resource.is_wishlisted || false);
   const [status, setStatus] = useState(resource.status || "available");
@@ -27,6 +28,7 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
 
     if (!user) {
       toast.error("Please login to wishlist items");
+      navigate("/login", { state: { from: { pathname: "/resources" } } });
       return;
     }
 
