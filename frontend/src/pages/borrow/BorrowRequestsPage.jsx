@@ -632,9 +632,17 @@ export default function BorrowRequestsPage() {
                     )
                   )}
                   {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                        className="btn-secondary !py-1.5 !px-2.5 text-[10px] flex items-center gap-1"
+                      >
+                        <BellRing className="h-3 w-3" /> Remind Borrower
+                      </button>
+                    </div>
                   )}
                   {tab === "lending" && book.status === "return_requested" && (
                     <button

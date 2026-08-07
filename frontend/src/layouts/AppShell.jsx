@@ -212,7 +212,7 @@ export default function AppShell() {
       {/* SIDEBAR */}
       <aside className="hidden w-64 flex-col border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 md:flex sticky top-0 h-screen z-20">
         {/* Brand Logo & Name */}
-        <Link to="/explore" className="flex items-center gap-3 px-6 py-6 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+        <Link to="/resouces" className="flex items-center gap-3 px-6 py-6 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-600 to-indigo-500 text-white shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 group-hover:scale-105 transition-all duration-300">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
               <path d="M12 2L2 7l10 5 10-5-10-5z" />
