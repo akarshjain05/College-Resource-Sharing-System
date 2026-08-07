@@ -3,7 +3,6 @@ import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, Users, Tag, ArrowRight, CheckCircle2, Clock, Edit, Copy } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wantedApi, categoryApi } from "../../api/endpoints";
-import { EmptyState } from "../../components/EmptyState";
 import { appCallbacks } from "../../utils/appCallbacks";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmModal from "../../components/ConfirmModal";
