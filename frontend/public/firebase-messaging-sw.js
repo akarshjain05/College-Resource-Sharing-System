@@ -31,7 +31,7 @@ messaging.onBackgroundMessage((payload) => {
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-self.addEventListener('notificationclick', (event) => {
+self.onnotificationclick = (event) => {
     event.notification.close();
     const link = event.notification.data?.link;
     if (link) {

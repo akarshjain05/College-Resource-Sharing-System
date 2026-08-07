@@ -1,4 +1,5 @@
 import axios from "axios";
+import { appCallbacks } from "../utils/appCallbacks";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
@@ -73,7 +74,7 @@ api.interceptors.response.use(
         const status = refreshError.response?.status;
         if (status === 401 || status === 400) {
           localStorage.removeItem("crss_access_token");
-          window.dispatchEvent(new Event("crss:auth-unauthorized"));
+          appCallbacks.trigger("auth-unauthorized");
           // No need to remove crss_refresh_token as it's a cookie managed by backend
           window.location.href = "/login";
         }
