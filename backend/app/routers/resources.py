@@ -242,7 +242,7 @@ def update_resource(
     resource_id: uuid.UUID,
     payload: ResourceUpdate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
@@ -272,7 +272,7 @@ def update_resource(
 @router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_resource(
     resource_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
@@ -321,7 +321,7 @@ def add_resource_image(
     resource_id: uuid.UUID,
     image_url: str,
     is_primary: bool = False,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
