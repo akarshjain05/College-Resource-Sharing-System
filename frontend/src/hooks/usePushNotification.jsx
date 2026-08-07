@@ -4,13 +4,13 @@ import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import api from "../api/client";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCXKGuwKX3zHQ9VslvrTNESCPAFON12lYA",
-    authDomain: "notification-service-ed93d.firebaseapp.com",
-    projectId: "notification-service-ed93d",
-    storageBucket: "notification-service-ed93d.firebasestorage.app",
-    messagingSenderId: "351765879932",
-    appId: "1:351765879932:web:d474b0c86e13f855ccfdf9",
-    measurementId: "G-2MPEQH3TTK"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 const VAPID_KEY = "BA6CZ5D9U-OB9PAlrc7RjIkdDQHjWrype-_sAZUhBZK32lau5GA8LW_uKsKew3YMFLZlFCb5wBxqtzGcwaIzymY";
@@ -44,7 +44,8 @@ export function usePushNotification(user) {
 
         try {
             // 1. Register the service worker
-            const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+            const swUrl = `/firebase-messaging-sw.js?apiKey=${import.meta.env.VITE_FIREBASE_API_KEY}&authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN}&projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID}&storageBucket=${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}&messagingSenderId=${import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID}&appId=${import.meta.env.VITE_FIREBASE_APP_ID}&measurementId=${import.meta.env.VITE_FIREBASE_MEASUREMENT_ID}`;
+            const registration = await navigator.serviceWorker.register(swUrl);
             console.log("Service Worker registered successfully:", registration);
 
             // 2. Fetch the FCM token

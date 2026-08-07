@@ -186,40 +186,6 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_link: s
         pass
 
 
-async def send_payment_receipt_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
-    safe_name = html.escape(user_name)
-    safe_title = html.escape(item_title)
-    safe_tx = html.escape(transaction_id)
-    body = f"""
-      <p style="margin-top:0; color:#1E293B; font-size:15px; font-weight:600;">Hi {safe_name},</p>
-      <p style="color:#475569;">Your security deposit / payment has been received successfully.</p>
-
-      <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; margin: 24px 0;">
-        <table width="100%" border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Item:</td>
-            <td align="right" style="color: #0F172A; font-size: 13px; font-weight: 700; padding-bottom: 8px;">{safe_title}</td>
-          </tr>
-          <tr>
-            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Amount Paid:</td>
-            <td align="right" style="color: #15803D; font-size: 16px; font-weight: 800; padding-bottom: 8px;">₹{amount:.2f}</td>
-          </tr>
-          <tr>
-            <td style="color: #64748B; font-size: 13px; padding-bottom: 8px;">Transaction ID:</td>
-            <td align="right" style="color: #0F172A; font-size: 12px; font-family: monospace; padding-bottom: 8px;">{safe_tx}</td>
-          </tr>
-          <tr>
-            <td style="color: #64748B; font-size: 13px;">Status:</td>
-            <td align="right">
-              <span style="background: #DCFCE7; color: #15803D; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase;">CONFIRMED</span>
-            </td>
-          </tr>
-        </table>
-      </div>
-    """
-    html = _wrap_template("Payment Receipt — Deposit Confirmed", body, "Official Transaction Receipt")
-    await send_email(to_email, f"Payment Receipt: ₹{amount:.2f} for {item_title}", html)
-
 
 async def send_payment_refund_email(to_email: str, user_name: str, amount: float, item_title: str, transaction_id: str) -> None:
     safe_name = html.escape(user_name)

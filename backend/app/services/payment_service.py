@@ -53,8 +53,6 @@ def verify_webhook_signature(raw_body: bytes, signature_header: str) -> bool:
     return hmac.compare_digest(expected, signature_header or "")
 
 
-def fetch_payment(payment_id: str) -> dict:
-    return _client.payment.fetch(payment_id)
 
 
 def refund_payment(payment_id: str, *, amount_paise: int, notes: dict) -> dict:

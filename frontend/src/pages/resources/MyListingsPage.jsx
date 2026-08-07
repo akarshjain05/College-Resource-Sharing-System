@@ -952,7 +952,12 @@ export default function MyListingsPage() {
       <ConfirmModal
         isOpen={!!confirmDialog}
         onClose={() => setConfirmDialog(null)}
-        {...confirmDialog}
+        title={confirmDialog?.title}
+        message={confirmDialog?.message}
+        confirmText={confirmDialog?.confirmText}
+        cancelText={confirmDialog?.cancelText}
+        isDanger={confirmDialog?.isDanger || (confirmDialog?.confirmColor && confirmDialog.confirmColor.includes('red')) || false}
+        onConfirm={confirmDialog?.onConfirm}
       />
     </div>
   );
