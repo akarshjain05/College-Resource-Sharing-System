@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, timedelta
 from tests.conftest import auth_headers
 
@@ -40,10 +41,10 @@ def test_review_without_borrow(client, test_user, second_user, test_category):
     resp = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 5, "comment": "Nice!"},
+        json={"resource_id": resource["id"], "borrow_request_id": str(uuid.uuid4()), "rating": 5, "comment": "Nice!"},
     )
     assert resp.status_code == 400
-    assert "borrowed previously" in resp.json()["detail"]
+    assert "after successfully borrowing" in resp.json()["detail"]
 
 
 def test_review_with_pending_borrow(client, test_user, second_user, test_category):
@@ -56,14 +57,14 @@ def test_review_with_pending_borrow(client, test_user, second_user, test_categor
     req_resp = request_borrow(client, borrower_headers, resource["id"])
     assert req_resp.status_code == 201
 
-    # Try to review
+    req_id = req_resp.json()["id"]
     resp = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 4, "comment": "Great!"},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id, "rating": 4, "comment": "Great!"},
     )
     assert resp.status_code == 400
-    assert "borrowed previously" in resp.json()["detail"]
+    assert "after successfully borrowing" in resp.json()["detail"]
 
 
 def test_review_limitations_and_lifecycle(client, test_user, second_user, test_category):
@@ -85,7 +86,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     resp1 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 5, "comment": "Awesome!"},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id, "rating": 5, "comment": "Awesome!"},
     )
     assert resp1.status_code == 201
 
@@ -93,10 +94,10 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     resp2 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 4, "comment": "Again!"},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id, "rating": 4, "comment": "Again!"},
     )
     assert resp2.status_code == 400
-    assert "one review per successful borrow" in resp2.json()["detail"]
+    assert "already reviewed this borrow transaction" in resp2.json()["detail"]
 
     # 2. Second Borrow Lifecycle
     req_resp2 = request_borrow(client, borrower_headers, resource["id"])
@@ -111,7 +112,7 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     resp3 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 4, "comment": "Second time!"},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id2, "rating": 4, "comment": "Second time!"},
     )
     assert resp3.status_code == 201
 
@@ -119,10 +120,10 @@ def test_review_limitations_and_lifecycle(client, test_user, second_user, test_c
     resp4 = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 3, "comment": "Third time!"},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id2, "rating": 3, "comment": "Third time!"},
     )
     assert resp4.status_code == 400
-    assert "one review per successful borrow" in resp4.json()["detail"]
+    assert "already reviewed this borrow transaction" in resp4.json()["detail"]
 
 
 def test_admin_can_delete_any_review(client, test_user, second_user, admin_user, test_category):
@@ -144,7 +145,7 @@ def test_admin_can_delete_any_review(client, test_user, second_user, admin_user,
     review_resp = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 3, "comment": "Mediocre."},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id, "rating": 3, "comment": "Mediocre."},
     )
     assert review_resp.status_code == 201
     review_id = review_resp.json()["id"]
@@ -175,7 +176,7 @@ def test_non_admin_cannot_delete_review(client, test_user, second_user, test_cat
     review_resp = client.post(
         "/api/v1/reviews",
         headers=borrower_headers,
-        json={"resource_id": resource["id"], "rating": 4, "comment": "Good."},
+        json={"resource_id": resource["id"], "borrow_request_id": req_id, "rating": 4, "comment": "Good."},
     )
     review_id = review_resp.json()["id"]
 

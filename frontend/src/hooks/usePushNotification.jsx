@@ -27,7 +27,7 @@ function getFirebaseMessaging() {
             return getMessaging(app);
         }
     } catch (error) {
-        console.error("Failed to initialize Firebase Messaging:", error);
+        // Silently fail on Firebase init issues
     }
     return null;
 }
@@ -46,7 +46,6 @@ export function usePushNotification(user) {
             // 1. Register the service worker
             const swUrl = `/firebase-messaging-sw.js?apiKey=${import.meta.env.VITE_FIREBASE_API_KEY}&authDomain=${import.meta.env.VITE_FIREBASE_AUTH_DOMAIN}&projectId=${import.meta.env.VITE_FIREBASE_PROJECT_ID}&storageBucket=${import.meta.env.VITE_FIREBASE_STORAGE_BUCKET}&messagingSenderId=${import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID}&appId=${import.meta.env.VITE_FIREBASE_APP_ID}&measurementId=${import.meta.env.VITE_FIREBASE_MEASUREMENT_ID}`;
             const registration = await navigator.serviceWorker.register(swUrl);
-            console.log("Service Worker registered successfully:", registration);
 
             // 2. Fetch the FCM token
             const token = await getToken(messaging, {
@@ -55,20 +54,17 @@ export function usePushNotification(user) {
             });
 
             if (token) {
-                console.log("FCM Token retrieved successfully:", token);
-
                 // 3. Save the token via our own backend (no external microservice needed)
                 try {
                     await api.post("/users/me/fcm-token", { fcm_token: token });
-                    console.log("FCM Token saved to backend successfully.");
                 } catch (netErr) {
-                    console.warn("Could not save FCM token to backend:", netErr?.message);
+                    // Silently fail if token save fails
                 }
             } else {
-                console.warn("No FCM registration token received.");
+                // No token received
             }
         } catch (error) {
-            console.warn("Error setting up Web Push Notifications:", error?.message || error);
+            // Silently fail push notification setup
         }
     };
 
@@ -83,7 +79,6 @@ export function usePushNotification(user) {
             }
             return result;
         } catch (err) {
-            console.error("Failed to request permission:", err);
             return Notification.permission;
         }
     };
@@ -104,7 +99,6 @@ export function usePushNotification(user) {
                 const messaging = getFirebaseMessaging();
                 if (messaging) {
                     unsubscribeOnMessage = onMessage(messaging, (payload) => {
-                        console.log("Foreground push notification received:", payload);
                         const title = payload.notification?.title || payload.data?.title || "New Notification";
                         const body = payload.notification?.body || payload.data?.body || "";
 

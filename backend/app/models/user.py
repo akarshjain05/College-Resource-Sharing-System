@@ -38,6 +38,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     phone_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
+    unverified_email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     email_verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 

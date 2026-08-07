@@ -120,6 +120,7 @@ class UserLogin(BaseModel):
 class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     full_name: Optional[SafeStr] = Field(None, max_length=150)
+    email: Optional[EmailStr] = None
     department: Optional[SafeStr] = Field(None, max_length=100)
     course: Optional[SafeStr] = Field(None, max_length=100)
     year_of_study: Optional[int] = Field(None, ge=1, le=6)
@@ -127,6 +128,15 @@ class UserUpdate(BaseModel):
     skills: Optional[SafeStr] = Field(None, max_length=500)
     phone_number: Optional[SafeStr] = Field(None, max_length=20)
     profile_picture_url: Optional[str] = Field(None, max_length=500)
+
+    @field_validator("email")
+    @classmethod
+    def validate_campus_email(cls, v: Optional[str]) -> Optional[str]:
+        if v:
+            v = unicodedata.normalize("NFKC", v).strip().lower()
+            if not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
+                raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
+        return v
 
     @model_validator(mode="before")
     @classmethod
@@ -148,6 +158,8 @@ class UserResponse(UserBase):
     skills: Optional[str] = None
     profile_picture_url: Optional[str] = None
     is_verified: bool = False
+    unverified_email: Optional[str] = None
+    email_change_challenge_id: Optional[str] = None
     is_active: bool = True
     is_suspended: bool = False
     trust_score: int = 100
@@ -155,6 +167,11 @@ class UserResponse(UserBase):
     avg_response_seconds: Optional[int] = None
     created_at: datetime
     roll_no: str
+
+
+class VerifyEmailChangeRequest(BaseModel):
+    challenge_id: str
+    otp: str = Field(..., min_length=6, max_length=6, pattern="^[0-9]{6}$")
 
 
 class PasswordResetRequest(BaseModel):

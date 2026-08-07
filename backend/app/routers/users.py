@@ -18,15 +18,46 @@ def get_my_profile(current_user: User = Depends(get_current_user)):
 
 
 @router.put("/me", response_model=UserResponse)
-def update_my_profile(
+async def update_my_profile(
     payload: UserUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    from app.core.exceptions import ConflictException, AppException
+    from app.services.otp_service import generate_otp, store_signup_otp, delete_otp_challenge
+    from app.services.email_service import send_brevo_otp_email
+
+    email_change_challenge_id = None
+    
+    # Process updates
     for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(current_user, field, value)
+        if field == "email":
+            if value and value.strip().lower() != current_user.email.lower():
+                new_email = value.strip().lower()
+                existing = db.query(User).filter(User.email == new_email).first()
+                if existing:
+                    raise ConflictException("An account with this email already exists")
+                
+                otp = generate_otp()
+                challenge_id, _ = store_signup_otp(new_email, otp)
+                sent = await send_brevo_otp_email(new_email, current_user.full_name, otp)
+                if not sent:
+                    delete_otp_challenge(challenge_id, new_email)
+                    raise AppException(
+                        "Failed to send verification email. Please try again later.",
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        error_code="BREVO_SEND_FAILED",
+                    )
+                current_user.unverified_email = new_email
+                current_user.is_verified = False
+                email_change_challenge_id = challenge_id
+        else:
+            setattr(current_user, field, value)
+            
     db.commit()
     db.refresh(current_user)
+    
+    current_user.email_change_challenge_id = email_change_challenge_id
     return current_user
 
 

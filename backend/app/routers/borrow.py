@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_active_verified_user
 from app.core.exceptions import NotFoundException, ForbiddenException, AppException
 from app.core.rate_limit import limiter
 from app.models.borrow import BorrowRequest
@@ -52,7 +52,7 @@ def create_borrow_request(
     request: Request,
     payload: BorrowRequestCreate,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(Resource).filter(Resource.id == payload.resource_id).with_for_update().first()
