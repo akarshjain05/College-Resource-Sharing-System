@@ -9,7 +9,7 @@ Lifecycle:
 """
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -126,6 +126,7 @@ def list_all_damage_claims(
 def resolve_damage_claim(
     claim_id: uuid.UUID,
     payload: DamageClaimResolve,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     _admin: User = Depends(require_admin),
 ):
@@ -171,12 +172,15 @@ def resolve_damage_claim(
     from app.models.enums import BorrowStatus, PaymentStatus
     from app.models.payment import Payment
     from app.services import payment_service
+    from app.services.email_service import send_payment_refund_email
+    from sqlalchemy.orm import joinedload
 
     br = db.query(BorrowRequest).filter(BorrowRequest.id == claim.borrow_request_id).first()
     payment = None
     if br:
         payment = (
             db.query(Payment)
+            .options(joinedload(Payment.payer))
             .filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID)
             .first()
         )
@@ -195,6 +199,15 @@ def resolve_damage_claim(
             )
             payment.status = PaymentStatus.REFUND_INITIATED
             payment.refund_id = result["id"]
+            if payment.payer and payment.payer.email:
+                background_tasks.add_task(
+                    send_payment_refund_email,
+                    payment.payer.email,
+                    payment.payer.full_name,
+                    payment.deposit_amount / 100.0,
+                    br.resource.title if br.resource else "item",
+                    result["id"]
+                )
 
     elif payload.status == DamageClaimStatus.RESOLVED_PARTIAL:
         # Borrower is only partly at fault — the assessed cost is kept out of the
@@ -210,6 +223,15 @@ def resolve_damage_claim(
                 )
                 payment.status = PaymentStatus.REFUND_INITIATED
                 payment.refund_id = result["id"]
+                if payment.payer and payment.payer.email:
+                    background_tasks.add_task(
+                        send_payment_refund_email,
+                        payment.payer.email,
+                        payment.payer.full_name,
+                        refundable_paise / 100.0,
+                        br.resource.title if br.resource else "item",
+                        result["id"]
+                    )
 
     # RESOLVED_VALID: the lender's claim stands as filed — the full deposit is
     # forfeited to cover the damage, so no refund is issued.

@@ -354,6 +354,7 @@ def confirm_handover_resource(
 @router.post("/{request_id}/reject-handover", response_model=BorrowRequestResponse)
 def reject_handover_resource(
     request_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -371,7 +372,7 @@ def reject_handover_resource(
     from app.models.enums import PaymentStatus
     from app.services import payment_service
 
-    payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
             payment.razorpay_payment_id, amount_paise=payment.total_amount,
@@ -379,6 +380,17 @@ def reject_handover_resource(
         )
         payment.status = PaymentStatus.REFUND_INITIATED
         payment.refund_id = result["id"]
+        
+        from app.services.email_service import send_payment_refund_email
+        if payment.payer and payment.payer.email:
+            background_tasks.add_task(
+                send_payment_refund_email,
+                payment.payer.email,
+                payment.payer.full_name,
+                payment.total_amount / 100.0,
+                br.resource.title if br.resource else "item",
+                result["id"]
+            )
 
     br.status = BorrowStatus.CANCELLED
     db.commit()
@@ -396,6 +408,7 @@ def reject_handover_resource(
 @router.post("/{request_id}/cancel", response_model=BorrowRequestResponse)
 def cancel_borrow_request(
     request_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -423,7 +436,7 @@ def cancel_borrow_request(
     from app.models.enums import PaymentStatus
     from app.services import payment_service
 
-    payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
             payment.razorpay_payment_id, amount_paise=payment.total_amount,
@@ -431,6 +444,17 @@ def cancel_borrow_request(
         )
         payment.status = PaymentStatus.REFUND_INITIATED
         payment.refund_id = result["id"]
+        
+        from app.services.email_service import send_payment_refund_email
+        if payment.payer and payment.payer.email:
+            background_tasks.add_task(
+                send_payment_refund_email,
+                payment.payer.email,
+                payment.payer.full_name,
+                payment.total_amount / 100.0,
+                br.resource.title if br.resource else "item",
+                result["id"]
+            )
 
     br.status = BorrowStatus.CANCELLED
     db.commit()
@@ -556,6 +580,7 @@ def return_resource(
 def confirm_return_resource(
     request_id: uuid.UUID,
     payload: BorrowRequestConfirmReturn,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -602,7 +627,7 @@ def confirm_return_resource(
             from app.models.enums import PaymentStatus
             from app.services import payment_service
 
-            payment = db.query(Payment).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+            payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
             if payment and payment.refunded_amount == 0:
                 result = payment_service.refund_payment(
                     payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
@@ -610,6 +635,17 @@ def confirm_return_resource(
                 )
                 payment.status = PaymentStatus.REFUND_INITIATED
                 payment.refund_id = result["id"]
+                
+                from app.services.email_service import send_payment_refund_email
+                if payment.payer and payment.payer.email:
+                    background_tasks.add_task(
+                        send_payment_refund_email,
+                        payment.payer.email,
+                        payment.payer.full_name,
+                        payment.deposit_amount / 100.0,
+                        br.resource.title if br.resource else "item",
+                        result["id"]
+                    )
 
             # Only apply normal trust adjustments for non-damaged returns
             actual_ret = _to_date(br.actual_return_date)
