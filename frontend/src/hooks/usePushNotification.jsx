@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage as setupFirebaseListener } from "firebase/messaging";
 import api from "../api/client";
 
 const firebaseConfig = {
@@ -98,7 +98,7 @@ export function usePushNotification(user) {
 
                 const messaging = getFirebaseMessaging();
                 if (messaging) {
-                    unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                    unsubscribeOnMessage = setupFirebaseListener(messaging, (payload) => {
                         const title = payload.notification?.title || payload.data?.title || "New Notification";
                         const body = payload.notification?.body || payload.data?.body || "";
 

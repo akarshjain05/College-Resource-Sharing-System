@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { chatEventBus } from "../utils/chatEventBus";
+import { chatMessageRouter } from "../utils/chatMessageRouter";
 import { resolveNotificationLink } from "../utils/routeResolver";
 import { notificationApi } from "../api/endpoints";
+import { appCallbacks } from "../utils/appCallbacks";
 
 // The realtime notification WebSocket is served by the main backend itself
 // (see backend/app/routers/websocket.py), not a separate microservice --
@@ -76,7 +77,7 @@ export function useNotificationSocket(onNotification, user) {
 
           // Route chat messages directly to open threads.
           if (payload.type === "chat_message") {
-            const isHandled = chatEventBus.emit(payload.borrow_request_id, payload.message);
+            const isHandled = chatMessageRouter.routeMessage(payload.borrow_request_id, payload.message);
             // If the thread is open (handled), skip the toast.
             if (isHandled) return;
           }
@@ -87,7 +88,7 @@ export function useNotificationSocket(onNotification, user) {
                 if (payload.id) {
                   try {
                     notificationApi.markRead(payload.id);
-                    window.dispatchEvent(new Event("refreshUnreadCount"));
+                    appCallbacks.trigger("refreshUnreadCount");
                   } catch (e) {
                     // ignore
                   }
