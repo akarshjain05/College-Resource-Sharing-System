@@ -456,15 +456,33 @@ def nudge_request(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Borrower nudges a request to remind the owner to respond or hand over the item."""
+    """Nudge endpoint to remind the other party (borrower or lender) to take action."""
     query = _borrow_query(db).filter(BorrowRequest.id == request_id)
     if current_user.role != UserRole.ADMIN:
-        query = query.filter(BorrowRequest.borrower_id == current_user.id)
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                BorrowRequest.borrower_id == current_user.id,
+                BorrowRequest.lender_id == current_user.id
+            )
+        )
     br = query.first()
     if not br:
         raise NotFoundException("Borrow request not found")
-    if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
-        raise AppException("This request cannot be nudged", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+
+    is_borrower = current_user.id == br.borrower_id
+    is_lender = current_user.id == br.lender_id
+
+    # Check eligibility based on role and status
+    if is_borrower:
+        if br.status not in (BorrowStatus.REQUESTED, BorrowStatus.APPROVED):
+            raise AppException("This request cannot be nudged by the borrower in its current state", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    elif is_lender:
+        if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
+            raise AppException("This request cannot be nudged by the lender in its current state", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+    else:
+        # Admin or other cases
+        pass
 
     # Rate-limit: one nudge per 24 hours
     if br.last_nudged_at and (datetime.now(timezone.utc) - br.last_nudged_at).total_seconds() < 86400:
@@ -474,18 +492,25 @@ def nudge_request(
     br.last_nudged_at = datetime.now(timezone.utc)
     db.commit()
 
-    if br.status == BorrowStatus.APPROVED:
-        notif_title = "Borrower is waiting for handover"
-        notif_msg = f"{current_user.full_name} is waiting for handover of '{resource_title}'. Please mark as handed over when delivered."
+    if is_borrower:
+        if br.status == BorrowStatus.APPROVED:
+            notif_title = "Borrower is waiting for handover"
+            notif_msg = f"{current_user.full_name} is waiting for handover of '{resource_title}'. Please mark as handed over when delivered."
+        else:
+            notif_title = "A borrower is waiting on your response"
+            notif_msg = f"{current_user.full_name} is still waiting on your decision for '{resource_title}'."
+        notify_user_id = br.lender_id
     else:
-        notif_title = "A borrower is waiting on your response"
-        notif_msg = f"{current_user.full_name} is still waiting on your decision for '{resource_title}'."
+        due_date_str = br.requested_end_date.strftime("%d %b %Y") if br.requested_end_date else "due date"
+        notif_title = "Reminder: Please return borrowed item"
+        notif_msg = f"Lender {current_user.full_name} is reminding you to return '{resource_title}' (was due on {due_date_str}). Please initiate return."
+        notify_user_id = br.borrower_id
 
     create_notification(
-        db, br.lender_id, NotificationType.SYSTEM,
+        db, notify_user_id, NotificationType.SYSTEM,
         notif_title,
         notif_msg,
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return {"detail": "Nudge sent"}
 
