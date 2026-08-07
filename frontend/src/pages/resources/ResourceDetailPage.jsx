@@ -101,7 +101,7 @@ export default function ResourceDetailPage() {
     e.preventDefault();
     if (!user) {
       toast.error("Please login to request items");
-      navigate("/login");
+      navigate("/login", { state: { from: { pathname: `/resources/${id}` } } });
       return;
     }
 
@@ -152,6 +152,7 @@ export default function ResourceDetailPage() {
   const handleWishlistToggle = async () => {
     if (!user) {
       toast.error("Please login to wishlist items");
+      navigate("/login", { state: { from: { pathname: `/resources/${id}` } } });
       return;
     }
     try {

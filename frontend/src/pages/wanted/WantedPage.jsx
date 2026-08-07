@@ -147,6 +147,11 @@ export default function WantedPage() {
   };
 
   const openOfferModal = (request) => {
+    if (!user) {
+      toast.error("Please login to make offers");
+      navigate("/login", { state: { from: { pathname: "/wanted" } } });
+      return;
+    }
     setOfferModalData(request);
     setSelectedResourceId("");
     setOfferMode(myResources.length === 0 ? "new" : "existing");

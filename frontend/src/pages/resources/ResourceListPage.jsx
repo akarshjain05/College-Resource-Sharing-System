@@ -65,6 +65,39 @@ export default function ResourceListPage() {
 
   return (
     <div className="space-y-6">
+      {!user && (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-primary-600 to-indigo-650 text-white p-6 sm:p-8 shadow-xl shadow-primary-500/10">
+          <div className="relative z-10 max-w-2xl space-y-3">
+            <span className="inline-block rounded-lg bg-white/20 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider">
+              Guest Preview Mode 🚀
+            </span>
+            <h2 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight">
+              Share & Borrow Campus Resources Instantly
+            </h2>
+            <p className="text-xs sm:text-sm font-medium text-indigo-100 leading-relaxed max-w-xl">
+              Save money and help your community. Explore textbooks, lab coats, calculators, electronics, and more. Sign in to request borrowing or list your own inventory!
+            </p>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link
+                to="/login"
+                className="rounded-xl bg-white hover:bg-slate-50 px-5 py-2.5 text-xs font-bold text-primary-600 transition-all shadow-sm hover:scale-102 active:scale-98"
+              >
+                Sign In to Account
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-xl bg-white/10 hover:bg-white/20 border border-white/25 px-5 py-2.5 text-xs font-bold text-white transition-all hover:scale-102 active:scale-98"
+              >
+                Create Account
+              </Link>
+            </div>
+          </div>
+          {/* Decorative floating shapes */}
+          <div className="absolute right-0 top-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+          <div className="absolute left-1/3 bottom-0 -mb-20 h-48 w-48 rounded-full bg-indigo-500/30 blur-2xl pointer-events-none" />
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">All Listings</h1>

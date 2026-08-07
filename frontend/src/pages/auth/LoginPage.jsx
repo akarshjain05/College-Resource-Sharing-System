@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { BookMarked } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -10,6 +10,8 @@ import CompleteGoogleProfileForm from "../../components/CompleteGoogleProfileFor
 export default function LoginPage() {
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/resources";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -22,7 +24,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
       toast.success("Welcome back!");
-      navigate("/resources");
+      navigate(from, { replace: true });
     } catch (err) {
       const errorCode = err.response?.data?.error_code;
       if (errorCode === "GOOGLE_ACCOUNT_NO_PASSWORD") {
@@ -51,7 +53,7 @@ export default function LoginPage() {
         });
       } else {
         toast.success("Welcome back!");
-        navigate("/resources");
+        navigate(from, { replace: true });
       }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Google sign-in failed. Please try again.");
@@ -77,7 +79,7 @@ export default function LoginPage() {
               registrationToken={googleSignup.registrationToken}
               fullName={googleSignup.fullName}
               email={googleSignup.email}
-              onDone={() => navigate("/resources")}
+              onDone={() => navigate(from, { replace: true })}
               onCancel={() => setGoogleSignup(null)}
             />
           ) : (

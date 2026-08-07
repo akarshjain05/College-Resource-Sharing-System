@@ -6,7 +6,6 @@ import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
 import ConfirmModal from "../../components/ConfirmModal";
-import { chatEventBus } from "../../utils/chatEventBus";
 import PayNowButton from "../../components/PayNowButton";
 
 const STATUS_STYLE = {
