@@ -44,7 +44,7 @@ const NAV_ITEMS = [
   // { to: "/profile", label: "My Profile", icon: User },
 ];
 
-export default function AppShell() {
+export default function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();

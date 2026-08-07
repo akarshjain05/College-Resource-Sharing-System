@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AppShell from "./layouts/AppShell";
+import AppLayout from "./layouts/AppLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
 import LoginPage from "./pages/auth/LoginPage";
@@ -47,7 +47,7 @@ export default function App() {
           <Route
             element={
               <ProtectedRoute>
-                <AppShell />
+                <AppLayout />
               </ProtectedRoute>
             }
           >

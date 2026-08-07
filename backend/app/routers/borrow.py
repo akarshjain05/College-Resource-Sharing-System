@@ -163,7 +163,7 @@ def _get_owned_request(db: Session, request_id: uuid.UUID, lender: User, for_upd
 @router.post("/{request_id}/approve", response_model=BorrowRequestResponse)
 def approve_borrow_request(
     request_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     br = _get_owned_request(db, request_id, current_user, for_update=True)
@@ -249,7 +249,7 @@ def approve_borrow_request(
 def reject_borrow_request(
     request_id: uuid.UUID,
     payload: BorrowRequestDecision,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     br = _get_owned_request(db, request_id, current_user)
@@ -291,7 +291,7 @@ def reject_borrow_request(
 @router.post("/{request_id}/handover", response_model=BorrowRequestResponse)
 def handover_resource(
     request_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     br = _get_owned_request(db, request_id, current_user)
@@ -324,7 +324,7 @@ def handover_resource(
 @router.post("/{request_id}/confirm-handover", response_model=BorrowRequestResponse)
 def confirm_handover_resource(
     request_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     query = db.query(BorrowRequest).filter(BorrowRequest.id == request_id)
@@ -355,7 +355,7 @@ def confirm_handover_resource(
 def reject_handover_resource(
     request_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     """Borrower reports not receiving an item marked as handed over."""
@@ -409,7 +409,7 @@ def reject_handover_resource(
 def cancel_borrow_request(
     request_id: uuid.UUID,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     query = _borrow_query(db).filter(BorrowRequest.id == request_id)
@@ -477,7 +477,7 @@ def cancel_borrow_request(
 @router.post("/{request_id}/nudge", status_code=status.HTTP_200_OK)
 def nudge_request(
     request_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     """Nudge endpoint to remind the other party (borrower or lender) to take action."""
@@ -543,7 +543,7 @@ def nudge_request(
 def return_resource(
     request_id: uuid.UUID,
     payload: BorrowRequestReturn,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     query = _borrow_query(db).filter(BorrowRequest.id == request_id)
@@ -581,7 +581,7 @@ def confirm_return_resource(
     request_id: uuid.UUID,
     payload: BorrowRequestConfirmReturn,
     background_tasks: BackgroundTasks,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     br = _get_owned_request(db, request_id, current_user)

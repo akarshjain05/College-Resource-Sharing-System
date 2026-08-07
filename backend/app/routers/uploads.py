@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, UploadFile, File, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_active_verified_user
 from app.core.exceptions import NotFoundException, ForbiddenException
 from app.models.resource import Resource, ResourceImage
 from app.models.enums import UserRole
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/uploads", tags=["File Uploads"])
 @router.post("/profile-picture", response_model=UserResponse)
 def upload_profile_picture(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     url = save_upload_file(file, "profiles")
@@ -38,7 +38,7 @@ def upload_resource_image(
     resource_id: uuid.UUID,
     file: UploadFile = File(...),
     is_primary: bool = False,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     resource = db.query(Resource).filter(Resource.id == resource_id).first()
@@ -63,7 +63,7 @@ def upload_resource_image(
 @router.delete("/resources/images/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_resource_image(
     image_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     image = db.query(ResourceImage).filter(ResourceImage.id == image_id).first()
@@ -79,7 +79,7 @@ def delete_resource_image(
 @router.patch("/resources/images/{image_id}/set-primary", response_model=ResourceImageResponse)
 def set_primary_resource_image(
     image_id: uuid.UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
 ):
     image = db.query(ResourceImage).filter(ResourceImage.id == image_id).first()
