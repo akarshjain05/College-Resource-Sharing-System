@@ -208,8 +208,8 @@ export default function AppLayout() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -429,14 +429,7 @@ export default function AppLayout() {
             <div className="relative flex items-center">
               <button
                 type="button"
-                onClick={() => {
-                  if (!user) {
-                    toast.error("Please login to view notifications");
-                    navigate("/login", { state: { from: { pathname: "/notifications" } } });
-                    return;
-                  }
-                  navigate("/notifications");
-                }}
+                onClick={() => navigate("/notifications")}
                 className="relative rounded-2xl border border-slate-200 hover:border-slate-350 dark:border-slate-800 dark:hover:border-slate-700 p-2.5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all active:scale-95 shadow-xs"
                 title="View Notifications"
               >

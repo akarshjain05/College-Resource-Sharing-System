@@ -48,11 +48,11 @@ export default function App() {
             {/* Public routes */}
             <Route path="/resources" element={<ResourceListPage />} />
             <Route path="/resources/:id" element={<ResourceDetailPage />} />
-            <Route path="/wanted" element={<WantedPage />} />
-            <Route path="/users/:userId" element={<PublicProfilePage />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/wanted" element={<WantedPage />} />
+              <Route path="/users/:userId" element={<PublicProfilePage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/my-listings" element={<MyListingsPage />} />
