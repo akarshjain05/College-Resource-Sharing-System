@@ -4,11 +4,10 @@ Admin accounts have every capability a regular user has, plus the **Admin Panel*
 in the sidebar only to accounts with `role = admin`).
 
 ## Getting Admin Access
-Admin accounts are not self-service — set `role: admin` directly when creating the account
-(e.g. via the seed script, or by editing a user's `role` column directly in the database
-for your first admin). There is currently no in-app "promote to admin" button, by design:
-granting admin rights is a sensitive action best done outside the web UI for a first admin,
-after which that admin could extend the API if a UI-driven promotion flow is wanted.
+Admin accounts are not self-service. To create your first admin, you can run the promotion script directly on the server against an existing user account:
+`docker compose exec backend python scripts/promote_admin.py <your_campus_email>`
+
+Alternatively, the demo seeder (`scripts/seed_data.py`) provisions a default `admin@example.com` account. There is currently no in-app "promote to admin" button, by design: granting admin rights is a sensitive action best done via CLI for a first admin.
 
 ## Admin Panel Overview
 

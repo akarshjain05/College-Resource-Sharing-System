@@ -175,8 +175,8 @@ recommended addition, not yet included.
 > (`docker compose up`) since they reflect your actual seeded data.
 
 ## Chapter 10: Deployment
-See `deployment/DEPLOYMENT_GUIDE.md` for three deployment paths (Ubuntu VPS with Nginx +
-Certbot, Render, Railway), plus `docs/INSTALLATION_GUIDE.md` for local development setup
+See `deployment/DEPLOYMENT_GUIDE.md` for three deployment paths (AWS EC2 with Nginx +
+Certbot), plus `docs/INSTALLATION_GUIDE.md` for local development setup
 and a troubleshooting table.
 
 ## Chapter 11: Conclusion & Future Scope

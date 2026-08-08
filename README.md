@@ -85,7 +85,7 @@ docker compose exec backend alembic upgrade head
 - Admin analytics (overview stats, most-borrowed categories, top contributors, department usage)
 - Admin user management (suspend/unsuspend) and category management
 - pytest suite covering auth, resources, the full borrow lifecycle, and admin RBAC (SQLite in-memory, no external deps needed to run)
-- Production deployment configs: multi-stage Nginx-served frontend build, reverse-proxy Nginx config, and a deployment guide for Ubuntu VPS / Render / Railway
+- Production deployment configs: multi-stage Nginx-served frontend build, reverse-proxy Nginx config, and a deployment guide for AWS EC2
 - React/Tailwind frontend for every one of the above flows, with a distinct "library index card" visual identity
 
 ### Running the tests
