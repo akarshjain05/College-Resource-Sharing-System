@@ -40,6 +40,9 @@
   container or locally, rebuild, and manually smoke-test the main flows (Tailwind/Vite
   major version bumps in particular can change build output in ways tests won't catch).
 
+## Code Quality
+- **ESLint**: The frontend project includes a `.eslintrc.cjs` configuration. Run `npm run lint` in the `frontend/` directory to check for issues. Strict rules have been downgraded to warnings to accommodate legacy code, but new code should aim to be warning-free.
+
 ## Log Locations
 - Application logs: stdout of each container (`docker compose logs -f backend`), using
   the `crss` logger configured in `app/core/logging_config.py`.

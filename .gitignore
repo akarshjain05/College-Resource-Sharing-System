@@ -36,3 +36,4 @@ celerybeat-schedule
 backend/celerybeat-schedule
 *.db
 *.sql
+*.tar.gz

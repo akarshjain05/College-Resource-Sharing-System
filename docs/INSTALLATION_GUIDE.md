@@ -1,7 +1,7 @@
 # Installation Guide
 
 This guide gets CRSS running locally for development or evaluation. For production
-deployment (VPS/Render/Railway), see `deployment/DEPLOYMENT_GUIDE.md`.
+deployment (AWS EC2), see `deployment/DEPLOYMENT_GUIDE.md`.
 
 ## Prerequisites
 - Docker Engine 24+ and Docker Compose v2 (`docker compose version` should work)
