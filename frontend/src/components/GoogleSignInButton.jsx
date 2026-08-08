@@ -30,7 +30,7 @@ export default function GoogleSignInButton({ onCredential, text = "continue_with
       });
       window.google.accounts.id.renderButton(buttonRef.current, {
         theme: "outline",
-        size: "large",
+        size: "medium",
         width: 344,
         text,
       });
