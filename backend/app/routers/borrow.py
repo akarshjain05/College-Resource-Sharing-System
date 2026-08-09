@@ -504,6 +504,17 @@ def nudge_request(
     elif is_lender:
         if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
             raise AppException("This request cannot be nudged by the lender in its current state", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+        
+        if br.status == BorrowStatus.ACTIVE:
+            # Prevent nudging unless the requested_end_date has passed (i.e. it's expired)
+            now = datetime.now(timezone.utc).date()
+            end = br.requested_end_date.date() if br.requested_end_date else now
+            if now <= end:
+                raise AppException(
+                    "You cannot remind the borrower until the return date has passed",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code="INVALID_STATE"
+                )
     else:
         # Admin or other cases
         pass
