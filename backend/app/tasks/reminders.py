@@ -34,7 +34,7 @@ def send_return_reminders():
                 NotificationType.RETURN_REMINDER,
                 "Return reminder",
                 f"'{br.resource.title}' is due back tomorrow ({br.requested_end_date}).",
-                link=f"/borrow-requests/{br.id}",
+                link=f"/my-bookings?id={br.id}",
             )
             asyncio.run(
                 send_return_reminder_email(
@@ -70,12 +70,12 @@ def mark_overdue_borrows_late():
             create_notification(
                 db, br.borrower_id, NotificationType.SYSTEM, "Item Overdue",
                 f"Your borrow for '{br.resource.title}' is overdue! Please return it immediately to avoid further penalties.",
-                link=f"/borrow-requests/{br.id}",
+                link=f"/my-bookings?id={br.id}",
             )
             create_notification(
                 db, br.lender_id, NotificationType.SYSTEM, "Item Overdue",
                 f"The borrow for '{br.resource.title}' by {br.borrower.full_name} is overdue.",
-                link=f"/borrow-requests/{br.id}",
+                link=f"/my-bookings?id={br.id}",
             )
             marked += 1
             

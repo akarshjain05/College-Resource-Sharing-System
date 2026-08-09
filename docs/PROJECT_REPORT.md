@@ -72,9 +72,9 @@ tracking, no accountability (who currently has an item), no notification system,
 audit trail — exactly the gaps CRSS is designed to close.
 
 **Positioning:** CRSS sits deliberately between these — structured enough to track
-borrow state, availability, and accountability (trust/sharing scores, review gating),
-but without the overhead of payment processing or stranger-trust mechanisms a general
-marketplace needs.
+borrow state, availability, and accountability (trust/sharing scores, review gating).
+Unlike simple lists, it includes a robust payment-gateway integration (Razorpay) for
+handling deposits and real transactions, providing a complete, trustworthy borrowing lifecycle.
 
 ## Chapter 3: Problem Statement & Objectives
 
@@ -175,8 +175,8 @@ recommended addition, not yet included.
 > (`docker compose up`) since they reflect your actual seeded data.
 
 ## Chapter 10: Deployment
-See `deployment/DEPLOYMENT_GUIDE.md` for three deployment paths (Ubuntu VPS with Nginx +
-Certbot, Render, Railway), plus `docs/INSTALLATION_GUIDE.md` for local development setup
+See `deployment/DEPLOYMENT_GUIDE.md` for three deployment paths (AWS EC2 with Nginx +
+Certbot), plus `docs/INSTALLATION_GUIDE.md` for local development setup
 and a troubleshooting table.
 
 ## Chapter 11: Conclusion & Future Scope
@@ -192,14 +192,11 @@ out of scope for this iteration.
 **Future scope:**
 - Native mobile apps (the responsive web frontend covers mobile browsers today, but not
   push notifications when the browser tab is closed)
-- Real payment-gateway-backed deposits, rather than tracked-but-informal deposit amounts
 - Accessibility passes (keyboard navigation audit, screen-reader
   labeling)
 - A frontend automated test suite (Vitest + React Testing Library)
 - An in-app "promote user to admin" flow with audit logging, replacing the current
   direct-database-edit approach for granting the first admin account
-- Concurrency hardening on borrow approval (row-level locking to eliminate the
-  double-approval race condition noted in `docs/VIVA_QUESTIONS.md`)
 - Map-based "pickup location" visualization for larger campuses
 
 ## Chapter 12: References

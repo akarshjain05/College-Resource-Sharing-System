@@ -118,7 +118,7 @@ def create_borrow_request(
         NotificationType.BORROW_REQUEST,
         "New borrow request",
         f"{current_user.full_name} wants to borrow '{resource_title}'.",
-        link=f"/borrow-requests/{borrow_request.id}",
+        link=f"/my-bookings?id={borrow_request.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == borrow_request.id).first()
 
@@ -232,7 +232,7 @@ def approve_borrow_request(
                 NotificationType.BORROW_REJECTED,
                 "Borrow Request Auto-Declined",
                 f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
-                link=f"/borrow-requests/{other_br.id}",
+                link=f"/my-bookings?id={other_br.id}",
             )
 
     db.commit()
@@ -241,7 +241,7 @@ def approve_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_APPROVED,
         "Borrow request approved",
         f"Your request to borrow '{resource_title}' was approved.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -284,7 +284,7 @@ def reject_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_REJECTED,
         "Borrow request rejected",
         f"Your request to borrow '{resource_title}' was rejected.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -317,7 +317,7 @@ def handover_resource(
         db, br.borrower_id, NotificationType.SYSTEM,
         "Handover Pending Confirmation",
         f"'{br.resource.title if br.resource else 'item'}' has been handed over by the lender. Please confirm receipt.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -347,7 +347,7 @@ def confirm_handover_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Confirmed",
         f"'{resource_title}' handover was confirmed by {current_user.full_name}.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -376,7 +376,7 @@ def reject_handover_resource(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
             notes={"reason": "borrower_rejected_handover_cancelled"},
         )
         payment.status = PaymentStatus.REFUND_INITIATED
@@ -401,7 +401,7 @@ def reject_handover_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Rejected / Booking Cancelled",
         f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name} (reported not received). The booking has been cancelled and refunded.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -441,7 +441,7 @@ def cancel_borrow_request(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
             notes={"reason": "borrow_request_cancelled"},
         )
         payment.status = PaymentStatus.REFUND_INITIATED
@@ -475,8 +475,8 @@ def cancel_borrow_request(
         notify_user_id,
         NotificationType.SYSTEM,
         "Borrow request cancelled",
-        msg_body,
-        link=f"/borrow-requests/{req_id}?tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
+        f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
+        link=f"/my-bookings?id={req_id}&tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
     )
 
     return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
@@ -512,6 +512,17 @@ def nudge_request(
     elif is_lender:
         if br.status not in (BorrowStatus.ACTIVE, BorrowStatus.LATE):
             raise AppException("This request cannot be nudged by the lender in its current state", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
+        
+        if br.status == BorrowStatus.ACTIVE:
+            # Prevent nudging unless the requested_end_date has passed (i.e. it's expired)
+            now = datetime.now(timezone.utc).date()
+            end = br.requested_end_date.date() if br.requested_end_date else now
+            if now <= end:
+                raise AppException(
+                    "You cannot remind the borrower until the return date has passed",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    error_code="INVALID_STATE"
+                )
     else:
         # Admin or other cases
         pass
@@ -579,7 +590,7 @@ def return_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Return requested",
         f"{current_user.full_name} has requested to return '{resource_title}'. Please confirm receipt.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -638,7 +649,7 @@ def confirm_return_resource(
             payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
             if payment and payment.refunded_amount == 0:
                 result = payment_service.refund_payment(
-                    payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
+                    db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
                     notes={"reason": "security_deposit_return"},
                 )
                 payment.status = PaymentStatus.REFUND_INITIATED
@@ -704,7 +715,7 @@ def confirm_return_resource(
         db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
         "Return confirmed",
         f"'{resource_title}' return has been confirmed.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
 
     if resource:

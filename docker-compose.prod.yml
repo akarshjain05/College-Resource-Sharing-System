@@ -1,4 +1,4 @@
-# Standalone production compose file for a single VM (e.g. Oracle Cloud Always Free).
+# Standalone production compose file for a single VM (e.g. AWS EC2).
 #
 # Deliberately NOT a partial override of docker-compose.yml: Compose merges list-typed
 # fields (volumes, ports) by CONCATENATION across -f files, not replacement, so trying

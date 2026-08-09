@@ -13,3 +13,4 @@ from app.models.damage_claim import DamageClaim  # noqa: F401
 from app.models.wishlist import WishlistItem  # noqa: F401
 from app.models.chat import ChatMessage  # noqa: F401
 from app.models.payment import Payment  # noqa: F401
+from app.models.wallet import WalletTransaction  # noqa: F401

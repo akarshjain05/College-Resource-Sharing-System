@@ -13,6 +13,12 @@ class PaymentStatus(str, enum.Enum):
     REFUNDED = "refunded"
     PARTIALLY_REFUNDED = "partially_refunded"
 
+class WalletTransactionType(str, enum.Enum):
+    TOP_UP = "top_up"
+    BORROW_DEDUCTION = "borrow_deduction"
+    REFUND = "refund"
+    EARNING = "earning"
+
 
 class PaymentPurpose(str, enum.Enum):
     RENT = "rent"

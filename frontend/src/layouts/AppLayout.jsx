@@ -46,7 +46,7 @@ const NAV_ITEMS = [
 ];
 
 export default function AppLayout() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -208,8 +208,8 @@ export default function AppLayout() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate("/login");
   };
 
@@ -234,34 +234,18 @@ export default function AppLayout() {
 
         <nav className="flex-1 space-y-1 px-3 py-6">
           {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
-            const isProtected = to !== "/resources" && to !== "/wanted";
-            const isLocked = isProtected && !user;
-            const isActive = !isLocked && (location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to)));
+            const isActive = location.pathname === to || (to !== "/resources" && location.pathname.startsWith(to));
             return (
               <Link
                 key={to}
-                to={isLocked ? "/login" : to}
-                onClick={(e) => {
-                  if (isLocked) {
-                    e.preventDefault();
-                    toast.error(`Please login to access ${label}`);
-                    navigate("/login", { state: { from: { pathname: to } } });
-                  }
-                }}
+                to={to}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-150 ${isActive
                   ? "bg-primary-600 text-white shadow-md shadow-primary-600/10 hover:bg-primary-700"
-                  : isLocked
-                    ? "text-slate-400 dark:text-slate-600 hover:bg-slate-50/30 dark:hover:bg-slate-800/20"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
               >
                 <Icon className="h-4.5 w-4.5 flex-shrink-0" />
                 <span>{label}</span>
-                {isLocked && (
-                  <span className="ml-auto inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    🔒 Lock
-                  </span>
-                )}
               </Link>
             );
           })}
@@ -430,14 +414,7 @@ export default function AppLayout() {
 
             {/* Wishlist Link in Navbar */}
             <Link
-              to={user ? "/wishlist" : "/login"}
-              onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  toast.error("Please login to view wishlist");
-                  navigate("/login", { state: { from: { pathname: "/wishlist" } } });
-                }
-              }}
+              to="/wishlist"
               className={`relative rounded-2xl border p-2.5 transition-all active:scale-95 shadow-xs ${
                 location.pathname === "/wishlist"
                   ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400"
@@ -452,14 +429,7 @@ export default function AppLayout() {
             <div className="relative flex items-center">
               <button
                 type="button"
-                onClick={() => {
-                  if (!user) {
-                    toast.error("Please login to view notifications");
-                    navigate("/login", { state: { from: { pathname: "/notifications" } } });
-                    return;
-                  }
-                  navigate("/notifications");
-                }}
+                onClick={() => navigate("/notifications")}
                 className="relative rounded-2xl border border-slate-200 hover:border-slate-350 dark:border-slate-800 dark:hover:border-slate-700 p-2.5 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all active:scale-95 shadow-xs"
                 title="View Notifications"
               >

@@ -130,9 +130,6 @@ export default function RegisterPage() {
           {/* Middle Pitch / Feature List */}
           <div className="relative z-10 my-auto max-w-lg space-y-8">
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wider text-brass-300 uppercase backdrop-blur-md border border-white/15">
-                <Sparkles className="h-3.5 w-3.5" /> SVNIT Exclusive Hub
-              </span>
               <h2 className="font-display text-4xl font-extrabold leading-tight tracking-tight text-white xl:text-5xl">
                 Lend what you have.<br />
                 <span className="bg-gradient-to-r from-brass-300 to-emerald-300 bg-clip-text text-transparent">Borrow what you need.</span><br />
@@ -187,7 +184,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Right Column: Registration form */}
-        <div className="flex flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-12 xl:px-16 bg-slate-50 dark:bg-slate-950 overflow-y-auto lg:h-screen">
+        <div className="flex flex-col items-center px-4 py-12 sm:px-6 lg:px-12 xl:px-16 bg-slate-50 dark:bg-slate-950 overflow-y-auto lg:h-screen">
           <div className="w-full max-w-md space-y-6 my-auto">
             
             {/* Header for Mobile/Tablet */}

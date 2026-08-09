@@ -59,7 +59,7 @@ export default function ResourceListPage() {
         console.log("Database list call failed", err);
       })
       .finally(() => setLoading(false));
-  }, [debouncedSearch, categoryId, condition, status, minRating, sortBy, sortDir, page, categories]);
+  }, [debouncedSearch, categoryId, condition, status, minRating, sortBy, sortDir, page, categories, user?.id]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 

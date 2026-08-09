@@ -3,29 +3,24 @@
 ## Getting Started
 
 ### Creating an account
-1. Go to the CRSS login page and click **Create an account**.
-2. Fill in your full name, campus email, a password (minimum 8 characters), and select
-   your role (Student, Faculty, or Club/Department).
-3. Optionally add your department, course, year of study, and student ID — these help
-   other users know who they're borrowing from or lending to.
-4. Click **Create account**, then sign in. A verification email is sent to your address;
-   click the link inside it to verify your account.
+1. Go to the CRSS login page. You can either use **Sign in with Google** for one-click access or click **Create an account** to register with an email.
+2. If registering manually, fill in your full name, campus email, a password (minimum 8 characters), and select your role (Student, Faculty, or Club/Department).
+3. Optionally add your department, course, year of study, and student ID — these help other users know who they're borrowing from or lending to.
+4. Click **Create account**, then sign in. A verification email is sent to your address; click the link inside it to verify your account.
 
 ### Signing in
-Enter your campus email and password on the login page. If you forget your password,
-use the **Forgot password?** link to receive a reset email.
+Enter your campus email and password on the login page, or click **Sign in with Google**. If you forget your password, use the **Forgot password?** link to receive a reset email.
 
 ## Browsing and Borrowing
 
 ### Finding a resource
 1. Go to **Browse Resources** in the sidebar.
-2. Use the search box to look for a keyword (title, description, or tag), or narrow
-   results with the category and condition filters.
+2. Use the search box to look for a keyword (title, description, or tag), or narrow results with the category and condition filters.
 3. Click any resource card to see full details, photos, owner info, and reviews.
 
 ### Campus Needs / Wanted Board
 Can't find what you are looking for?
-1. Go to **Campus Needs** (or Wanted items).
+1. Go to **Campus Needs** (or Wanted items). Note: You must be logged in to view or post on this board.
 2. You can create a request for a specific resource you need.
 3. Other users can view your need and offer to lend the resource to you.
 
