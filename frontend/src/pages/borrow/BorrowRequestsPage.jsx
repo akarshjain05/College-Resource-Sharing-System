@@ -535,17 +535,17 @@ export default function BorrowRequestsPage() {
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </span>
                     ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <>
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                           <User className="h-3.5 w-3.5 text-slate-400" /> Waiting for owner to hand over
                         </span>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                          className="btn-secondary !py-1.5 !px-2.5 text-[10px] flex items-center gap-1"
+                          className="btn-secondary !py-2 text-xs flex items-center gap-1.5"
                         >
-                          <BellRing className="h-3 w-3" /> Nudge
+                          <BellRing className="h-3.5 w-3.5" /> Nudge
                         </button>
-                      </div>
+                      </>
                     )
                   )}
                   {tab === "borrowing" && book.status === "handover_requested" && (
@@ -573,13 +573,13 @@ export default function BorrowRequestsPage() {
                         <RotateCcw className="h-3.5 w-3.5" /> Return Item
                       </button>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Return unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
                       </span>
                     )
                   )}
                   {tab === "borrowing" && book.status === "return_requested" && (
-                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                    <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                       <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Return pending confirmation
                     </span>
                   )}
@@ -614,7 +614,7 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : isExpired ? (
-                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
                       </span>
                     ) : isStarted ? (
@@ -625,23 +625,23 @@ export default function BorrowRequestsPage() {
                         <Check className="h-3.5 w-3.5" /> Mark as Handed Over
                       </button>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
                       </span>
                     )
                   )}
                   {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                    <>
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
                       </span>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                        className="btn-secondary !py-1.5 !px-2.5 text-[10px] flex items-center gap-1"
+                        className="btn-secondary !py-2 text-xs flex items-center gap-1.5"
                       >
-                        <BellRing className="h-3 w-3" /> Remind Borrower
+                        <BellRing className="h-3.5 w-3.5" /> Remind Borrower
                       </button>
-                    </div>
+                    </>
                   )}
                   {tab === "lending" && book.status === "return_requested" && (
                     <button
