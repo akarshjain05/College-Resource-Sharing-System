@@ -222,7 +222,7 @@ def test_borrow_cancel_notification(client, test_user, second_user, test_categor
     req_id = req_resp.json()["id"]
 
     # Borrower cancels request
-    cancel_resp = client.post(f"/api/v1/borrow-requests/{req_id}/cancel", headers=borrower_headers)
+    cancel_resp = client.post(f"/api/v1/borrow-requests/{req_id}/cancel", headers=borrower_headers, json={})
     assert cancel_resp.status_code == 200, f"Unexpected status {cancel_resp.status_code}: {cancel_resp.text}"
 
     # Verify owner (lender) receives cancellation notification
