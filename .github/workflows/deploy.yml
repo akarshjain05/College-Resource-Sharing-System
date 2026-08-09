@@ -3,17 +3,47 @@ name: Deploy to AWS EC2
 on:
   push:
     branches:
-      - main  # Triggers when you push to the 'main' branch
+      - main
 
 concurrency:
   group: deploy-ec2
   cancel-in-progress: true
 
-
 jobs:
-  deploy:
+  test-backend:
     runs-on: ubuntu-latest
-    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt
+      - name: Run tests
+        working-directory: backend
+        env:
+          ENVIRONMENT: test
+        run: python -m pytest -q
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+  deploy:
+    needs: [test-backend, build-frontend]
+    runs-on: ubuntu-latest
+
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -25,7 +55,7 @@ jobs:
           script: |
             # 1. Go into the project directory
             cd College-Resource-Sharing-System
-            
+
             # 2. Pull the latest code from GitHub main branch
             rm -f .git/*.lock .git/refs/heads/*.lock .git/refs/remotes/origin/*.lock || true
             git fetch origin --prune

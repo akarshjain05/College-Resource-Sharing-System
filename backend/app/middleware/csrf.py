@@ -30,13 +30,21 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         is_bearer_request = request.headers.get("authorization", "").lower().startswith("bearer ")
         is_auth_endpoint = "/auth/" in request.url.path
 
+        # A request with no CSRF cookie at all was never issued a token to echo back —
+        # it's a plain unauthenticated/non-browser request, not a cookie-riding CSRF
+        # attempt. Let it fall through to the route's own auth dependency, which will
+        # correctly reply 401. Only enforce once a session (and its csrf_token cookie)
+        # actually exists.
+        has_csrf_cookie = existing_token is not None
+
         if (
             request.method not in SAFE_METHODS
             and not is_bearer_request
             and not is_auth_endpoint
+            and has_csrf_cookie
         ):
             submitted_token = request.headers.get(CSRF_HEADER_NAME)
-            if not existing_token or not submitted_token or not secrets.compare_digest(submitted_token, existing_token):
+            if not submitted_token or not secrets.compare_digest(submitted_token, existing_token):
                 return JSONResponse(
                     status_code=403,
                     content={"detail": "CSRF token missing or invalid", "error_code": "CSRF_FAILURE"},
