@@ -24,6 +24,7 @@ jobs:
         working-directory: backend
         env:
           ENVIRONMENT: test
+          UPLOAD_DIR: ./uploads
         run: python -m pytest -q
 
   build-frontend:
