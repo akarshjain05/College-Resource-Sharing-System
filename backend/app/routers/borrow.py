@@ -375,7 +375,7 @@ def reject_handover_resource(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
             notes={"reason": "borrower_rejected_handover_cancelled"},
         )
         payment.status = PaymentStatus.REFUND_INITIATED
@@ -439,7 +439,7 @@ def cancel_borrow_request(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
             notes={"reason": "borrow_request_cancelled"},
         )
         payment.status = PaymentStatus.REFUND_INITIATED
@@ -641,7 +641,7 @@ def confirm_return_resource(
             payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
             if payment and payment.refunded_amount == 0:
                 result = payment_service.refund_payment(
-                    payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
+                    db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
                     notes={"reason": "security_deposit_return"},
                 )
                 payment.status = PaymentStatus.REFUND_INITIATED

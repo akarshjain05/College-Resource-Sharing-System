@@ -8,26 +8,19 @@ import ChatThread from "../../components/ChatThread";
 import ConfirmModal from "../../components/ConfirmModal";
 import PayNowButton from "../../components/PayNowButton";
 
-const STATUS_STYLE = {
-  requested: "bg-brass-50 text-brass-700",
-  approved: "bg-forest-50 text-forest-700",
-  active: "bg-forest-100 text-forest-800",
-  rejected: "bg-red-50 text-red-600",
-  cancelled: "bg-ink-100 text-ink-500",
-  returned: "bg-ink-100 text-ink-700",
-  return_requested: "bg-brass-50 text-brass-700",
-  damaged: "bg-red-50 text-red-600",
-  late: "bg-red-50 text-red-600",
-};
-
 const getStatusBadge = (status) => {
-  const st = status.toLowerCase();
+  const st = (status || "").toLowerCase();
   if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
   if (st === "approved") return <span className="rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Approved</span>;
   if (st === "pending") return <span className="rounded-lg bg-amber-50 text-amber-600 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Pending</span>;
   if (st === "handover_requested") return <span className="rounded-lg bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Handover Requested</span>;
   if (st === "active" || st === "ongoing") return <span className="rounded-lg bg-indigo-50 text-indigo-600 border border-indigo-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Active</span>;
-  if (st === "returned") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
+  if (st === "returned" || st === "confirmed_return") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Completed</span>;
+  if (st === "return_requested") return <span className="rounded-lg bg-purple-50 text-purple-600 border border-purple-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Return Pending</span>;
+  if (st === "cancelled") return <span className="rounded-lg bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Cancelled</span>;
+  if (st === "rejected") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Declined</span>;
+  if (st === "damaged") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Damaged</span>;
+  if (st === "late") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Late</span>;
   return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
 };
 
@@ -447,7 +440,7 @@ export default function BorrowRequestsPage() {
                       {book.resource.image_placeholder || "🪜"}
                     </div>
                     <div>
-                      <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight hover:text-brand-500 hover:underline cursor-pointer">
+                      <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white leading-tight hover:text-primary-600 dark:hover:text-primary-400 hover:underline cursor-pointer">
                         <Link to={`/resources/${book.resource.id}`}>
                           {book.resource.title}
                         </Link>
@@ -479,12 +472,12 @@ export default function BorrowRequestsPage() {
                       <p className="text-primary-600 dark:text-primary-400 font-extrabold">₹{book.total_amount}</p>
                       {book.total_amount === 0 ? (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
-                      ) : ['requested', 'pending', 'rejected', 'cancelled'].includes(book.status?.toLowerCase()) ? null : book.payment?.status === "paid" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
                       ) : ["rejected", "cancelled"].includes(book.status?.toLowerCase()) ? (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                           {book.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
                         </span>
+                      ) : ["requested", "pending"].includes(book.status?.toLowerCase()) ? null : book.payment?.status === "paid" ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
                       ) : (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
                       )}
@@ -511,27 +504,23 @@ export default function BorrowRequestsPage() {
                   )}
                   {tab === "borrowing" && book.status === "approved" && (
                     (!book.payment || book.payment.status !== "paid") && book.total_amount > 0 ? (
-                      <div className="w-full flex gap-2 items-center">
-                        <div className="flex-1">
-                          <PayNowButton 
-                             borrowRequest={book} 
-                             onPaid={() => {
-                                setSelectedBookingForModal(null);
-                                if (typeof loadBookingsList === 'function') loadBookingsList();
-                             }} 
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
-                            className="w-full btn-secondary !py-3 text-xs text-red-600 hover:bg-red-50 border-red-100 mt-2 flex items-center justify-center gap-1.5"
-                          >
-                            <Ban className="h-3.5 w-3.5" /> Cancel Request
-                          </button>
-                        </div>
-                      </div>
+                      <>
+                        <PayNowButton 
+                           borrowRequest={book} 
+                           onPaid={() => {
+                              setSelectedBookingForModal(null);
+                              if (typeof loadBookingsList === 'function') loadBookingsList();
+                           }} 
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Request
+                        </button>
+                      </>
                     ) : !isStarted ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </span>
                     ) : (
@@ -729,7 +718,7 @@ export default function BorrowRequestsPage() {
                     value={damageReportInput}
                     onChange={(e) => setDamageReportInput(e.target.value)}
                     rows={2}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-800 placeholder-slate-400 outline-none transition-all focus:border-red-500 focus:ring-1 focus:ring-red-500"
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 text-xs text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 outline-none transition-all focus:border-red-500 focus:ring-1 focus:ring-red-500"
                   />
                   <p className="text-[10px] text-slate-500 mt-1">
                     Reporting damage will automatically open a claim for the owner to review.
@@ -742,7 +731,7 @@ export default function BorrowRequestsPage() {
                   type="submit"
                   className="flex-1 btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-2 text-xs font-bold shadow-sm"
                 >
-                  Submit & Return
+                  {reviewAction === "confirm_return" ? "Submit & Confirm" : "Submit & Return"}
                 </button>
                 <button
                   type="button"
@@ -758,8 +747,14 @@ export default function BorrowRequestsPage() {
       )}
 
       {selectedBookingForModal && (() => {
-        const modalIsStarted = new Date(selectedBookingForModal.requested_start_date) <= new Date();
-        const modalIsExpired = new Date(selectedBookingForModal.requested_end_date) < new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDate = new Date(selectedBookingForModal.requested_start_date);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(selectedBookingForModal.requested_end_date);
+        endDate.setHours(0, 0, 0, 0);
+        const modalIsStarted = today >= startDate;
+        const modalIsExpired = today > endDate;
         const isLenderModal = tab === "lending" || bookings.lending?.some(b => b.id === selectedBookingForModal.id) || selectedBookingForModal.lender?.full_name === "You";
 
         return (
@@ -802,12 +797,12 @@ export default function BorrowRequestsPage() {
                     <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
                     {(selectedBookingForModal.total_amount || 0) === 0 ? (
                       <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
-                    ) : ['requested', 'pending', 'rejected', 'cancelled'].includes(selectedBookingForModal.status?.toLowerCase()) ? null : selectedBookingForModal.payment?.status === "paid" ? (
-                      <span className="inline-flex items-center rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
                     ) : ["rejected", "cancelled"].includes(selectedBookingForModal.status?.toLowerCase()) ? (
                       <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                         {selectedBookingForModal.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
                       </span>
+                    ) : ["requested", "pending"].includes(selectedBookingForModal.status?.toLowerCase()) ? null : selectedBookingForModal.payment?.status === "paid" ? (
+                      <span className="inline-flex items-center rounded-md bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✓ Paid</span>
                     ) : (
                       <span className="inline-flex items-center rounded-md bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">✗ Unpaid</span>
                     )}
@@ -862,26 +857,25 @@ export default function BorrowRequestsPage() {
 
                 {!isLenderModal && selectedBookingForModal.status === "approved" && (
                   (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
-                    <div className="w-full flex gap-2 items-center">
+                    <div className="flex gap-2">
                       <div className="flex-1">
                         <PayNowButton 
-                           borrowRequest={selectedBookingForModal} 
+                           borrowRequest={selectedBookingForModal}
+                           className="w-full"
                            onPaid={() => {
                               setSelectedBookingForModal(null);
                               if (typeof loadBookingsList === 'function') loadBookingsList();
                            }} 
                         />
                       </div>
-                      <div className="flex-1">
-                        <button
-                          onClick={async () => {
-                            await handleStatusChange(selectedBookingForModal.id, "cancelled");
-                          }}
-                          className="w-full btn-secondary !py-3 text-xs text-red-600 hover:bg-red-50 border-red-100 mt-2 flex items-center justify-center gap-1.5"
-                        >
-                          <Ban className="h-3.5 w-3.5" /> Cancel Request
-                        </button>
-                      </div>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="flex-1 btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Request
+                      </button>
                     </div>
                   ) : !modalIsStarted ? (
                     <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
@@ -1012,9 +1006,19 @@ export default function BorrowRequestsPage() {
                 )}
 
                 {isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
-                  <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-[11px] font-bold text-slate-400">Item is currently with borrower</span>
+                  <div className="flex items-center justify-between gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Item is currently with borrower</span>
+                    </div>
+                    {modalIsExpired && (
+                      <button
+                        onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
+                        className="btn-secondary !py-1 !px-2 text-[10px] flex items-center gap-1"
+                      >
+                        <BellRing className="h-3 w-3" /> Remind Borrower
+                      </button>
+                    )}
                   </div>
                 )}
 

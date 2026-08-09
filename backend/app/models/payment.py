@@ -16,12 +16,12 @@ class Payment(Base, UUIDMixin, TimestampMixin):
         UniqueConstraint("borrow_request_id", name="uq_payment_borrow_request"),
     )
 
-    borrow_request_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=False
+    borrow_request_id: Mapped[Optional[UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=True
     )
     payer_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
 
-    razorpay_order_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False, index=True)
+    razorpay_order_id: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True, index=True)
     razorpay_payment_id: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True, index=True)
     razorpay_signature: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
 
@@ -43,7 +43,7 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     # Every webhook delivery we've already processed, so a Razorpay retry can't double-apply an event.
     last_webhook_event_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
 
-    borrow_request: Mapped["BorrowRequest"] = relationship("BorrowRequest")
+    borrow_request: Mapped[Optional["BorrowRequest"]] = relationship("BorrowRequest")
     payer: Mapped["User"] = relationship("User")
 
     def __repr__(self) -> str:

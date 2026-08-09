@@ -22,6 +22,9 @@ export const authApi = {
 };
 
 export const paymentApi = {
+  createTopupOrder: (amount_paise) => api.post("/payments/wallet/topup/order", { amount_paise }),
+  verifyTopup: (payload) => api.post("/payments/wallet/topup/verify", payload),
+  payFromWallet: (borrowRequestId) => api.post("/payments/wallet/pay", { borrow_request_id: borrowRequestId }),
   createOrder: (borrowRequestId) => api.post("/payments/orders", { borrow_request_id: borrowRequestId }),
   verify: (payload) => api.post("/payments/verify", payload),
   getMyTransactions: () => api.get("/payments/my"),
