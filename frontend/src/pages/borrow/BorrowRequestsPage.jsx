@@ -603,20 +603,44 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : isExpired ? (
-                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1 mr-auto">
-                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     ) : isStarted ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
-                        className="btn-primary !py-2 text-xs"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                      </button>
+                      <div className="w-full flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
+                          className="flex-1 btn-primary !py-2 text-xs"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="flex-none btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     )
                   )}
                   {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
