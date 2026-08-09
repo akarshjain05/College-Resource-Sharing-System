@@ -22,7 +22,7 @@ def _notify_new_wanted_bg(poster_id: uuid.UUID, poster_name: str, wanted_id: uui
 
     db = SessionLocal()
     try:
-        other_users = db.query(User).filter(User.id != poster_id).all()
+        other_users = db.query(User).filter(User.id != poster_id, User.notif_campus_needs == True).all()
         for user in other_users:
             create_notification(
                 db=db,

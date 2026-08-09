@@ -128,6 +128,8 @@ class UserUpdate(BaseModel):
     skills: Optional[SafeStr] = Field(None, max_length=500)
     phone_number: Optional[SafeStr] = Field(None, max_length=20)
     profile_picture_url: Optional[str] = Field(None, max_length=500)
+    notif_resource_listing: Optional[bool] = None
+    notif_campus_needs: Optional[bool] = None
 
     @field_validator("email")
     @classmethod
@@ -165,6 +167,8 @@ class UserResponse(UserBase):
     trust_score: int = 100
     sharing_score: int = 0
     avg_response_seconds: Optional[int] = None
+    notif_resource_listing: bool = True
+    notif_campus_needs: bool = True
     created_at: datetime
     roll_no: str
 

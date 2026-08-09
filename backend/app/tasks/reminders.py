@@ -57,37 +57,83 @@ def mark_overdue_borrows_late():
     marked = 0
     try:
         today = date.today()
-        overdue = (
+        overdue_active = (
             db.query(BorrowRequest)
             .filter(
-                BorrowRequest.status.in_([BorrowStatus.ACTIVE, BorrowStatus.APPROVED]),
+                BorrowRequest.status == BorrowStatus.ACTIVE,
                 BorrowRequest.requested_end_date < today
             )
             .all()
         )
-        for br in overdue:
+        for br in overdue_active:
             br.status = BorrowStatus.LATE
             create_notification(
-                db,
-                br.borrower_id,
-                NotificationType.SYSTEM,
-                "Item Overdue",
+                db, br.borrower_id, NotificationType.SYSTEM, "Item Overdue",
                 f"Your borrow for '{br.resource.title}' is overdue! Please return it immediately to avoid further penalties.",
                 link=f"/borrow-requests/{br.id}",
             )
             create_notification(
-                db,
-                br.lender_id,
-                NotificationType.SYSTEM,
-                "Item Overdue",
+                db, br.lender_id, NotificationType.SYSTEM, "Item Overdue",
                 f"The borrow for '{br.resource.title}' by {br.borrower.full_name} is overdue.",
                 link=f"/borrow-requests/{br.id}",
             )
             marked += 1
-        
+            
+        # Cancel and refund borrows that were never handed over
+        from app.models.payment import Payment
+        from app.models.enums import PaymentStatus
+        from app.services import payment_service
+        from sqlalchemy.orm import joinedload
+        from app.services.email_service import send_payment_refund_email
+
+        expired_unfulfilled = (
+            db.query(BorrowRequest)
+            .filter(
+                BorrowRequest.status.in_([BorrowStatus.REQUESTED, BorrowStatus.APPROVED, BorrowStatus.HANDOVER_REQUESTED]),
+                BorrowRequest.requested_end_date < today
+            )
+            .all()
+        )
+        cancelled = 0
+        for br in expired_unfulfilled:
+            # Issue refund if they paid
+            payment = db.query(Payment).options(joinedload(Payment.payer)).filter(
+                Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID
+            ).first()
+            
+            if payment:
+                try:
+                    result = payment_service.refund_payment(
+                        payment.razorpay_payment_id, amount_paise=payment.total_amount,
+                        notes={"reason": "borrow_window_expired_unfulfilled"},
+                    )
+                    payment.status = PaymentStatus.REFUND_INITIATED
+                    payment.refund_id = result["id"]
+                    
+                    if payment.payer and payment.payer.email:
+                        asyncio.run(
+                            send_payment_refund_email(
+                                payment.payer.email,
+                                payment.payer.full_name,
+                                payment.total_amount / 100.0,
+                                br.resource.title if br.resource else "item",
+                                result["id"]
+                            )
+                        )
+                except Exception as e:
+                    logger.error(f"Failed to refund expired borrow {br.id}: {e}")
+                    
+            br.status = BorrowStatus.CANCELLED
+            create_notification(
+                db, br.borrower_id, NotificationType.SYSTEM, "Borrow Cancelled",
+                f"Your request for '{br.resource.title}' expired without handover and was auto-cancelled.",
+                link=f"/borrow-requests/{br.id}",
+            )
+            cancelled += 1
+
         db.commit()
-        logger.info("Marked %d borrows as late", marked)
-        return {"borrows_marked_late": marked}
+        logger.info("Marked %d borrows as late, auto-cancelled %d unfulfilled", marked, cancelled)
+        return {"borrows_marked_late": marked, "borrows_auto_cancelled": cancelled}
     finally:
         db.close()
 

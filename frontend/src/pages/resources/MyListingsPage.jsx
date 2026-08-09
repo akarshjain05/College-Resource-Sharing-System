@@ -296,22 +296,26 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
         </div>
 
         {/* Resource Details Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
+            <span className="text-[9px] font-bold uppercase text-slate-400 block">Daily Price</span>
+            <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{item.daily_price ?? Math.floor((item.deposit_amount || 0) * 0.05)}/day</span>
+          </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">Security Deposit</span>
-            <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{item.deposit_amount || 0}</span>
+            <span className="font-extrabold text-slate-850 dark:text-slate-100 text-sm">₹{item.deposit_amount || 0}</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">Total Borrows</span>
-            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.total_borrows || 0}</span>
+            <span className="font-extrabold text-slate-850 dark:text-slate-100 text-sm">{item.total_borrows || 0}</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">View Count</span>
-            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.view_count || 0}</span>
+            <span className="font-extrabold text-slate-850 dark:text-slate-100 text-sm">{item.view_count || 0}</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">Max Borrow Days</span>
-            <span className="font-extrabold text-slate-800 dark:text-slate-100 text-sm">{item.max_borrow_days || 7} days</span>
+            <span className="font-extrabold text-slate-850 dark:text-slate-100 text-sm">{item.max_borrow_days || 7} days</span>
           </div>
         </div>
 

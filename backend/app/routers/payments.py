@@ -54,7 +54,11 @@ def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
         days = max(1, (br.requested_end_date.date() - br.requested_start_date.date()).days + 1)
     except Exception:
         days = 1
-    daily_price = int(deposit_val * 0.05)
+    resource_daily_price = float(getattr(resource, "daily_price", 0) or 0)
+    if resource_daily_price > 0:
+        daily_price = int(resource_daily_price)
+    else:
+        daily_price = int(deposit_val * 0.05)
     rent = daily_price * days
     deposit = int(deposit_val)
     rent_paise = rent * 100

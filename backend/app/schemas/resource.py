@@ -26,6 +26,7 @@ class ResourceBase(BaseModel):
     pickup_location: Optional[SafeStr] = Field(None, max_length=200)
     tags: Optional[SafeStr] = Field(None, max_length=200)
     deposit_amount: Optional[float] = Field(0, ge=0)
+    daily_price: Optional[float] = Field(0, ge=0)
     max_borrow_days: int = Field(7, ge=1, le=90)
     available_from: Optional[date] = None
     available_to: Optional[date] = None
@@ -46,6 +47,7 @@ class ResourceUpdate(BaseModel):
     pickup_location: Optional[SafeStr] = Field(None, max_length=200)
     tags: Optional[SafeStr] = Field(None, max_length=200)
     deposit_amount: Optional[float] = Field(None, ge=0)
+    daily_price: Optional[float] = Field(None, ge=0)
     max_borrow_days: Optional[int] = Field(None, ge=1, le=90)
     available_from: Optional[date] = None
     available_to: Optional[date] = None

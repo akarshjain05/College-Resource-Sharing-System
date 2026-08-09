@@ -262,25 +262,20 @@ export default function BorrowRequestsPage() {
         return;
       }
       if (newStatus === "cancelled" || newStatus === "cancel") {
-        setConfirmDialog({
-          title: "Cancel Request",
-          message: "Are you sure you want to cancel this request?",
-          confirmText: "Cancel Request",
-          isDanger: true,
-          onConfirm: async () => {
-            try {
-              await borrowApi.cancel(bookingId);
-              toast.success("Updated successfully");
-              setSelectedBookingForModal(null);
-              if (typeof loadBookingsList === 'function') loadBookingsList();
-              if (selectedBookingForModal?.id === bookingId) {
-                closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
-              }
-            } catch (err) {
-              toast.error(err.response?.data?.detail || "Action failed");
-            }
+        const reason = window.prompt("Are you sure you want to cancel this booking? If yes, please provide a reason:");
+        if (reason === null) return; // User cancelled the prompt
+        
+        try {
+          await borrowApi.cancel(bookingId, { reason: reason.trim() });
+          toast.success("Updated successfully");
+          setSelectedBookingForModal(null);
+          if (typeof loadBookingsList === 'function') loadBookingsList();
+          if (selectedBookingForModal?.id === bookingId) {
+            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
           }
-        });
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Action failed");
+        }
         return;
       }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
@@ -614,20 +609,44 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : isExpired ? (
-                      <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     ) : isStarted ? (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
-                        className="btn-primary !py-2 text-xs"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                      </button>
+                      <div className="w-full flex gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
+                          className="flex-1 btn-primary !py-2 text-xs"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="flex-none btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     ) : (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
-                      </span>
+                      <div className="w-full flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </div>
                     )
                   )}
                   {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
@@ -987,24 +1006,54 @@ export default function BorrowRequestsPage() {
                       </button>
                     </div>
                   ) : modalIsExpired ? (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
-                      <Calendar className="h-3.5 w-3.5 text-red-500" />
-                      <span className="text-[11px] font-bold text-red-500">Lending window expired</span>
+                    <div className="w-full flex justify-between items-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
+                        <Calendar className="h-3.5 w-3.5 text-red-500" />
+                        <span className="text-[11px] font-bold text-red-500">Lending window expired</span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                      </button>
                     </div>
                   ) : modalIsStarted ? (
-                    <button
-                      onClick={async () => {
-                        await handleStatusChange(selectedBookingForModal.id, "handover");
-                        closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
-                      }}
-                      className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
-                    >
-                      <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                    </button>
+                    <div className="w-full flex gap-2">
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "handover");
+                          closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
+                        }}
+                        className="flex-1 btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="flex-none btn-secondary !py-2.5 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                      </button>
+                    </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
+                    <div className="w-full flex justify-between items-center gap-2">
+                      <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                      </button>
                     </div>
                   )
                 )}

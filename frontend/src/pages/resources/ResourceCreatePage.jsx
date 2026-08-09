@@ -214,6 +214,7 @@ export default function ResourceCreatePage() {
         pickup_location: form.location,
         tags: categoryName.toLowerCase(),
         deposit_amount: depositAmountNum,
+        daily_price: dailyPriceNum,
         max_borrow_days: 7,
         category_id: form.category_id,
         available_from: form.available_from || null,

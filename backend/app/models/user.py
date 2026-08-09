@@ -51,6 +51,8 @@ class User(Base, UUIDMixin, TimestampMixin):
     response_count: Mapped[int] = mapped_column(default=0)
 
     fcm_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    notif_resource_listing: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    notif_campus_needs: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     resources: Mapped[List["Resource"]] = relationship(
         "Resource", back_populates="owner", cascade="all, delete-orphan"

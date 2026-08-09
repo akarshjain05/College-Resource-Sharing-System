@@ -33,6 +33,7 @@ export default function ResourceEditPage() {
     description: "",
     condition: "good",
     deposit_amount: 0,
+    daily_price: 0,
     location: "",
     available_from: "",
     available_to: "",
@@ -70,6 +71,7 @@ export default function ResourceEditPage() {
           description: resource.description || "",
           condition: resource.condition || "good",
           deposit_amount: resource.deposit_amount || 0,
+          daily_price: resource.daily_price || 0,
           location: resource.pickup_location || "",
           available_from: formatLocalDate(resource.available_from),
           available_to: formatLocalDate(resource.available_to),
@@ -102,8 +104,13 @@ export default function ResourceEditPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const dailyPriceNum = form.daily_price === "" ? 0 : Number(form.daily_price);
     const depositAmountNum = form.deposit_amount === "" ? 0 : Number(form.deposit_amount);
 
+    if (isNaN(dailyPriceNum) || dailyPriceNum <= 0) {
+      toast.error("Daily price must be greater than 0.");
+      return;
+    }
     if (isNaN(depositAmountNum) || depositAmountNum < 0) {
       toast.error("Deposit amount must be 0 or more.");
       return;
@@ -124,6 +131,7 @@ export default function ResourceEditPage() {
         condition: form.condition,
         pickup_location: form.location,
         deposit_amount: depositAmountNum,
+        daily_price: dailyPriceNum,
         category_id: form.category_id,
         available_from: form.available_from || null,
         available_to: form.available_to || null,
@@ -273,7 +281,19 @@ export default function ResourceEditPage() {
             <div>
               <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider">Pricing details</h3>
             </div>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Daily Price (₹)</label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
+                  value={form.daily_price}
+                  onChange={update("daily_price")}
+                  placeholder="e.g. 150"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Security Deposit (₹)</label>
                 <input
@@ -283,6 +303,7 @@ export default function ResourceEditPage() {
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.deposit_amount}
                   onChange={update("deposit_amount")}
+                  placeholder="e.g. 500"
                 />
               </div>
             </div>
