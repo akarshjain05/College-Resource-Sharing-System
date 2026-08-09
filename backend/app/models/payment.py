@@ -32,7 +32,7 @@ class Payment(Base, UUIDMixin, TimestampMixin):
     currency: Mapped[str] = mapped_column(String(3), default="INR")
 
     status: Mapped[PaymentStatus] = mapped_column(
-        SAEnum(PaymentStatus, values_callable=lambda obj: [e.value for e in obj]),
+        SAEnum(PaymentStatus, values_callable=lambda obj: [e.value for e in obj], native_enum=False),
         default=PaymentStatus.CREATED, index=True,
     )
 
