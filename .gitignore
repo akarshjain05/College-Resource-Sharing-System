@@ -37,3 +37,4 @@ backend/celerybeat-schedule
 *.db
 *.sql
 *.tar.gz
+repomix-output.xml
