@@ -371,7 +371,7 @@ def accept_wanted_offer(
         notif_type=NotificationType.SYSTEM,
         title="Your offer was accepted!",
         message=f"{current_user.full_name} has accepted your offer for '{resource.title}'. A borrow request has been auto-created.",
-        link=f"/borrow-requests/{borrow_request.id}"
+        link=f"/my-bookings?id={borrow_request.id}"
     )
     
     create_notification(
@@ -380,7 +380,7 @@ def accept_wanted_offer(
         notif_type=NotificationType.SYSTEM,
         title="Borrow request created",
         message=f"A borrow request for '{resource.title}' has been auto-created based on your accepted offer.",
-        link=f"/borrow-requests/{borrow_request.id}"
+        link=f"/my-bookings?id={borrow_request.id}"
     )
 
     return wanted
