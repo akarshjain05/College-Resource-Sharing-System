@@ -22,12 +22,16 @@ from app.models.category import Category
 from app.core.security import hash_password
 from app.models.enums import UserRole
 
-SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
+import tempfile
+
+db_fd, db_path = tempfile.mkstemp(suffix=".db")
+SQLALCHEMY_TEST_URL = f"sqlite:///{db_path}"
 
 engine = create_engine(
     SQLALCHEMY_TEST_URL,
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    pool_size=10,
+    max_overflow=20,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
