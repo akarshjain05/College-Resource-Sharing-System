@@ -193,7 +193,7 @@ def resolve_damage_claim(
 
         if payment and (payment.refunded_amount or 0) == 0 and payment.deposit_amount > 0:
             result = payment_service.refund_payment(
-                payment.razorpay_payment_id,
+                db, payment.payer, payment.razorpay_payment_id,
                 amount_paise=payment.deposit_amount,
                 notes={"reason": "damage_claim_resolved_invalid", "claim_id": str(claim.id)},
             )
@@ -217,7 +217,7 @@ def resolve_damage_claim(
             refundable_paise = max(0, payment.deposit_amount - final_cost_paise)
             if refundable_paise > 0:
                 result = payment_service.refund_payment(
-                    payment.razorpay_payment_id,
+                    db, payment.payer, payment.razorpay_payment_id,
                     amount_paise=refundable_paise,
                     notes={"reason": "damage_claim_resolved_partial", "claim_id": str(claim.id)},
                 )

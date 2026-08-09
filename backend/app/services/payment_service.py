@@ -55,9 +55,19 @@ def verify_webhook_signature(raw_body: bytes, signature_header: str) -> bool:
 
 
 
-def refund_payment(payment_id: str, *, amount_paise: int, notes: dict) -> dict:
-    return _client.payment.refund(payment_id, {
-        "amount": amount_paise,
-        "notes": notes,
-        "speed": "normal",
-    })
+from app.models.wallet import WalletTransaction
+from app.models.enums import WalletTransactionType
+import uuid
+
+def refund_payment(db, user, payment_id: str, *, amount_paise: int, notes: dict) -> dict:
+    user.wallet_balance += amount_paise
+    refund_id = f"refund_{uuid.uuid4().hex[:16]}"
+    
+    tx = WalletTransaction(
+        user_id=user.id,
+        amount=amount_paise,
+        type=WalletTransactionType.REFUND,
+        reference_id=payment_id
+    )
+    db.add(tx)
+    return {"id": refund_id}

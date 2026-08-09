@@ -22,6 +22,8 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { paymentApi, getImageUrl } from "../../api/endpoints";
 import PayNowButton from "../../components/PayNowButton";
+import { loadRazorpayScript } from "../../utils/loadRazorpay";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TransactionsPage() {
   const [data, setData] = useState({
@@ -30,6 +32,7 @@ export default function TransactionsPage() {
       total_earned_paise: 0,
       active_deposits_paise: 0,
       pending_to_be_paid_paise: 0,
+      wallet_balance: 0,
     },
     transactions: [],
   });
@@ -38,6 +41,10 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [showTerms, setShowTerms] = useState(false);
+  const [showTopUp, setShowTopUp] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [topUpProcessing, setTopUpProcessing] = useState(false);
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const fetchTransactions = async () => {
@@ -58,6 +65,67 @@ export default function TransactionsPage() {
       toast.error("Failed to load your transaction history");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTopUpSubmit = async (e) => {
+    e.preventDefault();
+    const amountNum = parseInt(topUpAmount, 10);
+    if (!amountNum || amountNum < 100 || amountNum > 10000) {
+      toast.error("Please enter a valid amount between ₹100 and ₹10,000");
+      return;
+    }
+
+    setTopUpProcessing(true);
+    try {
+      const scriptOk = await loadRazorpayScript();
+      if (!scriptOk) {
+        toast.error("Could not load payment gateway.");
+        return;
+      }
+
+      const amountPaise = amountNum * 100;
+      const { data: order } = await paymentApi.createTopupOrder(amountPaise);
+
+      const options = {
+        key: order.razorpay_key_id,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.razorpay_order_id,
+        name: "CRSS Wallet Top-up",
+        description: `Add ₹${amountNum} to wallet`,
+        prefill: {
+          name: user?.full_name,
+          email: user?.email,
+        },
+        theme: { color: "#4f46e5" },
+        handler: async (response) => {
+          try {
+            toast.loading("Verifying top-up...", { id: "topup" });
+            await paymentApi.verifyTopup({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success("Wallet topped up successfully!", { id: "topup" });
+            setShowTopUp(false);
+            setTopUpAmount("");
+            fetchTransactions(); // refresh balance
+          } catch (verifyErr) {
+            toast.error("Verification failed.", { id: "topup" });
+          }
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (resp) => {
+        toast.error(resp.error?.description || "Top-up failed.");
+      });
+      rzp.open();
+    } catch (err) {
+      toast.error("Failed to start top-up.");
+    } finally {
+      setTopUpProcessing(false);
     }
   };
 
@@ -126,28 +194,34 @@ export default function TransactionsPage() {
                 className="flex items-center gap-1.5 px-4 py-2 bg-white text-blue-900 hover:bg-blue-50 rounded-xl text-xs sm:text-sm font-bold shadow-md transition"
               >
                 <FileText className="h-4 w-4 text-blue-700" />
-                {showTerms ? "Hide Terms" : "App Terms & UI Policy"}
+                {showTerms ? "Hide Terms" : "App Terms"}
+              </button>
+              <button
+                onClick={() => setShowTopUp(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition"
+              >
+                + Add Money
               </button>
             </div>
           </div>
 
           {/* 4 Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-            {/* Total Spent */}
+            {/* Wallet Balance */}
             <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-sm">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-blue-200">
-                  Total Spent (Debit)
+                <p className="text-xs font-bold uppercase tracking-wider text-emerald-200">
+                  Wallet Balance
                 </p>
-                <p className="text-2xl sm:text-3xl font-black mt-1 text-white">
-                  {formatRupees(data.summary?.total_spent_paise || 0)}
+                <p className="text-2xl sm:text-3xl font-black mt-1 text-emerald-300">
+                  {formatRupees(data.summary?.wallet_balance || 0)}
                 </p>
                 <p className="text-[11px] text-blue-200 mt-1">
-                  Rent & deposits paid on borrowed items
+                  Available for rent & deposits
                 </p>
               </div>
-              <div className="p-3 bg-rose-500/20 rounded-2xl border border-rose-300/30">
-                <ArrowUpRight className="h-6 w-6 text-rose-300" />
+              <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-300/30">
+                <Wallet className="h-6 w-6 text-emerald-300" />
               </div>
             </div>
 
@@ -262,6 +336,43 @@ export default function TransactionsPage() {
                   dual confirmation between neighbor students before final settlement is completed.
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top-up Modal */}
+        {showTopUp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-emerald-500" /> Top Up Wallet
+                </h2>
+                <button onClick={() => setShowTopUp(false)} className="text-slate-400 hover:bg-slate-100 rounded-full p-1"><X className="h-5 w-5" /></button>
+              </div>
+              <form onSubmit={handleTopUpSubmit}>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    Amount (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="100"
+                    max="10000"
+                    value={topUpAmount}
+                    onChange={(e) => setTopUpAmount(e.target.value)}
+                    placeholder="Min ₹100, Max ₹10,000..."
+                    className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={topUpProcessing}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition disabled:opacity-50"
+                >
+                  {topUpProcessing ? "Processing..." : "Proceed to Pay"}
+                </button>
+              </form>
             </div>
           </div>
         )}

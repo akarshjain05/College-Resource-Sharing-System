@@ -46,6 +46,7 @@ class User(Base, UUIDMixin, TimestampMixin):
 
     trust_score: Mapped[int] = mapped_column(default=100)
     sharing_score: Mapped[int] = mapped_column(default=0)
+    wallet_balance: Mapped[int] = mapped_column(default=0)
 
     avg_response_seconds: Mapped[Optional[int]] = mapped_column(nullable=True)
     response_count: Mapped[int] = mapped_column(default=0)

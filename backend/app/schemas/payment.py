@@ -45,6 +45,15 @@ class WalletSummary(BaseModel):
     total_earned_paise: int
     active_deposits_paise: int
     pending_to_be_paid_paise: int
+    wallet_balance: int = 0
+
+from pydantic import BaseModel, ConfigDict, Field
+
+class WalletTopUpOrderCreate(BaseModel):
+    amount_paise: int = Field(ge=10000, le=1000000, description="Minimum 100 INR, Maximum 10000 INR")
+
+class WalletPayRequest(BaseModel):
+    borrow_request_id: uuid.UUID
 
 
 class TransactionItem(BaseModel):

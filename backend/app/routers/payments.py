@@ -22,7 +22,11 @@ from app.schemas.payment import (
     MyTransactionsResponse,
     TransactionItem,
     WalletSummary,
+    WalletTopUpOrderCreate,
+    WalletPayRequest,
 )
+from app.models.wallet import WalletTransaction
+from app.models.enums import WalletTransactionType
 from app.services import payment_service
 from app.services.notification_service import create_notification
 from app.services.email_service import send_payment_confirmation_email
@@ -166,12 +170,147 @@ def get_my_transactions(
             total_earned_paise=total_earned_paise,
             active_deposits_paise=active_deposits_paise,
             pending_to_be_paid_paise=pending_to_be_paid_paise,
+            wallet_balance=current_user.wallet_balance,
         ),
         transactions=items,
     )
 
+@router.post("/wallet/topup/order", response_model=PaymentOrderResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
+def create_wallet_topup_order(
+    request: Request,
+    payload: WalletTopUpOrderCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    import time
+    order = payment_service.create_order(
+        amount_paise=payload.amount_paise,
+        receipt=f"wt_{str(current_user.id)[:8]}_{int(time.time())}",
+        notes={"user_id": str(current_user.id), "type": "wallet_topup"},
+    )
+    payment = Payment(
+        payer_id=current_user.id,
+        razorpay_order_id=order["id"],
+        rent_amount=0,
+        deposit_amount=payload.amount_paise,
+        total_amount=payload.amount_paise,
+        currency=settings.RAZORPAY_CURRENCY,
+        status=PaymentStatus.CREATED,
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+    return PaymentOrderResponse(
+        payment_id=payment.id, razorpay_order_id=order["id"], razorpay_key_id=settings.RAZORPAY_KEY_ID,
+        amount=payload.amount_paise, currency=settings.RAZORPAY_CURRENCY, rent_amount=0, deposit_amount=payload.amount_paise,
+    )
 
+@router.post("/wallet/topup/verify", response_model=PaymentResponse)
+@limiter.limit("20/minute")
+def verify_wallet_topup(
+    request: Request,
+    payload: PaymentVerifyRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    payment = db.query(Payment).filter(Payment.razorpay_order_id == payload.razorpay_order_id).first()
+    if not payment:
+        raise NotFoundException("Payment order not found")
+    if payment.payer_id != current_user.id:
+        raise ForbiddenException("Not your payment")
+    if payment.status == PaymentStatus.PAID:
+        return payment
 
+    valid = payment_service.verify_payment_signature(
+        payload.razorpay_order_id, payload.razorpay_payment_id, payload.razorpay_signature
+    )
+    if not valid:
+        payment.status = PaymentStatus.FAILED
+        payment.failure_reason = "Signature verification failed"
+        db.commit()
+        raise AppException("Payment verification failed", status.HTTP_400_BAD_REQUEST, "SIGNATURE_INVALID")
+
+    payment.razorpay_payment_id = payload.razorpay_payment_id
+    payment.razorpay_signature = payload.razorpay_signature
+    payment.status = PaymentStatus.PAID
+    
+    current_user.wallet_balance += payment.total_amount
+    tx = WalletTransaction(
+        user_id=current_user.id,
+        amount=payment.total_amount,
+        type=WalletTransactionType.TOP_UP,
+        reference_id=str(payment.id)
+    )
+    db.add(tx)
+    db.commit()
+    return payment
+
+@router.post("/wallet/pay", response_model=PaymentResponse)
+@limiter.limit("10/minute")
+def pay_from_wallet(
+    request: Request,
+    payload: WalletPayRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    br = db.query(BorrowRequest).filter(BorrowRequest.id == payload.borrow_request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.borrower_id != current_user.id:
+        raise ForbiddenException("Only the borrower can pay for this request")
+    if br.status != BorrowStatus.APPROVED:
+        raise AppException(
+            "Payment can only be made after the owner approves the request",
+            status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE",
+        )
+
+    existing = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
+    if existing and existing.status == PaymentStatus.PAID:
+        raise AppException("This request has already been paid for", status.HTTP_400_BAD_REQUEST, "ALREADY_PAID")
+
+    rent_paise, deposit_paise, total_paise = _compute_amounts(br)
+
+    if current_user.wallet_balance < total_paise:
+        raise AppException("Insufficient wallet balance", status.HTTP_400_BAD_REQUEST, "INSUFFICIENT_BALANCE", data={"required_paise": total_paise})
+
+    import uuid
+    payment_id_str = f"wallet_{uuid.uuid4().hex[:16]}"
+    
+    if existing:
+        payment = existing
+        payment.rent_amount = rent_paise
+        payment.deposit_amount = deposit_paise
+        payment.total_amount = total_paise
+        payment.currency = settings.RAZORPAY_CURRENCY
+        payment.status = PaymentStatus.CREATED
+    else:
+        payment = Payment(
+            borrow_request_id=br.id,
+            payer_id=current_user.id,
+            rent_amount=rent_paise,
+            deposit_amount=deposit_paise,
+            total_amount=total_paise,
+            currency=settings.RAZORPAY_CURRENCY,
+            status=PaymentStatus.CREATED,
+        )
+        db.add(payment)
+
+    current_user.wallet_balance -= total_paise
+    tx = WalletTransaction(
+        user_id=current_user.id,
+        amount=-total_paise,
+        type=WalletTransactionType.BORROW_DEDUCTION,
+        reference_id=str(br.id)
+    )
+    db.add(tx)
+    
+    db.commit()
+    db.refresh(payment)
+    
+    _mark_paid(db, payment, payment_id_str, None, background_tasks)
+    return payment
 @router.post("/orders", response_model=PaymentOrderResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
 def create_payment_order(
