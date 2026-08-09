@@ -40,6 +40,7 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     deposit_paid: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
     damage_report: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    cancellation_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     decided_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     last_nudged_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 

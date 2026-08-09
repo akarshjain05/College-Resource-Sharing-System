@@ -27,6 +27,8 @@ class BorrowRequestCreate(BaseModel):
 class BorrowRequestDecision(BaseModel):
     rejection_reason: Optional[SafeStr] = Field(None, max_length=500)
 
+class BorrowCancelRequest(BaseModel):
+    reason: Optional[str] = Field(None, max_length=500)
 
 class BorrowRequestReturn(BaseModel):
     damage_report: Optional[SafeStr] = Field(None, max_length=1000)
@@ -53,6 +55,7 @@ class BorrowRequestResponse(BaseModel):
     deposit_paid: Optional[float] = None
     damage_report: Optional[str] = None
     rejection_reason: Optional[str] = None
+    cancellation_reason: Optional[str] = None
     borrower_rating: Optional[int] = None
     borrower_review: Optional[str] = None
     lender_rating: Optional[int] = None

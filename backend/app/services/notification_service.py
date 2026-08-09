@@ -142,7 +142,7 @@ def notify_all_except_owner_bg(
     
     db = SessionLocal()
     try:
-        other_users = db.query(User).filter(User.id != owner_id).all()
+        other_users = db.query(User).filter(User.id != owner_id, User.notif_resource_listing == True).all()
         for user in other_users:
             create_notification(
                 db=db,

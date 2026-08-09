@@ -21,7 +21,6 @@ export default function CompleteGoogleProfileForm({ registrationToken, fullName,
     department: "",
     course: "",
     year_of_study: "",
-    student_id: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,7 +36,6 @@ export default function CompleteGoogleProfileForm({ registrationToken, fullName,
         department: form.department || undefined,
         course: form.course || undefined,
         year_of_study: form.year_of_study ? Number(form.year_of_study) : undefined,
-        student_id: form.student_id || undefined,
       });
       toast.success("Account created with Google — you're in!");
       onDone();
@@ -76,22 +74,16 @@ export default function CompleteGoogleProfileForm({ registrationToken, fullName,
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="label">Year of study</label>
-          <input
-            type="number"
-            min={1}
-            max={6}
-            className="input"
-            value={form.year_of_study}
-            onChange={update("year_of_study")}
-          />
-        </div>
-        <div>
-          <label className="label">Student ID</label>
-          <input className="input" value={form.student_id} onChange={update("student_id")} />
-        </div>
+      <div>
+        <label className="label">Year of study</label>
+        <input
+          type="number"
+          min={1}
+          max={6}
+          className="input"
+          value={form.year_of_study}
+          onChange={update("year_of_study")}
+        />
       </div>
 
       <button type="submit" disabled={submitting} className="btn-primary w-full">

@@ -20,6 +20,7 @@ from app.schemas.borrow import (
     BorrowRequestReturn,
     BorrowRequestConfirmReturn,
     BorrowRequestResponse,
+    BorrowCancelRequest,
 )
 from app.services.notification_service import create_notification
 from app.services.email_service import send_borrow_request_email
@@ -408,6 +409,7 @@ def reject_handover_resource(
 @router.post("/{request_id}/cancel", response_model=BorrowRequestResponse)
 def cancel_borrow_request(
     request_id: uuid.UUID,
+    payload: BorrowCancelRequest,
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_verified_user),
     db: Session = Depends(get_db),
@@ -457,10 +459,16 @@ def cancel_borrow_request(
             )
 
     br.status = BorrowStatus.CANCELLED
+    if payload.reason:
+        br.cancellation_reason = payload.reason
     db.commit()
 
     status_text = "approved borrow request" if was_approved else "borrow request"
     notify_user_id = br.borrower_id if current_user.id == lender_id else lender_id
+    
+    msg_body = f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'."
+    if payload.reason:
+        msg_body += f"\nReason: {payload.reason}"
     
     create_notification(
         db,

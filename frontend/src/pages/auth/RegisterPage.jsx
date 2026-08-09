@@ -26,7 +26,6 @@ export default function RegisterPage() {
     department: "",
     course: "",
     year_of_study: "",
-    student_id: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
@@ -308,15 +307,9 @@ export default function RegisterPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="label text-slate-700 dark:text-slate-300">Year of study</label>
-                        <input type="number" min={1} max={6} className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.year_of_study} onChange={update("year_of_study")} placeholder="e.g. 3" />
-                      </div>
-                      <div>
-                        <label className="label text-slate-700 dark:text-slate-300">Student ID</label>
-                        <input className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.student_id} onChange={update("student_id")} placeholder="e.g. U22CO001" />
-                      </div>
+                    <div>
+                      <label className="label text-slate-700 dark:text-slate-300">Year of study</label>
+                      <input type="number" min={1} max={6} className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.year_of_study} onChange={update("year_of_study")} placeholder="e.g. 3" />
                     </div>
 
                     <button type="submit" disabled={submitting} className="btn-primary w-full py-3 text-sm font-semibold rounded-xl tracking-wide shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 mt-2">

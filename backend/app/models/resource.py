@@ -33,6 +33,7 @@ class Resource(Base, UUIDMixin, TimestampMixin):
     qr_code_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     deposit_amount: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
+    daily_price: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
     max_borrow_days: Mapped[int] = mapped_column(Integer, default=7)
 
     average_rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0)

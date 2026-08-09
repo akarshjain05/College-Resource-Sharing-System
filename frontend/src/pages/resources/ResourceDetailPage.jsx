@@ -91,8 +91,8 @@ export default function ResourceDetailPage() {
     ? Math.max(1, Math.ceil((eDate - sDate) / (1000 * 60 * 60 * 24)) + 1)
     : 0;
 
-  // Simple pricing model based on deposit
-  const dailyPrice = Math.floor(resource.deposit_amount * 0.05); // 5% of deposit per day
+  // Simple pricing model based on daily_price with fallback to deposit
+  const dailyPrice = resource.daily_price ?? Math.floor(resource.deposit_amount * 0.05);
   const rentAmount = daysCount * dailyPrice;
   const securityDeposit = resource.deposit_amount;
   const totalAmount = rentAmount + securityDeposit;
