@@ -635,12 +635,14 @@ export default function BorrowRequestsPage() {
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Item is currently with borrower
                       </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
-                        className="btn-secondary !py-2 text-xs flex items-center gap-1.5"
-                      >
-                        <BellRing className="h-3.5 w-3.5" /> Remind Borrower
-                      </button>
+                      {isExpired && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "nudge"); }}
+                          className="btn-secondary !py-2 text-xs flex items-center gap-1.5"
+                        >
+                          <BellRing className="h-3.5 w-3.5" /> Remind Borrower
+                        </button>
+                      )}
                     </>
                   )}
                   {tab === "lending" && book.status === "return_requested" && (
