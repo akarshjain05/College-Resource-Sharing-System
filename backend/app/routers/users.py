@@ -159,17 +159,17 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     # Calculate stats
     borrower_requests = db.query(BorrowRequest).filter(
         BorrowRequest.borrower_id == user.id, 
-        BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
+        BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE, BorrowStatus.RETURN_REQUESTED])
     ).all()
     
     total_borrows = len(borrower_requests)
-    returned_on_time = sum(1 for br in borrower_requests if br.status == BorrowStatus.RETURNED and (br.actual_return_date and br.actual_return_date <= br.requested_end_date))
+    returned_on_time = sum(1 for br in borrower_requests if br.status in [BorrowStatus.RETURNED, BorrowStatus.RETURN_REQUESTED] and (br.actual_return_date and br.actual_return_date <= br.requested_end_date))
     rated_as_borrower = [br.borrower_rating for br in borrower_requests if br.borrower_rating]
     avg_borrower_rating = sum(rated_as_borrower) / len(rated_as_borrower) if rated_as_borrower else 0
 
     lender_requests = db.query(BorrowRequest).filter(
         BorrowRequest.lender_id == user.id,
-        BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE])
+        BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED, BorrowStatus.LATE, BorrowStatus.RETURN_REQUESTED])
     ).all()
     
     total_lends = len(lender_requests)
@@ -189,7 +189,8 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     # Reviews where this user was the borrower (so the LENDER left the review)
     borrower_reviews = db.query(BorrowRequest).filter(
         BorrowRequest.borrower_id == user.id,
-        BorrowRequest.borrower_review.isnot(None)
+        BorrowRequest.borrower_review.isnot(None),
+        BorrowRequest.borrower_review != ""
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
     for br in borrower_reviews:
@@ -209,7 +210,8 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     # Reviews where this user was the lender (so the BORROWER left the review)
     lender_reviews = db.query(BorrowRequest).filter(
         BorrowRequest.lender_id == user.id,
-        BorrowRequest.lender_review.isnot(None)
+        BorrowRequest.lender_review.isnot(None),
+        BorrowRequest.lender_review != ""
     ).order_by(BorrowRequest.actual_return_date.desc()).limit(5).all()
     
     for br in lender_reviews:

@@ -29,7 +29,7 @@ class PaymentVerifyRequest(BaseModel):
 class PaymentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    borrow_request_id: uuid.UUID
+    borrow_request_id: Optional[uuid.UUID] = None
     status: PaymentStatus
     created_at: datetime
     rent_amount: int
