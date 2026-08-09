@@ -117,7 +117,7 @@ def create_borrow_request(
         NotificationType.BORROW_REQUEST,
         "New borrow request",
         f"{current_user.full_name} wants to borrow '{resource_title}'.",
-        link=f"/borrow-requests/{borrow_request.id}",
+        link=f"/my-bookings?id={borrow_request.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == borrow_request.id).first()
 
@@ -231,7 +231,7 @@ def approve_borrow_request(
                 NotificationType.BORROW_REJECTED,
                 "Borrow Request Auto-Declined",
                 f"Your request to borrow '{resource.title}' was automatically declined because the item was approved for another borrower.",
-                link=f"/borrow-requests/{other_br.id}",
+                link=f"/my-bookings?id={other_br.id}",
             )
 
     db.commit()
@@ -240,7 +240,7 @@ def approve_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_APPROVED,
         "Borrow request approved",
         f"Your request to borrow '{resource_title}' was approved.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -283,7 +283,7 @@ def reject_borrow_request(
         db, br.borrower_id, NotificationType.BORROW_REJECTED,
         "Borrow request rejected",
         f"Your request to borrow '{resource_title}' was rejected.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -316,7 +316,7 @@ def handover_resource(
         db, br.borrower_id, NotificationType.SYSTEM,
         "Handover Pending Confirmation",
         f"'{br.resource.title if br.resource else 'item'}' has been handed over by the lender. Please confirm receipt.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -346,7 +346,7 @@ def confirm_handover_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Confirmed",
         f"'{resource_title}' handover was confirmed by {current_user.full_name}.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -400,7 +400,7 @@ def reject_handover_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Handover Rejected / Booking Cancelled",
         f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name} (reported not received). The booking has been cancelled and refunded.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -468,7 +468,7 @@ def cancel_borrow_request(
         NotificationType.SYSTEM,
         "Borrow request cancelled",
         f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
-        link=f"/borrow-requests/{req_id}?tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
+        link=f"/my-bookings?id={req_id}&tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
     )
 
     return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
@@ -582,7 +582,7 @@ def return_resource(
         db, br.lender_id, NotificationType.SYSTEM,
         "Return requested",
         f"{current_user.full_name} has requested to return '{resource_title}'. Please confirm receipt.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()
 
@@ -707,7 +707,7 @@ def confirm_return_resource(
         db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
         "Return confirmed",
         f"'{resource_title}' return has been confirmed.",
-        link=f"/borrow-requests/{br.id}",
+        link=f"/my-bookings?id={br.id}",
     )
 
     if resource:

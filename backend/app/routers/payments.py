@@ -302,7 +302,7 @@ def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signatur
             "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }),
-        link=f"/borrow-requests/{br.id}?tab=lending",
+        link=f"/my-bookings?id={br.id}&tab=lending",
     )
     create_notification(
         db, br.borrower_id, NotificationType.PAYMENT_SUCCESS,
@@ -315,7 +315,7 @@ def _mark_paid(db: Session, payment: Payment, razorpay_payment_id: str, signatur
             "transaction_id": razorpay_payment_id or payment.razorpay_order_id,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }),
-        link=f"/borrow-requests/{br.id}?tab=borrowing",
+        link=f"/my-bookings?id={br.id}&tab=borrowing",
     )
     if payment.payer.email:
         background_tasks.add_task(
