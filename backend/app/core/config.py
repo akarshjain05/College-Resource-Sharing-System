@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://redis:6379/0"
 
     # ---- JWT ----
-    SECRET_KEY: str
+    SECRET_KEY: str = ""
     OLD_SECRET_KEY: Optional[str] = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     BREVO_API_KEY: str = ""
     BREVO_SENDER_EMAIL: str = "security@yourdomain.com"
     BREVO_SENDER_NAME: str = "Campus Resources"
-    OTP_SECRET: str
+    OTP_SECRET: str = ""
     OTP_PEPPER: str = ""
     OTP_EXPIRY_SECONDS: int = 600
     OTP_MAX_ATTEMPTS: int = 5
@@ -91,11 +91,23 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_secrets_in_prod(self) -> 'Settings':
         if self.ENVIRONMENT == "production":
+            import secrets
+            import logging
+            logger = logging.getLogger("crss")
+            
+            if not self.SECRET_KEY:
+                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
+                self.SECRET_KEY = secrets.token_urlsafe(32)
+                
+            if not self.OTP_SECRET:
+                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
+                self.OTP_SECRET = secrets.token_urlsafe(32)
+
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
-                raise ValueError("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in production.")
+                logger.warning("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Payments will fail!")
                 
             if not self.GOOGLE_CLIENT_ID:
-                raise ValueError("GOOGLE_CLIENT_ID must be set in production.")
+                logger.warning("GOOGLE_CLIENT_ID is not set in production. Google Sign-In will fail!")
                 
         return self
 
