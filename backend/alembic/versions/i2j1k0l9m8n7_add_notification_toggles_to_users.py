@@ -16,14 +16,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    from sqlalchemy.exc import ProgrammingError
     bind = op.get_bind()
-    try:
-        with bind.begin_nested():
-            op.add_column('users', sa.Column('notif_resource_listing', sa.Boolean(), server_default='true', nullable=False))
-            op.add_column('users', sa.Column('notif_campus_needs', sa.Boolean(), server_default='true', nullable=False))
-    except ProgrammingError:
-        pass
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
+    columns = [c['name'] for c in inspector.get_columns('users')]
+    if 'notif_resource_listing' not in columns:
+        op.add_column('users', sa.Column('notif_resource_listing', sa.Boolean(), server_default='true', nullable=False))
+    if 'notif_campus_needs' not in columns:
+        op.add_column('users', sa.Column('notif_campus_needs', sa.Boolean(), server_default='true', nullable=False))
 
 
 def downgrade() -> None:

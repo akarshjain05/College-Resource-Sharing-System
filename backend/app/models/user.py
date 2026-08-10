@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 
-from sqlalchemy import String, Boolean, Enum as SAEnum, Text, DateTime
+from sqlalchemy import String, Boolean, Enum as SAEnum, Text, DateTime, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -11,6 +11,9 @@ from app.models.enums import UserRole, AuthProvider
 
 class User(Base, UUIDMixin, TimestampMixin):
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint('wallet_balance >= 0', name='ck_user_wallet_balance_positive'),
+    )
 
     full_name: Mapped[str] = mapped_column(String(150), nullable=False)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)

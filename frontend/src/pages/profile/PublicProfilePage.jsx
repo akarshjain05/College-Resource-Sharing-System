@@ -160,7 +160,7 @@ export default function PublicProfilePage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1 text-xl font-black text-slate-900 dark:text-white">
-                <span>{stats.avg_borrower_rating ?? "5.0"}</span>
+                <span>{stats.avg_borrower_rating === 0 ? "New" : stats.avg_borrower_rating}</span>
                 <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
               </div>
               <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">Borrower Rating</p>
@@ -175,7 +175,7 @@ export default function PublicProfilePage() {
 
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-1 text-xl font-black text-slate-900 dark:text-white">
-                <span>{stats.avg_lender_rating ?? "5.0"}</span>
+                <span>{stats.avg_lender_rating === 0 ? "New" : stats.avg_lender_rating}</span>
                 <Star className="h-4 w-4 text-emerald-500 fill-emerald-500" />
               </div>
               <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider mt-1">Lender Rating</p>

@@ -20,18 +20,22 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    try:
-        with op.get_bind().begin_nested():
-            op.add_column('resources', sa.Column('available_from', sa.Date(), nullable=True))
-            op.add_column('resources', sa.Column('available_to', sa.Date(), nullable=True))
-    except ProgrammingError:
-        pass
+    bind = op.get_bind()
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
+    columns = [c['name'] for c in inspector.get_columns('resources')]
+    if 'available_from' not in columns:
+        op.add_column('resources', sa.Column('available_from', sa.Date(), nullable=True))
+    if 'available_to' not in columns:
+        op.add_column('resources', sa.Column('available_to', sa.Date(), nullable=True))
 
 
 def downgrade() -> None:
-    try:
-        with op.get_bind().begin_nested():
-            op.drop_column('resources', 'available_to')
-            op.drop_column('resources', 'available_from')
-    except ProgrammingError:
-        pass
+    bind = op.get_bind()
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
+    columns = [c['name'] for c in inspector.get_columns('resources')]
+    if 'available_to' in columns:
+        op.drop_column('resources', 'available_to')
+    if 'available_from' in columns:
+        op.drop_column('resources', 'available_from')
