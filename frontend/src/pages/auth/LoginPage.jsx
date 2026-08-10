@@ -68,8 +68,8 @@ export default function LoginPage() {
         
         {/* Header */}
         <div className="flex flex-col items-center text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-forest-700 shadow-md">
-            <BookMarked className="h-6 w-6 text-white" />
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-transparent">
+            <img src="/logo.png" className="h-16 w-16 object-contain" alt="Logo" />
           </div>
           <h1 className="font-display text-2xl font-bold text-ink-900 dark:text-white">Campus Resource Sharing</h1>
           <p className="mt-2 text-sm text-ink-500 dark:text-slate-400">Sign in with your campus email to continue.</p>
