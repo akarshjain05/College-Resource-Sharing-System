@@ -119,8 +119,8 @@ export default function RegisterPage() {
           
           {/* Top Logo and Title */}
           <div className="relative z-10 flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-transparent">
-              <img src="/logo.png" className="h-12 w-12 object-contain" alt="Logo" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-transparent">
+              <img src="/logo.png" className="h-full w-full object-contain" alt="Logo" />
             </div>
             <span className="font-display text-lg font-bold tracking-tight text-white">
               Campus Resource Sharing
