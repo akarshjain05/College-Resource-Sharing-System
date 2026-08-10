@@ -104,11 +104,9 @@ def mark_overdue_borrows_late():
             if payment:
                 try:
                     result = payment_service.refund_payment(
-                        payment.razorpay_payment_id, amount_paise=payment.total_amount,
+                        db, payment, amount_paise=payment.total_amount,
                         notes={"reason": "borrow_window_expired_unfulfilled"},
                     )
-                    payment.status = PaymentStatus.REFUND_INITIATED
-                    payment.refund_id = result["id"]
                     
                     if payment.payer and payment.payer.email:
                         asyncio.run(
