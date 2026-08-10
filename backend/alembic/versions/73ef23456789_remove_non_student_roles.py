@@ -20,7 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Update existing users who have 'faculty' or 'club' roles to 'student'
-    op.execute("UPDATE users SET role = 'student' WHERE role IN ('faculty', 'club')")
+    op.execute("UPDATE users SET role = 'student' WHERE role::text IN ('faculty', 'club')")
 
 def downgrade() -> None:
     pass
