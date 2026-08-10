@@ -8,12 +8,6 @@ import GoogleSignInButton from "../../components/GoogleSignInButton";
 import CompleteGoogleProfileForm from "../../components/CompleteGoogleProfileForm";
 import VerificationCodeInput from "../../components/VerificationCodeInput";
 
-const ROLES = [
-  { value: "student", label: "Student" },
-  { value: "faculty", label: "Faculty" },
-  { value: "club", label: "Club / Department" },
-];
-
 export default function RegisterPage() {
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
@@ -22,10 +16,6 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirm_password: "",
-    role: "student",
-    department: "",
-    course: "",
-    year_of_study: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
@@ -51,11 +41,12 @@ export default function RegisterPage() {
 
     setSubmitting(true);
     try {
-      const payload = {
-        ...form,
-        year_of_study: form.year_of_study ? Number(form.year_of_study) : undefined,
-      };
-      const res = await register(payload);
+      const res = await register({
+        full_name: form.full_name.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        confirm_password: form.confirm_password,
+      });
       if (res && res.challenge_id) {
         toast.success("Verification code sent to your email!");
         setOtpSignup({
@@ -285,32 +276,6 @@ export default function RegisterPage() {
                       <p className="text-xs text-red-500">Passwords don't match.</p>
                     )}
 
-                    <div>
-                      <label className="label text-slate-700 dark:text-slate-300">I am a</label>
-                      <select className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.role} onChange={update("role")}>
-                        {ROLES.map((r) => (
-                          <option key={r.value} value={r.value}>
-                            {r.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="label text-slate-700 dark:text-slate-300">Department</label>
-                        <input className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.department} onChange={update("department")} placeholder="e.g. COED" />
-                      </div>
-                      <div>
-                        <label className="label text-slate-700 dark:text-slate-300">Course</label>
-                        <input className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.course} onChange={update("course")} placeholder="e.g. B.Tech" />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="label text-slate-700 dark:text-slate-300">Year of study</label>
-                      <input type="number" min={1} max={6} className="input bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800" value={form.year_of_study} onChange={update("year_of_study")} placeholder="e.g. 3" />
-                    </div>
 
                     <button type="submit" disabled={submitting} className="btn-primary w-full py-3 text-sm font-semibold rounded-xl tracking-wide shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 mt-2">
                       {submitting ? "Creating account..." : "Create Account"}

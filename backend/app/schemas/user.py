@@ -45,7 +45,7 @@ class UserRegister(UserBase):
         if v:
             v = unicodedata.normalize("NFKC", v).strip().lower()
             if not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
-                raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
+                raise ValueError("Please use your official college email ID to continue.")
         return v
 
     @model_validator(mode="after")
@@ -137,7 +137,7 @@ class UserUpdate(BaseModel):
         if v:
             v = unicodedata.normalize("NFKC", v).strip().lower()
             if not re.match(CAMPUS_EMAIL_REGEX, v, re.IGNORECASE):
-                raise ValueError("Only official campus email addresses (@svnit.ac.in) are allowed")
+                raise ValueError("Please use your official college email ID to continue.")
         return v
 
     @model_validator(mode="before")

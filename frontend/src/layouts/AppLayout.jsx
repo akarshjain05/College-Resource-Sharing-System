@@ -290,7 +290,9 @@ export default function AppLayout() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{user?.full_name || "Neighbor User"}</p>
-                  <p className="truncate text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">{user?.role || "Member"}</p>
+                  {user?.role === "admin" && (
+                    <p className="truncate text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Admin</p>
+                  )}
                 </div>
               </Link>
               <button

@@ -97,9 +97,11 @@ export default function PublicProfilePage() {
                     <h1 className="font-display text-2.5xl font-black text-slate-900 dark:text-white tracking-tight">
                       {fullName}
                     </h1>
-                    <span className="rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800/60 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
-                      {profile.role || "Student"}
-                    </span>
+                    {profile.role === "admin" && (
+                      <span className="rounded-full bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800/60 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+                        Admin
+                      </span>
+                    )}
                   </div>
 
                   {profile.department && (

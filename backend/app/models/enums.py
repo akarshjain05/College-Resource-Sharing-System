@@ -27,8 +27,6 @@ class PaymentPurpose(str, enum.Enum):
 
 class UserRole(str, enum.Enum):
     STUDENT = "student"
-    FACULTY = "faculty"
-    CLUB = "club"
     ADMIN = "admin"
 
 
