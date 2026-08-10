@@ -15,13 +15,12 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
-    from sqlalchemy.exc import ProgrammingError
     bind = op.get_bind()
-    try:
-        with bind.begin_nested():
-            op.add_column('borrow_requests', sa.Column('cancellation_reason', sa.Text(), nullable=True))
-    except ProgrammingError:
-        pass
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
+    columns = [c['name'] for c in inspector.get_columns('borrow_requests')]
+    if 'cancellation_reason' not in columns:
+        op.add_column('borrow_requests', sa.Column('cancellation_reason', sa.Text(), nullable=True))
 
 
 def downgrade() -> None:

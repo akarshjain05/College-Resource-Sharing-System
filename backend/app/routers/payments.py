@@ -218,7 +218,7 @@ def verify_wallet_topup(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    payment = db.query(Payment).filter(Payment.razorpay_order_id == payload.razorpay_order_id).first()
+    payment = db.query(Payment).filter(Payment.razorpay_order_id == payload.razorpay_order_id).with_for_update().first()
     if not payment:
         raise NotFoundException("Payment order not found")
     if payment.payer_id != current_user.id:
@@ -276,7 +276,8 @@ def pay_from_wallet(
 
     rent_paise, deposit_paise, total_paise = _compute_amounts(br)
 
-    if current_user.wallet_balance < total_paise:
+    locked_user = db.query(User).filter(User.id == current_user.id).with_for_update().first()
+    if locked_user.wallet_balance < total_paise:
         raise AppException("Insufficient wallet balance", status.HTTP_400_BAD_REQUEST, "INSUFFICIENT_BALANCE", data={"required_paise": total_paise})
 
     import uuid
@@ -301,9 +302,9 @@ def pay_from_wallet(
         )
         db.add(payment)
 
-    current_user.wallet_balance -= total_paise
+    locked_user.wallet_balance -= total_paise
     tx = WalletTransaction(
-        user_id=current_user.id,
+        user_id=locked_user.id,
         amount=-total_paise,
         type=WalletTransactionType.BORROW_DEDUCTION,
         reference_id=str(br.id)

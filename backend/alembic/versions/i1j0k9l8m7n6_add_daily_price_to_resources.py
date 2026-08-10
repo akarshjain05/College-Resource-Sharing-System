@@ -16,13 +16,12 @@ depends_on = None
 
 
 def upgrade() -> None:
-    from sqlalchemy.exc import ProgrammingError
     bind = op.get_bind()
-    try:
-        with bind.begin_nested():
-            op.add_column('resources', sa.Column('daily_price', sa.Numeric(10, 2), server_default='0.00', nullable=False))
-    except ProgrammingError:
-        pass
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
+    columns = [c['name'] for c in inspector.get_columns('resources')]
+    if 'daily_price' not in columns:
+        op.add_column('resources', sa.Column('daily_price', sa.Numeric(10, 2), server_default='0.00', nullable=False))
 
 
 def downgrade() -> None:
