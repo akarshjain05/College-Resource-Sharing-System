@@ -15,7 +15,7 @@ from sqlalchemy.exc import ProgrammingError
 
 # revision identifiers, used by Alembic.
 revision: str = 'fc3b123'
-down_revision: Union[str, None] = 'fb2af07cae5c'
+down_revision: Union[str, None] = '85bdecb1b36b'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
