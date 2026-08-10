@@ -32,7 +32,7 @@ def upgrade() -> None:
         pass
 
     # 2. Enum for WalletTransactionType
-    wallet_tx_type = postgresql.ENUM('TOP_UP', 'BORROW_DEDUCTION', 'REFUND', 'EARNING', name='wallettransactiontype')
+    wallet_tx_type = postgresql.ENUM('top_up', 'borrow_deduction', 'refund', 'earning', name='wallettransactiontype')
     try:
         with bind.begin_nested():
             wallet_tx_type.create(bind)
@@ -81,7 +81,7 @@ def downgrade() -> None:
     op.drop_table('wallet_transactions')
 
     # 3. Drop Enum
-    wallet_tx_type = postgresql.ENUM('TOP_UP', 'BORROW_DEDUCTION', 'REFUND', 'EARNING', name='wallettransactiontype')
+    wallet_tx_type = postgresql.ENUM('top_up', 'borrow_deduction', 'refund', 'earning', name='wallettransactiontype')
     wallet_tx_type.drop(op.get_bind())
 
     # 4. Drop wallet_balance from users

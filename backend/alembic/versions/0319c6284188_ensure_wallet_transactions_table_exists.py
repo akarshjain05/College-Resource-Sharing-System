@@ -28,7 +28,7 @@ def upgrade() -> None:
         DO $$
         BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'wallettransactiontype') THEN
-                CREATE TYPE wallettransactiontype AS ENUM ('TOP_UP', 'BORROW_DEDUCTION', 'REFUND', 'EARNING');
+                CREATE TYPE wallettransactiontype AS ENUM ('top_up', 'borrow_deduction', 'refund', 'earning');
             END IF;
         END
         $$;
