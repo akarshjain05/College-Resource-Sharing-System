@@ -287,7 +287,7 @@ def google_login(request: Request, response: Response, payload: GoogleAuthReques
     if user is None:
         if not re.match(CAMPUS_EMAIL_REGEX, email, re.IGNORECASE):
             raise AppException(
-                "Only official campus email addresses (@svnit.ac.in) can be registered.",
+                "Please use your official college email ID (@svnit.ac.in) to continue.",
                 status_code=status.HTTP_400_BAD_REQUEST,
                 error_code="INVALID_CAMPUS_EMAIL",
             )
@@ -345,7 +345,7 @@ def complete_google_profile(request: Request, response: Response, payload: Googl
     email = data["sub"]
     if not re.match(CAMPUS_EMAIL_REGEX, email, re.IGNORECASE):
         raise AppException(
-            "Only official campus email addresses (@svnit.ac.in) can be registered.",
+            "Please use your official college email ID (@svnit.ac.in) to continue.",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="INVALID_CAMPUS_EMAIL",
         )
