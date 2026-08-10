@@ -59,7 +59,12 @@ from app.models.wallet import WalletTransaction
 from app.models.enums import WalletTransactionType
 import uuid
 
-def refund_payment(db, user, payment_id: str, *, amount_paise: int, notes: dict) -> dict:
+def refund_payment(db, payment: "Payment", *, amount_paise: int, notes: dict) -> dict:
+    from app.models.enums import PaymentStatus
+    user = payment.payer
+    if not user:
+        raise ValueError("Payment must have a payer associated")
+
     user.wallet_balance += amount_paise
     refund_id = f"refund_{uuid.uuid4().hex[:16]}"
     
@@ -67,7 +72,15 @@ def refund_payment(db, user, payment_id: str, *, amount_paise: int, notes: dict)
         user_id=user.id,
         amount=amount_paise,
         type=WalletTransactionType.REFUND,
-        reference_id=payment_id
+        reference_id=payment.razorpay_payment_id
     )
     db.add(tx)
+
+    payment.refunded_amount = (payment.refunded_amount or 0) + amount_paise
+    payment.status = (
+        PaymentStatus.REFUNDED if payment.refunded_amount >= payment.total_amount
+        else PaymentStatus.PARTIALLY_REFUNDED
+    )
+    payment.refund_id = refund_id
+    
     return {"id": refund_id}

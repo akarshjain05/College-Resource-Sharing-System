@@ -376,11 +376,9 @@ def reject_handover_resource(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment, amount_paise=payment.total_amount,
             notes={"reason": "borrower_rejected_handover_cancelled"},
         )
-        payment.status = PaymentStatus.REFUND_INITIATED
-        payment.refund_id = result["id"]
         
         from app.services.email_service import send_payment_refund_email
         if payment.payer and payment.payer.email:
@@ -441,11 +439,9 @@ def cancel_borrow_request(
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
-            db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.total_amount,
+            db, payment, amount_paise=payment.total_amount,
             notes={"reason": "borrow_request_cancelled"},
         )
-        payment.status = PaymentStatus.REFUND_INITIATED
-        payment.refund_id = result["id"]
         
         from app.services.email_service import send_payment_refund_email
         if payment.payer and payment.payer.email:
@@ -649,11 +645,9 @@ def confirm_return_resource(
             payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
             if payment and payment.refunded_amount == 0:
                 result = payment_service.refund_payment(
-                    db, payment.payer, payment.razorpay_payment_id, amount_paise=payment.deposit_amount,
-                    notes={"reason": "security_deposit_return"},
+                    db, payment, amount_paise=payment.deposit_amount,
+                    notes={"reason": "item_returned_undamaged"},
                 )
-                payment.status = PaymentStatus.REFUND_INITIATED
-                payment.refund_id = result["id"]
                 
                 from app.services.email_service import send_payment_refund_email
                 if payment.payer and payment.payer.email:
