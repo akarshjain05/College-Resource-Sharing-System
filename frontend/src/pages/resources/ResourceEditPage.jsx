@@ -259,6 +259,7 @@ export default function ResourceEditPage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available From</label>
                 <input
                   type="date"
+                  min={new Date().toISOString().split("T")[0]}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-955 text-sm text-slate-800 dark:text-slate-100"
                   value={form.available_from}
                   onChange={update("available_from")}
@@ -268,7 +269,7 @@ export default function ResourceEditPage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Available To</label>
                 <input
                   type="date"
-                  min={form.available_from}
+                  min={form.available_from || new Date().toISOString().split("T")[0]}
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100"
                   value={form.available_to}
                   onChange={update("available_to")}
