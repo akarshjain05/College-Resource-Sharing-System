@@ -1,7 +1,20 @@
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
-export default function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = "Confirm", cancelText = "Cancel", isDanger = false }) {
+export default function ConfirmModal({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message, 
+  confirmText = "Confirm", 
+  cancelText = "Cancel", 
+  isDanger = false,
+  showInput = false,
+  inputValue = "",
+  onInputChange = () => {},
+  inputPlaceholder = "Type here..."
+}) {
   if (!isOpen) return null;
 
   return (
@@ -27,6 +40,19 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
             {message}
           </p>
+
+          {showInput && (
+            <div className="mt-4">
+              <input
+                type="text"
+                autoFocus
+                placeholder={inputPlaceholder}
+                value={inputValue}
+                onChange={(e) => onInputChange(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm text-slate-800 dark:text-slate-100 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+              />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-3 bg-slate-50 dark:bg-slate-950/50 p-4 border-t border-slate-100 dark:border-slate-800">
@@ -38,10 +64,11 @@ export default function ConfirmModal({ isOpen, onClose, onConfirm, title, messag
           </button>
           <button
             onClick={() => {
-              onConfirm();
+              onConfirm(inputValue);
               onClose();
             }}
-            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-sm ${
+            disabled={showInput && !inputValue.trim()}
+            className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-bold text-white transition-all active:scale-95 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed ${
               isDanger 
                 ? 'bg-red-600 hover:bg-red-700' 
                 : 'bg-primary-600 hover:bg-primary-700'

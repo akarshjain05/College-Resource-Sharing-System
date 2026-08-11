@@ -255,20 +255,28 @@ export default function BorrowRequestsPage() {
         return;
       }
       if (newStatus === "cancelled" || newStatus === "cancel") {
-        const reason = window.prompt("Are you sure you want to cancel this booking? If yes, please provide a reason:");
-        if (reason === null) return; // User cancelled the prompt
-        
-        try {
-          await borrowApi.cancel(bookingId, { reason: reason.trim() });
-          toast.success("Updated successfully");
-          setSelectedBookingForModal(null);
-          if (typeof loadBookingsList === 'function') loadBookingsList();
-          if (selectedBookingForModal?.id === bookingId) {
-            closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+        setConfirmDialog({
+          title: "Cancel Booking",
+          message: "Are you sure you want to cancel this booking? If yes, please provide a reason:",
+          confirmText: "Cancel Booking",
+          isDanger: true,
+          showInput: true,
+          inputValue: "",
+          inputPlaceholder: "Reason for cancellation...",
+          onConfirm: async (reason) => {
+            try {
+              await borrowApi.cancel(bookingId, { reason: reason.trim() });
+              toast.success("Updated successfully");
+              setSelectedBookingForModal(null);
+              if (typeof loadBookingsList === 'function') loadBookingsList();
+              if (selectedBookingForModal?.id === bookingId) {
+                closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+              }
+            } catch (err) {
+              toast.error(err.response?.data?.detail || "Action failed");
+            }
           }
-        } catch (err) {
-          toast.error(err.response?.data?.detail || "Action failed");
-        }
+        });
         return;
       }
       if (newStatus === "return_requested" || newStatus === "return") await borrowApi.returnItem(bookingId, null, 5, "");
@@ -1087,27 +1095,25 @@ export default function BorrowRequestsPage() {
 
 
                 {/* Bottom Row — Message + Report Issue (left) | Close Details (right) */}
-                <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => {
-                        const bId = selectedBookingForModal.id;
-                        closeBookingModal();
-                        setOpenChatId(bId);
-                      }}
-                      className="btn-secondary !py-2 !px-3 text-xs flex items-center gap-1.5"
+                <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
+                  {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
+                    <a
+                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
+                      className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5 mr-auto"
                     >
-                      <MessageCircle className="h-3.5 w-3.5" /> Message
-                    </button>
-                    {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
-                      <a
-                        href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
-                        className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5"
-                      >
-                        <AlertCircle className="h-3.5 w-3.5" /> Report Issue
-                      </a>
-                    )}
-                  </div>
+                      <AlertCircle className="h-3.5 w-3.5" /> Report Issue
+                    </a>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenChatId(selectedBookingForModal.id);
+                      closeBookingModal();
+                    }}
+                    className="btn-secondary !py-2 !px-4 text-xs flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" /> Message
+                  </button>
                   <button
                     onClick={() => closeBookingModal()}
                     className="btn-secondary !py-2 !px-4 text-xs"
