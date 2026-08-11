@@ -636,13 +636,32 @@ def confirm_return_resource(
 
     # Trust Score Logic (Borrower)
     borrower = db.query(User).filter(User.id == br.borrower_id).first()
+    
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    from app.services import payment_service
+
+    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    
+    # Credit the rent amount to the lender's wallet unconditionally on return
+    if payment and payment.rent_amount > 0:
+        from app.models.wallet import WalletTransaction
+        from app.models.enums import WalletTransactionType
+        
+        lender = db.query(User).filter(User.id == br.lender_id).first()
+        if lender:
+            lender.wallet_balance += payment.rent_amount
+            
+            earning_tx = WalletTransaction(
+                user_id=lender.id,
+                amount=payment.rent_amount,
+                type=WalletTransactionType.EARNING,
+                reference_id=str(br.id)
+            )
+            db.add(earning_tx)
+
     if borrower:
         if not is_damaged:
-            from app.models.payment import Payment
-            from app.models.enums import PaymentStatus
-            from app.services import payment_service
-
-            payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
             if payment and payment.refunded_amount == 0:
                 result = payment_service.refund_payment(
                     db, payment, amount_paise=payment.deposit_amount,
