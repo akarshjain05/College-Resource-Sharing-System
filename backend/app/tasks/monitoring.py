@@ -1,6 +1,5 @@
 import logging
-from datetime import datetime, timedelta
-import pytz
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select, and_, func
 
@@ -29,7 +28,7 @@ def check_security_anomalies() -> None:
     logger.info("Running security anomaly checks...")
     db = SessionLocal()
     try:
-        now = datetime.now(pytz.UTC)
+        now = datetime.now(timezone.utc)
         one_hour_ago = now - timedelta(hours=1)
         
         # 1. Check for unexpected admin account creations (should be rare)
