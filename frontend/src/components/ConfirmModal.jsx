@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
 export default function ConfirmModal({ 
@@ -11,11 +11,14 @@ export default function ConfirmModal({
   cancelText = "Cancel", 
   isDanger = false,
   showInput = false,
-  inputValue = "",
-  onInputChange = () => {},
   inputPlaceholder = "Type here..."
 }) {
-  if (!isOpen) return null;
+  const [inputValue, setInputValue] = useState("");
+
+  if (!isOpen) {
+    if (inputValue !== "") setInputValue(""); // Reset on close
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-[2px] p-4 animate-in fade-in duration-200">
@@ -48,7 +51,7 @@ export default function ConfirmModal({
                 autoFocus
                 placeholder={inputPlaceholder}
                 value={inputValue}
-                onChange={(e) => onInputChange(e.target.value)}
+                onChange={(e) => setInputValue(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-3 text-sm text-slate-800 dark:text-slate-100 outline-none transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
               />
             </div>
