@@ -1,83 +1,13 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+import re
 
-from app.core.database import get_db
-from app.core.deps import require_admin
-from app.models.borrow import BorrowRequest
-from app.models.resource import Resource
-from app.models.user import User
-from app.models.category import Category
-from app.models.enums import BorrowStatus
+with open("backend/app/routers/admin.py", "r") as f:
+    code = f.read()
 
-router = APIRouter(prefix="/admin/analytics", tags=["Admin Analytics"])
-
-
-@router.get("/overview")
-def overview(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
-    total_users = db.query(func.count(User.id)).scalar()
-    total_resources = db.query(func.count(Resource.id)).scalar()
-    total_borrows = db.query(func.count(BorrowRequest.id)).scalar()
-    pending_requests = (
-        db.query(func.count(BorrowRequest.id)).filter(BorrowRequest.status == BorrowStatus.REQUESTED).scalar()
-    )
-    active_borrows = (
-        db.query(func.count(BorrowRequest.id))
-        .filter(BorrowRequest.status == BorrowStatus.ACTIVE)
-        .scalar()
-    )
-    return {
-        "total_users": total_users,
-        "total_resources": total_resources,
-        "total_borrows": total_borrows,
-        "pending_requests": pending_requests,
-        "active_borrows": active_borrows,
-    }
-
-
-@router.get("/most-borrowed-categories")
-def most_borrowed_categories(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
-    rows = (
-        db.query(Category.name, func.count(BorrowRequest.id).label("borrow_count"))
-        .join(Resource, Resource.category_id == Category.id)
-        .join(BorrowRequest, BorrowRequest.resource_id == Resource.id)
-        .group_by(Category.name)
-        .order_by(func.count(BorrowRequest.id).desc())
-        .limit(10)
-        .all()
-    )
-    return [{"category": name, "borrow_count": count} for name, count in rows]
-
-
-@router.get("/top-contributors")
-def top_contributors(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
-    rows = (
-        db.query(User.full_name, func.count(Resource.id).label("resource_count"))
-        .join(Resource, Resource.owner_id == User.id)
-        .group_by(User.full_name)
-        .order_by(func.count(Resource.id).desc())
-        .limit(10)
-        .all()
-    )
-    return [{"user": name, "resource_count": count} for name, count in rows]
-
-
-@router.get("/department-usage")
-def department_usage(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
-    rows = (
-        db.query(User.department, func.count(BorrowRequest.id).label("borrow_count"))
-        .join(BorrowRequest, BorrowRequest.borrower_id == User.id)
-        .filter(User.department.isnot(None))
-        .group_by(User.department)
-        .order_by(func.count(BorrowRequest.id).desc())
-        .all()
-    )
-    return [{"department": dept, "borrow_count": count} for dept, count in rows]
-
-@router.get("/dashboard")
+new_endpoint = """
+@router.get("/analytics", response_model=None)
 def get_analytics_dashboard(
     db: Session = Depends(get_db),
-    _admin: User = Depends(require_admin),
+    current_admin: User = Depends(require_admin),
 ):
     from sqlalchemy import func
     from datetime import datetime, timedelta
@@ -93,6 +23,7 @@ def get_analytics_dashboard(
     total_active_users = db.query(User).filter(User.is_active == True).count()
     total_items_shared = db.query(Resource).filter(Resource.status != ResourceStatus.UNAVAILABLE).count()
     
+    # Community Value (Sum of deposit amounts for active/completed borrows)
     val_result = db.query(func.sum(Resource.deposit_amount)).join(
         BorrowRequest, Resource.id == BorrowRequest.resource_id
     ).filter(
@@ -105,6 +36,7 @@ def get_analytics_dashboard(
     # 2. Borrowing Trends (Last 12 weeks)
     trends = []
     now = datetime.utcnow()
+    # Create 12 weekly buckets
     for i in range(11, -1, -1):
         start_date = now - timedelta(days=(i * 7) + 7)
         end_date = now - timedelta(days=(i * 7))
@@ -136,6 +68,7 @@ def get_analytics_dashboard(
     # 4. Recent Activity
     activities = []
     
+    # Recent Listings
     recent_resources = db.query(Resource).order_by(Resource.created_at.desc()).limit(10).all()
     for r in recent_resources:
         activities.append(RecentActivityItem(
@@ -147,6 +80,7 @@ def get_analytics_dashboard(
             icon="laptop"
         ))
         
+    # Recent Returns
     recent_returns = db.query(BorrowRequest).filter(
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED])
     ).order_by(BorrowRequest.actual_return_date.desc().nulls_last()).limit(10).all()
@@ -160,6 +94,7 @@ def get_analytics_dashboard(
             icon="check"
         ))
         
+    # Recent Disputes
     recent_disputes = db.query(Complaint).filter(Complaint.status == ComplaintStatus.RESOLVED).order_by(Complaint.updated_at.desc()).limit(10).all()
     for disp in recent_disputes:
         activities.append(RecentActivityItem(
@@ -185,3 +120,10 @@ def get_analytics_dashboard(
         popular_categories=[CategoryDistribution(**c) for c in popular_categories],
         recent_activity=recent_activity
     )
+"""
+
+code = code + "\n\n" + new_endpoint.strip() + "\n"
+
+with open("backend/app/routers/admin.py", "w") as f:
+    f.write(code)
+print("Patched admin.py")
