@@ -598,8 +598,8 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : isExpired ? (
-                      <div className="w-full flex justify-between items-center gap-2">
-                        <span className="text-[11px] font-bold text-red-500 flex items-center gap-1">
+                      <>
+                        <span className="text-[11px] font-bold text-red-500 flex items-center gap-1 mr-auto">
                           <Calendar className="h-3.5 w-3.5 text-red-500" /> Lending window expired
                         </span>
                         <button
@@ -608,7 +608,7 @@ export default function BorrowRequestsPage() {
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Booking
                         </button>
-                      </div>
+                      </>
                     ) : isStarted ? (
                       <div className="w-full flex gap-2">
                         <button
@@ -625,8 +625,8 @@ export default function BorrowRequestsPage() {
                         </button>
                       </div>
                     ) : (
-                      <div className="w-full flex justify-between items-center gap-2">
-                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                      <>
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                           <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString()}
                         </span>
                         <button
@@ -635,7 +635,7 @@ export default function BorrowRequestsPage() {
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Booking
                         </button>
-                      </div>
+                      </>
                     )
                   )}
                   {tab === "lending" && (book.status === "active" || book.status === "ongoing" || book.status === "late") && (
