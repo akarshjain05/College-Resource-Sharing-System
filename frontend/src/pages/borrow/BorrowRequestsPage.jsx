@@ -21,6 +21,7 @@ const getStatusBadge = (status) => {
   if (st === "rejected") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Declined</span>;
   if (st === "damaged") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Damaged</span>;
   if (st === "late") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Late</span>;
+  if (st === "cancellation_requested") return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Cancel Pending</span>;
   return <span className="rounded-lg bg-red-50 text-red-600 border border-red-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">{status}</span>;
 };
 
@@ -229,6 +230,14 @@ export default function BorrowRequestsPage() {
         await borrowApi.nudge(bookingId);
         toast.success("Nudge sent successfully!");
         return;
+      }
+      if (newStatus === "accept_cancellation") {
+        await borrowApi.acceptCancellation(bookingId);
+        toast.success("Cancellation accepted. Refund initiated.");
+      }
+      if (newStatus === "reject_cancellation") {
+        await borrowApi.rejectCancellation(bookingId);
+        toast.success("Cancellation rejected. Booking remains approved.");
       }
       if (newStatus === "active" || newStatus === "handover") await borrowApi.handover(bookingId);
       if (newStatus === "confirm_handover") await borrowApi.confirmHandover(bookingId);
@@ -670,6 +679,29 @@ export default function BorrowRequestsPage() {
                     </button>
                   )}
 
+                  {book.status === "cancellation_requested" && (
+                    book.cancellation_requested_by_id === user?.id ? (
+                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Pending cancellation approval
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "accept_cancellation"); }}
+                          className="btn-primary !py-2 text-xs bg-red-600 hover:bg-red-700 border-red-700 text-white"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Accept Cancellation
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_cancellation"); }}
+                          className="btn-secondary !py-2 text-xs"
+                        >
+                          <X className="h-3.5 w-3.5" /> Reject
+                        </button>
+                      </>
+                    )
+                  )}
+
                   {["active", "returned", "damaged", "late", "rejected", "cancelled"].includes(book.status) && (
                     <a
                       href={`/complaints?borrow_request_id=${book.id}&resource_id=${book.resource?.id || ''}&against_user_id=${(tab === "borrowing" ? book.lender?.id : book.borrower?.id) || ''}&category=dispute`}
@@ -1093,6 +1125,36 @@ export default function BorrowRequestsPage() {
                   </button>
                 )}
 
+
+                {selectedBookingForModal.status === "cancellation_requested" && (
+                  selectedBookingForModal.cancellation_requested_by_id === user?.id ? (
+                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-[11px] font-bold text-slate-400">Pending cancellation approval</span>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "accept_cancellation");
+                          closeBookingModal({ ...selectedBookingForModal, status: "cancelled" });
+                        }}
+                        className="btn-primary flex-1 !py-2.5 text-xs flex items-center justify-center gap-1.5 bg-red-600 hover:bg-red-700 border-red-700 text-white"
+                      >
+                        <Check className="h-3.5 w-3.5" /> Accept Cancellation
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "reject_cancellation");
+                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                        }}
+                        className="btn-secondary flex-1 !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                      >
+                        <X className="h-3.5 w-3.5" /> Reject
+                      </button>
+                    </div>
+                  )
+                )}
 
                 {/* Bottom Row — Message + Report Issue (left) | Close Details (right) */}
                 <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">

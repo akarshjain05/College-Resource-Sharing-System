@@ -106,6 +106,32 @@ export default function ChatThread({ request, onReportIssue }) {
       );
     }
 
+    if (msg.body?.includes("[CANCELLATION_REQUEST]")) {
+      const parts = msg.body.split("\n");
+      return (
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-900 dark:text-amber-200 text-xs space-y-1">
+          <p className="font-bold">{parts[0].replace("[CANCELLATION_REQUEST] ", "")}</p>
+          {parts[1] && <p className="text-[11px] opacity-90">{parts.slice(1).join("\n")}</p>}
+        </div>
+      );
+    }
+
+    if (msg.body?.includes("[CANCELLATION_ACCEPTED]")) {
+      return (
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-900 dark:text-emerald-200 text-xs text-center font-bold">
+          {msg.body.replace("[CANCELLATION_ACCEPTED] ", "")}
+        </div>
+      );
+    }
+
+    if (msg.body?.includes("[CANCELLATION_REJECTED]")) {
+      return (
+        <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 text-xs text-center font-bold">
+          {msg.body.replace("[CANCELLATION_REJECTED] ", "")}
+        </div>
+      );
+    }
+
     return <p>{msg.body}</p>;
   };
 
@@ -138,7 +164,7 @@ export default function ChatThread({ request, onReportIssue }) {
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender_id === user.id;
-            const isSystemMsg = msg.body?.includes("[COMPLAINT_UPDATE]") || msg.body?.includes("[COMPLAINT_FILED]");
+            const isSystemMsg = msg.body?.includes("[COMPLAINT_UPDATE]") || msg.body?.includes("[COMPLAINT_FILED]") || msg.body?.includes("[CANCELLATION_REQUEST]") || msg.body?.includes("[CANCELLATION_ACCEPTED]") || msg.body?.includes("[CANCELLATION_REJECTED]");
 
             if (isSystemMsg) {
               return (

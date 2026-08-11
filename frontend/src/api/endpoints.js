@@ -77,6 +77,8 @@ export const borrowApi = {
   confirmHandover: (id) => api.post(`/borrow-requests/${id}/confirm-handover`),
   rejectHandover: (id) => api.post(`/borrow-requests/${id}/reject-handover`),
   cancel: (id, payload = {}) => api.post(`/borrow-requests/${id}/cancel`, payload),
+  acceptCancellation: (id) => api.post(`/borrow-requests/${id}/accept-cancellation`),
+  rejectCancellation: (id) => api.post(`/borrow-requests/${id}/reject-cancellation`),
   returnItem: (id, damageReport, lenderRating, lenderReview) => api.post(`/borrow-requests/${id}/return`, { damage_report: damageReport, lender_rating: lenderRating, lender_review: lenderReview }),
   confirmReturn: (id, borrowerRating, borrowerReview) => api.post(`/borrow-requests/${id}/confirm-return`, { borrower_rating: borrowerRating, borrower_review: borrowerReview }),
 };

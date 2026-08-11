@@ -60,6 +60,7 @@ class BorrowStatus(str, enum.Enum):
     RETURNED = "returned"
     LATE = "late"
     DAMAGED = "damaged"
+    CANCELLATION_REQUESTED = "cancellation_requested"
 
 
 class DamageClaimStatus(str, enum.Enum):
@@ -84,6 +85,7 @@ class NotificationType(str, enum.Enum):
     PAYMENT_FAILED = "payment_failed"
     REFUND_ISSUED = "refund_issued"
     COMPLAINT_UPDATE = "complaint_update"
+    CANCELLATION_REQUEST = "cancellation_request"
     SYSTEM = "system"
 
 
