@@ -40,4 +40,8 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.monitoring.check_security_anomalies",
         "schedule": crontab(minute=0),  # top of every hour
     },
+    "unpublish-expired-resources-daily": {
+        "task": "app.tasks.reminders.unpublish_expired_resources",
+        "schedule": crontab(hour=0, minute=10),  # every day at 00:10 UTC
+    },
 }

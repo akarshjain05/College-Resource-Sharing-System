@@ -175,3 +175,43 @@ def check_overdue_complaints():
     finally:
         db.close()
 
+
+@celery_app.task(name="app.tasks.reminders.unpublish_expired_resources")
+def unpublish_expired_resources():
+    """Find resources whose availability window has passed and mark them as unpublished (unavailable)."""
+    db = SessionLocal()
+    unpublished_count = 0
+    try:
+        from app.models.resource import Resource
+        from app.models.enums import ResourceStatus
+
+        today = date.today()
+        expired_resources = (
+            db.query(Resource)
+            .filter(
+                Resource.status == ResourceStatus.AVAILABLE,
+                Resource.available_to != None,
+                Resource.available_to < today
+            )
+            .all()
+        )
+        for resource in expired_resources:
+            resource.status = ResourceStatus.UNAVAILABLE
+            create_notification(
+                db,
+                resource.owner_id,
+                NotificationType.SYSTEM,
+                "Listing Expired",
+                f"Your listing '{resource.title}' has automatically been unpublished as its availability window has ended.",
+                link=f"/my-listings",
+            )
+            unpublished_count += 1
+            
+        db.commit()
+        logger.info("Automatically unpublished %d expired resources", unpublished_count)
+        return {"resources_unpublished": unpublished_count}
+    except Exception as e:
+        logger.error(f"Failed to unpublish expired resources: {e}")
+        db.rollback()
+    finally:
+        db.close()
