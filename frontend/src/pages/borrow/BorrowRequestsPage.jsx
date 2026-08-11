@@ -1180,6 +1180,8 @@ export default function BorrowRequestsPage() {
         confirmText={confirmDialog?.confirmText}
         cancelText={confirmDialog?.cancelText}
         isDanger={confirmDialog?.isDanger || (confirmDialog?.confirmColor && confirmDialog.confirmColor.includes('red')) || false}
+        showInput={confirmDialog?.showInput || false}
+        inputPlaceholder={confirmDialog?.inputPlaceholder}
         onConfirm={confirmDialog?.onConfirm}
       />
     </div>
