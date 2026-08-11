@@ -127,6 +127,7 @@ export const wishlistApi = {
 };
 
 export const adminApi = {
+  dashboard: () => api.get("/admin/analytics/dashboard"),
   overview: () => api.get("/admin/analytics/overview"),
   mostBorrowedCategories: () => api.get("/admin/analytics/most-borrowed-categories"),
   topContributors: () => api.get("/admin/analytics/top-contributors"),

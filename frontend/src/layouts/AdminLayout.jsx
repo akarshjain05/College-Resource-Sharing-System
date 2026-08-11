@@ -2,6 +2,7 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 
 const TABS = [
   { to: "/admin", label: "Overview", exact: true },
+  { to: "/admin/analytics", label: "Analytics" },
   { to: "/admin/users", label: "Users" },
   { to: "/admin/categories", label: "Categories" },
   { to: "/admin/resources", label: "Resources" },

@@ -1,13 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { adminApi } from "../../api/endpoints";
+import { adminApi, resourceApi } from "../../api/endpoints";
+import ConfirmModal from "../../components/ConfirmModal";
+import { Eye, MoreVertical, Trash2 } from "lucide-react";
 
 export default function AdminResourcesPage() {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const menuRef = useRef(null);
 
   const load = (p = 1) => {
     setLoading(true);
@@ -23,6 +30,31 @@ export default function AdminResourcesPage() {
   useEffect(() => {
     load(page);
   }, [page]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await resourceApi.remove(deleteTarget.id);
+      toast.success("Resource deleted successfully");
+      setDeleteTarget(null);
+      load(page); // Reload table
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to delete resource");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -71,9 +103,39 @@ export default function AdminResourcesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Link to={`/resources/${res.id}`} className="text-brass-600 font-semibold hover:text-brass-700">
-                        View
-                      </Link>
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          to={`/resources/${res.id}`}
+                          className="p-2 text-ink-400 hover:text-brass-600 hover:bg-brass-50 rounded-xl transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="h-4.5 w-4.5" />
+                        </Link>
+                        <div className="relative">
+                          <button
+                            onClick={() => setMenuOpen(menuOpen === res.id ? null : res.id)}
+                            className="p-2 text-ink-400 hover:text-ink-700 hover:bg-ink-100 rounded-xl transition-colors"
+                          >
+                            <MoreVertical className="h-4.5 w-4.5" />
+                          </button>
+                          {menuOpen === res.id && (
+                            <div 
+                              ref={menuRef} 
+                              className="absolute right-0 mt-1 w-36 bg-white border border-ink-100 shadow-xl rounded-xl py-1.5 z-20 overflow-hidden"
+                            >
+                              <button
+                                onClick={() => {
+                                  setDeleteTarget(res);
+                                  setMenuOpen(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2.5 font-semibold transition-colors"
+                              >
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -82,6 +144,18 @@ export default function AdminResourcesPage() {
           </table>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={!!deleteTarget}
+        title="Delete Resource"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmText={deleting ? "Deleting..." : "Delete Resource"}
+        cancelText="Cancel"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        isDestructive={true}
+        loading={deleting}
+      />
     </div>
   );
 }

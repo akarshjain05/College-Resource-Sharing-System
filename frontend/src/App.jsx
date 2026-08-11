@@ -26,6 +26,7 @@ import MyNeedsPage from "./pages/wanted/MyNeedsPage";
 import TransactionsPage from "./pages/payments/TransactionsPage";
 
 const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminAnalyticsPage = lazy(() => import("./pages/admin/AdminAnalyticsPage"));
 const AdminUsersPage = lazy(() => import("./pages/admin/AdminUsersPage"));
 const AdminCategoriesPage = lazy(() => import("./pages/admin/AdminCategoriesPage"));
 const AdminResourcesPage = lazy(() => import("./pages/admin/AdminResourcesPage"));
@@ -86,6 +87,7 @@ export default function App() {
                 }
               >
                 <Route index element={<AdminDashboardPage />} />
+                <Route path="analytics" element={<AdminAnalyticsPage />} />
                 <Route path="users" element={<AdminUsersPage />} />
                 <Route path="categories" element={<AdminCategoriesPage />} />
                 <Route path="resources" element={<AdminResourcesPage />} />

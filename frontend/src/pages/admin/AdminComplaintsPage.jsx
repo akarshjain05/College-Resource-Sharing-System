@@ -66,10 +66,10 @@ function ComplaintRow({ complaint, onUpdate }) {
       await onUpdate(complaint.id, { 
         status, 
         admin_response: response,
-        resolution_action: resolutionAction || undefined,
-        resolution_amount: resolutionAmount ? parseFloat(resolutionAmount) : undefined,
+        resolution_action: resolutionAction || null,
+        resolution_amount: resolutionAmount ? parseFloat(resolutionAmount) : null,
         resolution_notes: response,
-        trust_score_penalty: penalty ? parseInt(penalty, 10) : undefined 
+        trust_score_penalty: penalty ? parseInt(penalty, 10) : null 
       });
     } finally {
       setSaving(false);
@@ -314,13 +314,13 @@ export default function AdminComplaintsPage() {
 
   const filteredComplaints = complaints.filter((c) => {
     const matchesStatus = filterStatus === "all" || c.status === filterStatus;
-    const q = searchQuery.toLowerCase();
+    const q = (searchQuery || "").toLowerCase();
     const matchesSearch =
       !q ||
-      c.subject.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q) ||
-      (c.filed_by && c.filed_by.full_name.toLowerCase().includes(q)) ||
-      (c.against_user && c.against_user.full_name.toLowerCase().includes(q));
+      (c.subject || "").toLowerCase().includes(q) ||
+      (c.description || "").toLowerCase().includes(q) ||
+      (c.filed_by && (c.filed_by.full_name || "").toLowerCase().includes(q)) ||
+      (c.against_user && (c.against_user.full_name || "").toLowerCase().includes(q));
     return matchesStatus && matchesSearch;
   });
 
