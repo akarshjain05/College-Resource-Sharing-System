@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { userApi, authApi } from "../../api/endpoints";
 import PasswordInput from "../../components/PasswordInput";
+import ConfirmModal from "../../components/ConfirmModal";
 import { User, Lock, ArrowLeft, Save, ShieldCheck, Mail, AlertTriangle, Bell } from "lucide-react";
 
 export default function ProfilePage() {
@@ -23,6 +24,7 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null);
 
   const isGoogleAccount = user?.auth_provider === "google";
 
@@ -69,20 +71,35 @@ export default function ProfilePage() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you absolutely sure you want to delete your account? This action cannot be undone and will anonymize all your data.")) return;
-    setDeleting(true);
-    try {
-      await userApi.deleteMyAccount();
-      toast.success("Account deleted successfully.");
-      logout();
-    } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not delete account.");
-      setDeleting(false);
-    }
+    setConfirmDialog({
+      title: "Delete Account",
+      message: "Are you absolutely sure you want to delete your account? This action cannot be undone and will anonymize all your data.",
+      confirmText: "Delete Account",
+      isDanger: true,
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await userApi.deleteMyAccount();
+          toast.success("Account deleted successfully.");
+          logout();
+        } catch (err) {
+          toast.error(err.response?.data?.detail || "Could not delete account.");
+        } finally {
+          setDeleting(false);
+        }
+      }
+    });
   };
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in duration-300">
+      {confirmDialog && (
+        <ConfirmModal
+          {...confirmDialog}
+          onClose={() => setConfirmDialog(null)}
+          loading={deleting}
+        />
+      )}
       {/* Back Link & Header */}
       <div className="flex items-center justify-between">
         <Link

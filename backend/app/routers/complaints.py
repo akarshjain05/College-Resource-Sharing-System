@@ -175,17 +175,9 @@ def update_complaint(
 
     # Post real-time chat update message if borrow request is linked
     if complaint.borrow_request_id:
-        resolution_str = complaint.resolution_data or json.dumps({
-            "action_taken": payload.resolution_action or "in_progress_update",
-            "notes": payload.admin_response or f"Status changed to {complaint.status.value.upper()}",
-            "amount": payload.resolution_amount or 0.0,
-            "resolved_at": datetime.utcnow().isoformat()
-        })
-
-        system_msg_body = (
-            f"[COMPLAINT_UPDATE] 📢 Complaint Status: {complaint.status.value.upper()}\n"
-            f"Resolution Data: {resolution_str}"
-        )
+        system_msg_body = f"[COMPLAINT_UPDATE] 📢 Complaint Status: {complaint.status.value.upper()}"
+        if complaint.resolution_data:
+            system_msg_body += f"\nResolution Data: {complaint.resolution_data}"
         msg = ChatMessage(
             borrow_request_id=complaint.borrow_request_id,
             sender_id=complaint.filed_by_id,
