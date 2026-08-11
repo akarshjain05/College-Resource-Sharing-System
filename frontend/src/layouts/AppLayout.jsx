@@ -87,8 +87,22 @@ export default function AppLayout() {
       const newLoc = localStorage.getItem(key) || "";
       setSelectedLocation(newLoc);
     };
+    
+    const handleSavedLocationsChange = () => {
+      const keySaved = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+      try {
+        const saved = localStorage.getItem(keySaved);
+        if (saved) setSavedLocations(JSON.parse(saved));
+      } catch (e) {}
+    };
+
     window.addEventListener("locationChanged", handleLocationChange);
-    return () => window.removeEventListener("locationChanged", handleLocationChange);
+    window.addEventListener("savedLocationsChanged", handleSavedLocationsChange);
+    
+    return () => {
+      window.removeEventListener("locationChanged", handleLocationChange);
+      window.removeEventListener("savedLocationsChanged", handleSavedLocationsChange);
+    };
   }, [user?.id]);
 
   useEffect(() => {

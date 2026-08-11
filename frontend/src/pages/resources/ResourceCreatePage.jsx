@@ -34,6 +34,15 @@ export default function ResourceCreatePage() {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const [submitting, setSubmitting] = useState(false);
+  const [savedLocations, setSavedLocations] = useState(() => {
+    try {
+      const key = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [photos, setPhotos] = useState([]); // Array of { file, previewUrl }
   const [categories, setCategories] = useState([]);
 
@@ -233,7 +242,25 @@ export default function ResourceCreatePage() {
           }
         }
       }
-      toast.success("Listing created successfully!");
+      toast.success("Resource listed successfully!");
+      
+      // Update saved locations
+      const loc = form.location.trim();
+      if (loc) {
+        const keySaved = user?.id ? `crss_saved_locs_${user.id}` : "crss_saved_locs_guest";
+        const currentSaved = (() => {
+          try {
+            const saved = localStorage.getItem(keySaved);
+            return saved ? JSON.parse(saved) : [];
+          } catch (e) {
+            return [];
+          }
+        })();
+        const newList = [loc, ...currentSaved.filter((l) => l !== loc)].slice(0, 5);
+        localStorage.setItem(keySaved, JSON.stringify(newList));
+        window.dispatchEvent(new Event("savedLocationsChanged"));
+      }
+
       setCreatedItem({ ...response.data, image_placeholder: finalPlaceholder });
       setSubmitting(false);
       setShowSuccessModal(true);
@@ -363,11 +390,17 @@ export default function ResourceCreatePage() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Location Block</label>
                 <input
                   required
+                  list="saved-locations-list"
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all outline-none bg-white dark:bg-slate-950 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400"
                   value={form.location}
                   onChange={update("location")}
                   placeholder="e.g. Hostel Block A"
                 />
+                <datalist id="saved-locations-list">
+                  {savedLocations.map((loc, idx) => (
+                    <option key={idx} value={loc} />
+                  ))}
+                </datalist>
               </div>
             </div>
 
