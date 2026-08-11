@@ -215,6 +215,22 @@ def resolve_damage_claim(
         if payment and (payment.refunded_amount or 0) == 0:
             final_cost_paise = int(round((payload.final_cost or 0) * 100))
             refundable_paise = max(0, payment.deposit_amount - final_cost_paise)
+            
+            # Credit the kept portion to the lender's wallet as compensation
+            if final_cost_paise > 0:
+                from app.models.wallet import WalletTransaction
+                from app.models.enums import WalletTransactionType
+                lender = db.query(User).filter(User.id == claim.filed_by_id).first()
+                if lender:
+                    lender.wallet_balance += final_cost_paise
+                    comp_tx = WalletTransaction(
+                        user_id=lender.id,
+                        amount=final_cost_paise,
+                        type=WalletTransactionType.EARNING,
+                        reference_id=str(claim.id)
+                    )
+                    db.add(comp_tx)
+            
             if refundable_paise > 0:
                 result = payment_service.refund_payment(
                     db, payment.payer, payment.razorpay_payment_id,
@@ -233,8 +249,23 @@ def resolve_damage_claim(
                         result["id"]
                     )
 
-    # RESOLVED_VALID: the lender's claim stands as filed — the full deposit is
-    # forfeited to cover the damage, so no refund is issued.
+    elif payload.status == DamageClaimStatus.RESOLVED_VALID:
+        # RESOLVED_VALID: the lender's claim stands as filed — the full deposit is
+        # forfeited to cover the damage, so no refund is issued.
+        if payment and payment.deposit_amount > 0 and (payment.refunded_amount or 0) == 0:
+            # Credit the full deposit to the lender's wallet as compensation
+            from app.models.wallet import WalletTransaction
+            from app.models.enums import WalletTransactionType
+            lender = db.query(User).filter(User.id == claim.filed_by_id).first()
+            if lender:
+                lender.wallet_balance += payment.deposit_amount
+                comp_tx = WalletTransaction(
+                    user_id=lender.id,
+                    amount=payment.deposit_amount,
+                    type=WalletTransactionType.EARNING,
+                    reference_id=str(claim.id)
+                )
+                db.add(comp_tx)
 
     db.commit()
     db.refresh(claim)
