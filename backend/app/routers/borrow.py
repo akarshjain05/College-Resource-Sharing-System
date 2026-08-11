@@ -435,12 +435,108 @@ def cancel_borrow_request(
     from app.models.payment import Payment
     from app.models.enums import PaymentStatus
     from app.services import payment_service
+    from app.models.chat import ChatMessage
+    from app.routers.websocket import manager
+    import json
+
+    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
+    
+    notify_user_id = br.borrower_id if current_user.id == lender_id else lender_id
+    status_text = "approved borrow request" if was_approved else "borrow request"
+
+    if payment:
+        # If payment is already made, require dual-sided cancellation
+        br.status = BorrowStatus.CANCELLATION_REQUESTED
+        br.cancellation_requested_by_id = current_user.id
+        if payload.reason:
+            br.cancellation_reason = payload.reason
+        db.commit()
+
+        # Send chat message
+        system_msg_body = f"[CANCELLATION_REQUEST] ⚠️ Cancellation Requested\nReason: {payload.reason or 'No reason provided.'}"
+        msg = ChatMessage(
+            borrow_request_id=br.id,
+            sender_id=current_user.id,
+            body=system_msg_body,
+        )
+        db.add(msg)
+        db.commit()
+        db.refresh(msg)
+        
+        for uid in (br.lender_id, br.borrower_id):
+            manager.notify_user(
+                uid,
+                {
+                    "type": "chat_message",
+                    "request_id": str(br.id),
+                    "message": {
+                        "id": str(msg.id),
+                        "sender_id": str(msg.sender_id),
+                        "body": msg.body,
+                        "created_at": msg.created_at.isoformat(),
+                    }
+                }
+            )
+
+        create_notification(
+            db,
+            notify_user_id,
+            NotificationType.CANCELLATION_REQUEST,
+            "Cancellation Requested",
+            f"{current_user.full_name} has requested to cancel the {status_text} for '{resource_title}'. Please review.",
+            link=f"/my-bookings?id={req_id}&tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
+        )
+    else:
+        # Instant cancellation if no payment
+        br.status = BorrowStatus.CANCELLED
+        if payload.reason:
+            br.cancellation_reason = payload.reason
+        db.commit()
+
+        msg_body = f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'."
+        if payload.reason:
+            msg_body += f"\nReason: {payload.reason}"
+        
+        create_notification(
+            db,
+            notify_user_id,
+            NotificationType.SYSTEM,
+            "Borrow request cancelled",
+            msg_body,
+            link=f"/my-bookings?id={req_id}&tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
+        )
+
+    return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
+
+@router.post("/{request_id}/accept-cancellation", response_model=BorrowRequestResponse)
+def accept_cancellation(
+    request_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_verified_user),
+    db: Session = Depends(get_db),
+):
+    br = _borrow_query(db).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.status != BorrowStatus.CANCELLATION_REQUESTED:
+        raise AppException("This request does not have a pending cancellation", status_code=status.HTTP_400_BAD_REQUEST)
+    
+    if current_user.id == br.cancellation_requested_by_id:
+        raise AppException("You cannot accept your own cancellation request", status_code=status.HTTP_400_BAD_REQUEST)
+    if current_user.id not in (br.borrower_id, br.lender_id):
+        raise AppException("Unauthorized to access this request", status_code=status.HTTP_403_FORBIDDEN)
+
+    from app.models.payment import Payment
+    from app.models.enums import PaymentStatus
+    from app.services import payment_service
+    from app.models.chat import ChatMessage
+    from app.routers.websocket import manager
 
     payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
     if payment:
         result = payment_service.refund_payment(
             db, payment, amount_paise=payment.total_amount,
-            notes={"reason": "borrow_request_cancelled"},
+            notes={"reason": "borrow_request_cancellation_accepted"},
         )
         
         from app.services.email_service import send_payment_refund_email
@@ -455,29 +551,111 @@ def cancel_borrow_request(
             )
 
     br.status = BorrowStatus.CANCELLED
-    if payload.reason:
-        br.cancellation_reason = payload.reason
     db.commit()
+    
+    system_msg_body = f"[CANCELLATION_ACCEPTED] ✅ {current_user.full_name} accepted the cancellation request."
+    msg = ChatMessage(
+        borrow_request_id=br.id,
+        sender_id=current_user.id,
+        body=system_msg_body,
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    
+    for uid in (br.lender_id, br.borrower_id):
+        manager.notify_user(
+            uid,
+            {
+                "type": "chat_message",
+                "request_id": str(br.id),
+                "message": {
+                    "id": str(msg.id),
+                    "sender_id": str(msg.sender_id),
+                    "body": msg.body,
+                    "created_at": msg.created_at.isoformat(),
+                }
+            }
+        )
 
-    status_text = "approved borrow request" if was_approved else "borrow request"
-    notify_user_id = br.borrower_id if current_user.id == lender_id else lender_id
-    
-    msg_body = f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'."
-    if payload.reason:
-        msg_body += f"\nReason: {payload.reason}"
-    
     create_notification(
         db,
-        notify_user_id,
+        br.cancellation_requested_by_id,
         NotificationType.SYSTEM,
-        "Borrow request cancelled",
-        f"{current_user.full_name} cancelled the {status_text} for '{resource_title}'.",
-        link=f"/my-bookings?id={req_id}&tab={'lending' if notify_user_id == lender_id else 'borrowing'}",
+        "Cancellation Accepted",
+        f"{current_user.full_name} accepted your cancellation request for '{br.resource.title if br.resource else 'item'}'. The booking is now cancelled.",
+        link=f"/my-bookings?id={br.id}&tab={'lending' if br.cancellation_requested_by_id == br.lender_id else 'borrowing'}",
     )
 
-    return _borrow_query(db).filter(BorrowRequest.id == req_id).first()
+    return _borrow_query(db).filter(BorrowRequest.id == request_id).first()
 
 
+@router.post("/{request_id}/reject-cancellation", response_model=BorrowRequestResponse)
+def reject_cancellation(
+    request_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_active_verified_user),
+    db: Session = Depends(get_db),
+):
+    br = _borrow_query(db).filter(BorrowRequest.id == request_id).first()
+    if not br:
+        raise NotFoundException("Borrow request not found")
+    if br.status != BorrowStatus.CANCELLATION_REQUESTED:
+        raise AppException("This request does not have a pending cancellation", status_code=status.HTTP_400_BAD_REQUEST)
+    
+    if current_user.id == br.cancellation_requested_by_id:
+        raise AppException("You cannot reject your own cancellation request", status_code=status.HTTP_400_BAD_REQUEST)
+    if current_user.id not in (br.borrower_id, br.lender_id):
+        raise AppException("Unauthorized to access this request", status_code=status.HTTP_403_FORBIDDEN)
+
+    from app.models.chat import ChatMessage
+    from app.routers.websocket import manager
+
+    # Revert to APPROVED since cancellation is only possible for REQUESTED or APPROVED
+    # and if it was PAID, it must have been APPROVED.
+    br.status = BorrowStatus.APPROVED
+    br.cancellation_requested_by_id = None
+    br.cancellation_reason = None
+    db.commit()
+    
+    system_msg_body = f"[CANCELLATION_REJECTED] ❌ {current_user.full_name} rejected the cancellation request."
+    msg = ChatMessage(
+        borrow_request_id=br.id,
+        sender_id=current_user.id,
+        body=system_msg_body,
+    )
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    
+    for uid in (br.lender_id, br.borrower_id):
+        manager.notify_user(
+            uid,
+            {
+                "type": "chat_message",
+                "request_id": str(br.id),
+                "message": {
+                    "id": str(msg.id),
+                    "sender_id": str(msg.sender_id),
+                    "body": msg.body,
+                    "created_at": msg.created_at.isoformat(),
+                }
+            }
+        )
+
+    # Need to find who originally requested it, since we just set it to None, let's keep track:
+    original_requester_id = br.lender_id if current_user.id == br.borrower_id else br.borrower_id
+
+    create_notification(
+        db,
+        original_requester_id,
+        NotificationType.SYSTEM,
+        "Cancellation Rejected",
+        f"{current_user.full_name} rejected your cancellation request for '{br.resource.title if br.resource else 'item'}'.",
+        link=f"/my-bookings?id={br.id}&tab={'lending' if original_requester_id == br.lender_id else 'borrowing'}",
+    )
+
+    return _borrow_query(db).filter(BorrowRequest.id == request_id).first()
 @router.post("/{request_id}/nudge", status_code=status.HTTP_200_OK)
 def nudge_request(
     request_id: uuid.UUID,
