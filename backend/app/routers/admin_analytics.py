@@ -84,7 +84,7 @@ def get_analytics_dashboard(
     from app.models.user import User
     from app.models.resource import Resource
     from app.models.borrow import BorrowRequest
-    from app.models.complaint import Complaint
+    from app.models.misc import Complaint
     from app.models.enums import ResourceStatus, BorrowStatus, ComplaintStatus
     from app.models.category import Category
     from app.schemas.analytics import AnalyticsResponse, KPIResponse, BorrowTrend, CategoryDistribution, RecentActivityItem
