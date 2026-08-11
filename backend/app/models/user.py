@@ -54,7 +54,7 @@ class User(Base, UUIDMixin, TimestampMixin):
     avg_response_seconds: Mapped[Optional[int]] = mapped_column(nullable=True)
     response_count: Mapped[int] = mapped_column(default=0)
 
-fcm_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    fcm_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     push_notifications: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     email_notifications: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     notif_resource_listing: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
