@@ -57,6 +57,9 @@ function ComplaintRow({ complaint, onUpdate }) {
         setResolutionAction(parsed.action_taken || "");
         setResolutionAmount(parsed.amount ? parsed.amount.toString() : "");
       } catch (e) {}
+    } else {
+      setResolutionAction("");
+      setResolutionAmount("");
     }
   }, [complaint]);
 

@@ -16,6 +16,8 @@ export default function ChatThread({ request, onReportIssue }) {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
+  if (!request) return null;
+
   const fetchMessages = async () => {
     try {
       const resp = await chatApi.list(request.id);

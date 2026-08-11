@@ -17,7 +17,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { notificationApi, usersApi } from "../api/endpoints";
+import { notificationApi, userApi } from "../api/endpoints";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { usePushNotification } from "../hooks/usePushNotification";
@@ -43,7 +43,7 @@ export default function NotificationsPage() {
     const newValue = !settings[key];
     setSettings(prev => ({ ...prev, [key]: newValue }));
     try {
-      await usersApi.updateMe({ [key]: newValue });
+      await userApi.updateMyProfile({ [key]: newValue });
       toast.success("Preference updated");
     } catch (err) {
       toast.error("Failed to update preference");
