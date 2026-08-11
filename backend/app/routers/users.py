@@ -134,7 +134,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     from app.models.resource import Resource
     from app.schemas.resource import ResourceResponse
     from app.models.borrow import BorrowRequest
-    from app.models.enums import BorrowStatus
+    from app.models.enums import BorrowStatus, ResourceStatus
     
     try:
         uid = uuid.UUID(user_id)
@@ -151,6 +151,7 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
     shared_resources = (
         db.query(Resource)
         .filter(Resource.owner_id == user.id)
+        .filter(Resource.status != ResourceStatus.UNAVAILABLE)
         .order_by(Resource.created_at.desc())
         .limit(10)
         .all()

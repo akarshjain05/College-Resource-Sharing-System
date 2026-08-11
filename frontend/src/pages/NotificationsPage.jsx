@@ -17,7 +17,7 @@ import {
   X,
   AlertTriangle,
 } from "lucide-react";
-import { notificationApi } from "../api/endpoints";
+import { notificationApi, usersApi } from "../api/endpoints";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import { usePushNotification } from "../hooks/usePushNotification";
@@ -35,15 +35,29 @@ export default function NotificationsPage() {
   const [settings, setSettings] = useState({
     pushEnabled: localStorage.getItem("notif_push_enabled") !== "false",
     emailEnabled: localStorage.getItem("notif_email_enabled") !== "false",
+    notif_resource_listing: user?.notif_resource_listing ?? true,
+    notif_campus_needs: user?.notif_campus_needs ?? true,
   });
 
-  const handleToggleSetting = (key) => {
-    setSettings(prev => {
-      const updated = { ...prev, [key]: !prev[key] };
-      localStorage.setItem(`notif_${key === "pushEnabled" ? "push" : "email"}_enabled`, String(updated[key]));
-      toast.success(`${key === "pushEnabled" ? "Push" : "Email"} notifications ${updated[key] ? "enabled" : "disabled"}`);
-      return updated;
-    });
+  const handleToggleSetting = async (key) => {
+    if (key === "pushEnabled" || key === "emailEnabled") {
+      setSettings(prev => {
+        const updated = { ...prev, [key]: !prev[key] };
+        localStorage.setItem(`notif_${key === "pushEnabled" ? "push" : "email"}_enabled`, String(updated[key]));
+        toast.success(`${key === "pushEnabled" ? "Push" : "Email"} notifications ${updated[key] ? "enabled" : "disabled"}`);
+        return updated;
+      });
+    } else {
+      const newValue = !settings[key];
+      setSettings(prev => ({ ...prev, [key]: newValue }));
+      try {
+        await usersApi.updateMe({ [key]: newValue });
+        toast.success("Preference updated");
+      } catch (err) {
+        toast.error("Failed to update preference");
+        setSettings(prev => ({ ...prev, [key]: !newValue })); // revert
+      }
+    }
   };
 
   const loadNotifications = () => {
@@ -386,6 +400,46 @@ export default function NotificationsPage() {
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.emailEnabled ? "translate-x-5" : "translate-x-0"
+                      }`}
+                  />
+                </button>
+              </div>
+
+              {/* Resource Listing Toggle */}
+              <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/20">
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Resource Listing Alerts</h4>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-relaxed">Notify when new items are posted on campus.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSetting("notif_resource_listing")}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.notif_resource_listing ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                    }`}
+                  aria-label="Toggle resource listing alerts"
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.notif_resource_listing ? "translate-x-5" : "translate-x-0"
+                      }`}
+                  />
+                </button>
+              </div>
+
+              {/* Campus Needs Toggle */}
+              <div className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-slate-100 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/20">
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">Campus Needs Alerts</h4>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold leading-relaxed">Notify when someone requests a resource.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSetting("notif_campus_needs")}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.notif_campus_needs ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                    }`}
+                  aria-label="Toggle campus needs alerts"
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.notif_campus_needs ? "translate-x-5" : "translate-x-0"
                       }`}
                   />
                 </button>
