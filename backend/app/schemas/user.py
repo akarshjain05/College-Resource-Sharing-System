@@ -126,8 +126,10 @@ class UserUpdate(BaseModel):
     year_of_study: Optional[int] = Field(None, ge=1, le=6)
     bio: Optional[SafeStr] = Field(None, max_length=1000)
     skills: Optional[SafeStr] = Field(None, max_length=500)
-    phone_number: Optional[SafeStr] = Field(None, max_length=20)
+phone_number: Optional[SafeStr] = Field(None, max_length=20)
     profile_picture_url: Optional[str] = Field(None, max_length=500)
+    push_notifications: Optional[bool] = None
+    email_notifications: Optional[bool] = None
     notif_resource_listing: Optional[bool] = None
     notif_campus_needs: Optional[bool] = None
 
@@ -166,7 +168,9 @@ class UserResponse(UserBase):
     is_suspended: bool = False
     trust_score: int = 100
     sharing_score: int = 0
-    avg_response_seconds: Optional[int] = None
+avg_response_seconds: Optional[int] = None
+    push_notifications: bool = True
+    email_notifications: bool = True
     notif_resource_listing: bool = True
     notif_campus_needs: bool = True
     created_at: datetime

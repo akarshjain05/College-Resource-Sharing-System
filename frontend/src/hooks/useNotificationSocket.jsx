@@ -116,7 +116,7 @@ export function useNotificationSocket(onNotification, user) {
               </div>
               {payload.message && (
                 <div style={{ fontSize: "11px", color: "#666", marginTop: "2px" }}>
-                  {payload.message}
+                  {typeof payload.message === "object" ? (payload.message.body || "New message") : payload.message}
                 </div>
               )}
             </div>

@@ -17,7 +17,7 @@ export default function ResolutionCard({ resolutionData, className = "" }) {
 
   if (!parsed) return null;
 
-  const action = (parsed.action_taken || "resolved").toLowerCase();
+  const action = (parsed.action_taken || "resolved").toString().toLowerCase();
   const amount = parsed.amount || 0;
   const notes = parsed.notes || "";
   const dateStr = parsed.resolved_at ? new Date(parsed.resolved_at).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : null;

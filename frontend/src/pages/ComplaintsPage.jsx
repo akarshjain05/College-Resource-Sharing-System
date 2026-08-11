@@ -349,11 +349,12 @@ export default function ComplaintsPage() {
   // Filter complaints
   const filteredComplaints = complaints.filter(c => {
     const matchesStatus = filterStatus === "all" || c.status === filterStatus;
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = !q ||
-      c.subject.toLowerCase().includes(q) ||
-      c.description.toLowerCase().includes(q) ||
-      (c.against_user && c.against_user.full_name.toLowerCase().includes(q));
+    const q = (searchQuery || "").toLowerCase();
+    const matchesSearch =
+      !q ||
+      (c.subject || "").toLowerCase().includes(q) ||
+      (c.description || "").toLowerCase().includes(q) ||
+      (c.against_user && (c.against_user.full_name || "").toLowerCase().includes(q));
     return matchesStatus && matchesSearch;
   });
 

@@ -33,30 +33,21 @@ export default function NotificationsPage() {
 
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [settings, setSettings] = useState({
-    pushEnabled: localStorage.getItem("notif_push_enabled") !== "false",
-    emailEnabled: localStorage.getItem("notif_email_enabled") !== "false",
+    push_notifications: user?.push_notifications ?? true,
+    email_notifications: user?.email_notifications ?? true,
     notif_resource_listing: user?.notif_resource_listing ?? true,
     notif_campus_needs: user?.notif_campus_needs ?? true,
   });
 
   const handleToggleSetting = async (key) => {
-    if (key === "pushEnabled" || key === "emailEnabled") {
-      setSettings(prev => {
-        const updated = { ...prev, [key]: !prev[key] };
-        localStorage.setItem(`notif_${key === "pushEnabled" ? "push" : "email"}_enabled`, String(updated[key]));
-        toast.success(`${key === "pushEnabled" ? "Push" : "Email"} notifications ${updated[key] ? "enabled" : "disabled"}`);
-        return updated;
-      });
-    } else {
-      const newValue = !settings[key];
-      setSettings(prev => ({ ...prev, [key]: newValue }));
-      try {
-        await usersApi.updateMe({ [key]: newValue });
-        toast.success("Preference updated");
-      } catch (err) {
-        toast.error("Failed to update preference");
-        setSettings(prev => ({ ...prev, [key]: !newValue })); // revert
-      }
+    const newValue = !settings[key];
+    setSettings(prev => ({ ...prev, [key]: newValue }));
+    try {
+      await usersApi.updateMe({ [key]: newValue });
+      toast.success("Preference updated");
+    } catch (err) {
+      toast.error("Failed to update preference");
+      setSettings(prev => ({ ...prev, [key]: !newValue })); // revert
     }
   };
 
@@ -373,13 +364,13 @@ export default function NotificationsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleToggleSetting("pushEnabled")}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.pushEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                  onClick={() => handleToggleSetting("push_notifications")}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.push_notifications ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                     }`}
                   aria-label="Toggle push notifications"
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.pushEnabled ? "translate-x-5" : "translate-x-0"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.push_notifications ? "translate-x-5" : "translate-x-0"
                       }`}
                   />
                 </button>
@@ -393,13 +384,13 @@ export default function NotificationsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleToggleSetting("emailEnabled")}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.emailEnabled ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+                  onClick={() => handleToggleSetting("email_notifications")}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none ${settings.email_notifications ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                     }`}
                   aria-label="Toggle email notifications"
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${settings.emailEnabled ? "translate-x-5" : "translate-x-0"
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.email_notifications ? "translate-x-5" : "translate-x-0"
                       }`}
                   />
                 </button>

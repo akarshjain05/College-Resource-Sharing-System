@@ -127,16 +127,42 @@ def update_complaint(
     if payload.admin_response is not None:
         complaint.admin_response = payload.admin_response
 
-    # If structured resolution payload provided, build JSON resolution_data
-    if payload.resolution_action:
-        res_obj = {
-            "action_taken": payload.resolution_action,
-            "amount": payload.resolution_amount or 0.0,
-            "notes": payload.resolution_notes or payload.admin_response or "",
-            "resolved_at": datetime.utcnow().isoformat(),
-        }
-        complaint.resolution_data = json.dumps(res_obj)
-        complaint.status = ComplaintStatus.RESOLVED
+# If structured resolution payload provided, build JSON resolution_data
+    dump = payload.model_dump(exclude_unset=True)
+    if "resolution_action" in dump:
+        if payload.resolution_action:
+            res_obj = {
+                "action_taken": payload.resolution_action,
+                "amount": payload.resolution_amount or 0.0,
+                "notes": payload.resolution_notes or payload.admin_response or "",
+                "resolved_at": datetime.utcnow().isoformat(),
+            }
+            complaint.resolution_data = json.dumps(res_obj)
+            complaint.status = ComplaintStatus.RESOLVED
+        else:
+            complaint.resolution_data = None
+
+
+    # Real backend logic for refunds
+    if payload.resolution_action == "refund_issued" and complaint.borrow_request_id:
+        from app.models.payment import Payment
+        from app.models.enums import PaymentStatus
+        from app.services import payment_service
+        
+        # Find the payment for this borrow request
+        payment = db.query(Payment).filter(
+            Payment.borrow_request_id == complaint.borrow_request_id,
+            Payment.status == PaymentStatus.PAID
+        ).first()
+        
+        if payment:
+            refund_amount_paise = int((payload.resolution_amount or 0) * 100)
+            if refund_amount_paise > 0:
+                # We do not pass background_tasks here, so we skip the email for now or import it 
+                payment_service.refund_payment(
+                    db, payment, amount_paise=refund_amount_paise,
+                    notes={"reason": f"complaint_resolution_{complaint.id}"}
+                )
 
     # Trust score penalty handling
     if payload.trust_score_penalty and payload.trust_score_penalty > 0 and complaint.against_user_id:
