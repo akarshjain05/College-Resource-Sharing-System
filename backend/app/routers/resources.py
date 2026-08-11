@@ -295,8 +295,8 @@ def delete_resource(
     ).count()
     
     if active_bookings > 0:
-        from app.core.exceptions import BadRequestException
-        raise BadRequestException(f"Cannot delete resource with {active_bookings} active or pending bookings. Please cancel or complete them first.")
+        from app.core.exceptions import AppException
+        raise AppException(f"Cannot delete resource with {active_bookings} active or pending bookings. Please cancel or complete them first.")
         
     from app.models.wanted import WantedOffer
     from app.models.wishlist import WishlistItem
