@@ -55,9 +55,7 @@ export default function ResourceListPage() {
           setTotal(data.total || 0);
         }
       })
-      .catch((err) => {
-        console.log("Database list call failed", err);
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [debouncedSearch, categoryId, condition, status, minRating, sortBy, sortDir, page, categories, user?.id]);
 
