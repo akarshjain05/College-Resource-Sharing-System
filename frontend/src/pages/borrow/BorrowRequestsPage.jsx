@@ -1194,24 +1194,26 @@ export default function BorrowRequestsPage() {
 
                 {/* Bottom Row — Message + Report Issue (left) | Close Details (right) */}
                 <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-                  {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
-                    <a
-                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
-                      className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5 mr-auto"
+                  <div className="flex gap-2 mr-auto">
+                    {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
+                      <a
+                        href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
+                        className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5"
+                      >
+                        <AlertCircle className="h-3.5 w-3.5" /> Report Issue
+                      </a>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenChatId(selectedBookingForModal.id);
+                        closeBookingModal();
+                      }}
+                      className="btn-secondary !py-2 !px-4 text-xs flex items-center gap-1.5"
                     >
-                      <AlertCircle className="h-3.5 w-3.5" /> Report Issue
-                    </a>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenChatId(selectedBookingForModal.id);
-                      closeBookingModal();
-                    }}
-                    className="btn-secondary !py-2 !px-4 text-xs flex items-center gap-1.5"
-                  >
-                    <MessageCircle className="h-3.5 w-3.5" /> Message
-                  </button>
+                      <MessageCircle className="h-3.5 w-3.5" /> Message
+                    </button>
+                  </div>
                   <button
                     onClick={() => closeBookingModal()}
                     className="btn-secondary !py-2 !px-4 text-xs"
