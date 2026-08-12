@@ -11,17 +11,22 @@ from app.core.database import Base
 # Import all models to ensure they are registered with Base.metadata
 from app.models import *
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 def main():
     engine = create_engine(settings.DATABASE_URL)
     inspector = inspect(engine)
 
     if not inspector.has_table("alembic_version"):
-        print("Fresh database detected. Initializing tables...")
+        logger.info("Fresh database detected. Initializing tables...")
         Base.metadata.create_all(bind=engine)
-        print("Stamping alembic head...")
+        logger.info("Stamping alembic head...")
         subprocess.run(["alembic", "stamp", "head"], check=True)
     else:
-        print("Existing database detected. Running migrations...")
+        logger.info("Existing database detected. Running migrations...")
         subprocess.run(["alembic", "upgrade", "head"], check=True)
 
 if __name__ == "__main__":

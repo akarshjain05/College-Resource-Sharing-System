@@ -25,5 +25,4 @@ def test_update_complaint(client, admin_user, db_session, test_user):
             "trust_score_penalty": None
         }
     )
-    print("STATUS", response.status_code)
-    print("RESPONSE", response.json())
+
