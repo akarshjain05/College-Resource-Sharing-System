@@ -244,7 +244,7 @@ export default function BorrowRequestsPage() {
       if (newStatus === "reject_handover" || newStatus === "not_received") {
         setConfirmDialog({
           title: "Not Received",
-          message: "Are you sure you want to mark this item as not received? This will notify the lender, cancel the booking, and refund your payment.",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender and revert the status so they can try handing it over again.",
           confirmText: "Mark Not Received",
           isDanger: true,
           onConfirm: async () => {
