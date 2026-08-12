@@ -116,7 +116,7 @@ export default function BorrowRequestsPage() {
         autoOpenedRef.current = urlId;
         setTab(newTab);
         const status = foundBooking.status.toLowerCase();
-        if (["requested", "pending", "approved", "handover_requested"].includes(status)) setSubTab("upcoming");
+        if (["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status)) setSubTab("upcoming");
         else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
         else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
         else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
@@ -328,7 +328,7 @@ export default function BorrowRequestsPage() {
     const filtered = list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
-        return ["requested", "pending", "approved", "handover_requested"].includes(status);
+        return ["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status);
       }
       if (subTab === "ongoing") {
         return ["active", "ongoing", "return_requested", "late"].includes(status);
