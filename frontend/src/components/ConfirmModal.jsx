@@ -34,7 +34,7 @@ export default function ConfirmModal({
             <button
               onClick={onClose}
               className="rounded-full p-2 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-            >
+             aria-label="Close">
               <X className="h-5 w-5" />
             </button>
           </div>

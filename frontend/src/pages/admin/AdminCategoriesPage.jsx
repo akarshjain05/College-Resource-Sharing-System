@@ -25,7 +25,7 @@ function EditCategoryModal({ category, onClose, onUpdate }) {
       <div className="w-full max-w-md rounded-2xl bg-white border border-slate-200 p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h2 className="text-lg font-bold text-slate-900">Edit Category</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>

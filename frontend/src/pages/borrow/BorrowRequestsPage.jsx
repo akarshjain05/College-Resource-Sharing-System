@@ -839,6 +839,7 @@ export default function BorrowRequestsPage() {
               <button
                 onClick={() => closeBookingModal()}
                 className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1233,6 +1234,7 @@ export default function BorrowRequestsPage() {
               <button
                 onClick={() => setOpenChatId(null)}
                 className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-150 dark:hover:bg-slate-800 transition-colors z-10"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>

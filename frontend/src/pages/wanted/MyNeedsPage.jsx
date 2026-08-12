@@ -30,7 +30,7 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
+         aria-label="Close">
           <X className="h-5 w-5" />
         </button>
 
@@ -181,7 +181,7 @@ function EditWantedModal({ request, categories, onClose, onUpdate }) {
       <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Edit Need</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-slate-100">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-800 dark:hover:text-slate-100" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
