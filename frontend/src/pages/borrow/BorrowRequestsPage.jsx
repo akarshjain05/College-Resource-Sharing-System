@@ -141,9 +141,7 @@ export default function BorrowRequestsPage() {
     const start = new Date(r.requested_start_date);
     const end = new Date(r.requested_end_date);
     const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
-    
-    const dbDailyPrice = r.resource?.daily_price || 0;
-    const dailyPrice = dbDailyPrice > 0 ? dbDailyPrice : Math.floor(depositVal * 0.05);
+    const dailyPrice = r.resource?.daily_price || 0;
     
     return dailyPrice * days + depositVal;
   };
