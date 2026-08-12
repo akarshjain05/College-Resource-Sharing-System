@@ -92,7 +92,7 @@ export default function ResourceDetailPage() {
     : 0;
 
   // Simple pricing model based on daily_price with fallback to deposit
-  const dailyPrice = resource.daily_price ?? Math.floor(resource.deposit_amount * 0.05);
+  const dailyPrice = resource.daily_price || 0;
   const rentAmount = daysCount * dailyPrice;
   const securityDeposit = resource.deposit_amount;
   const totalAmount = rentAmount + securityDeposit;

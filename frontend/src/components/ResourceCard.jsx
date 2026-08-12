@@ -177,7 +177,7 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
           {/* Rent/day Display */}
           <div className="flex items-baseline gap-1">
             <span className="text-sm font-extrabold text-primary-600 dark:text-primary-400">
-              ₹{resource.daily_price ?? resource.daily_rate ?? Math.floor((resource.deposit_amount || 0) * 0.05)}
+              ₹{resource.daily_price || resource.daily_rate || 0}
             </span>
             <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">/ day</span>
           </div>

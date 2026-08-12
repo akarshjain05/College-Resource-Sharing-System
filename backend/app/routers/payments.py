@@ -59,10 +59,7 @@ def _compute_amounts(br: BorrowRequest) -> tuple[int, int, int]:
     except Exception:
         days = 1
     resource_daily_price = float(getattr(resource, "daily_price", 0) or 0)
-    if resource_daily_price > 0:
-        daily_price = int(resource_daily_price)
-    else:
-        daily_price = int(deposit_val * 0.05)
+    daily_price = int(resource_daily_price)
     rent = daily_price * days
     deposit = int(deposit_val)
     rent_paise = rent * 100
