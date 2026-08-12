@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Search, Plus, SlidersHorizontal } from "lucide-react";
 import { resourceApi, categoryApi } from "../../api/endpoints";
@@ -63,6 +64,9 @@ export default function ResourceListPage() {
 
   return (
     <div className="space-y-6">
+      <Helmet>
+        <title>Explore Resources | CRSS</title>
+      </Helmet>
       {!user && (
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-primary-600 to-indigo-650 text-white p-6 sm:p-8 shadow-xl shadow-primary-500/10">
           <div className="relative z-10 max-w-2xl space-y-3">

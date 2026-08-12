@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, ArrowRight, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -208,6 +209,9 @@ export default function WantedPage() {
 
   return (
     <div className="space-y-6">
+      <Helmet>
+        <title>Campus Needs | CRSS</title>
+      </Helmet>
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>

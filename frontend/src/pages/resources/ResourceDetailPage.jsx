@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -192,6 +193,9 @@ export default function ResourceDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Helmet>
+        <title>{resource.title} | CRSS</title>
+      </Helmet>
       {/* Back to explore */}
       <button
         onClick={() => navigate(-1)}
