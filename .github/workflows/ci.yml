@@ -36,6 +36,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           ENVIRONMENT: test
           SECRET_KEY: testsecret
+          UPLOAD_DIR: ./uploads
 
   frontend-lint:
     name: Frontend Lint & Test
