@@ -6,8 +6,8 @@ import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useAuth } from "../../context/AuthContext";
 import PayNowButton from "../../components/PayNowButton";
-
 const getStatusBadge = (status) => {
   const st = (status || "").toLowerCase();
   if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
@@ -26,6 +26,7 @@ const getStatusBadge = (status) => {
 };
 
 export default function BorrowRequestsPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Determine initial tab based on search params URL query
@@ -115,7 +116,7 @@ export default function BorrowRequestsPage() {
         autoOpenedRef.current = urlId;
         setTab(newTab);
         const status = foundBooking.status.toLowerCase();
-        if (["requested", "pending", "approved", "handover_requested"].includes(status)) setSubTab("upcoming");
+        if (["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status)) setSubTab("upcoming");
         else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
         else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
         else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
@@ -327,7 +328,7 @@ export default function BorrowRequestsPage() {
     const filtered = list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
-        return ["requested", "pending", "approved", "handover_requested"].includes(status);
+        return ["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status);
       }
       if (subTab === "ongoing") {
         return ["active", "ongoing", "return_requested", "late"].includes(status);
@@ -908,11 +909,11 @@ export default function BorrowRequestsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex flex-wrap gap-2 items-center justify-end">
                 {/* Primary Action Row — status-specific actions */}
                 {/* Borrower Actions */}
                 {!isLenderModal && selectedBookingForModal.status === "requested" && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full">
                     <button
                       onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
                       className="flex-1 btn-secondary !py-2.5 text-xs flex items-center justify-center gap-1.5"
@@ -932,7 +933,7 @@ export default function BorrowRequestsPage() {
 
                 {!isLenderModal && selectedBookingForModal.status === "approved" && (
                   (!selectedBookingForModal.payment || selectedBookingForModal.payment.status !== "paid") && selectedBookingForModal.total_amount > 0 ? (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full">
                       <div className="flex-1">
                         <PayNowButton 
                            borrowRequest={selectedBookingForModal}
@@ -953,7 +954,7 @@ export default function BorrowRequestsPage() {
                       </button>
                     </div>
                   ) : !modalIsStarted ? (
-                    <div className="flex justify-between items-center gap-2">
+                    <div className="flex justify-between items-center gap-2 w-full">
                       <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
@@ -968,8 +969,8 @@ export default function BorrowRequestsPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-col gap-2 w-full">
+                      <div className="w-full flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                         <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                         <span className="text-[11px] font-bold text-slate-400">Waiting for owner to hand over</span>
                         <button
@@ -1027,7 +1028,7 @@ export default function BorrowRequestsPage() {
                       <RotateCcw className="h-3.5 w-3.5" /> Return Item
                     </button>
                   ) : (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-400">Return unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
                     </div>
@@ -1035,7 +1036,7 @@ export default function BorrowRequestsPage() {
                 )}
 
                 {!isLenderModal && selectedBookingForModal.status === "return_requested" && (
-                  <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                  <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                     <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
                     <span className="text-[11px] font-bold text-slate-400">Return pending confirmation</span>
                   </div>
@@ -1043,7 +1044,7 @@ export default function BorrowRequestsPage() {
 
                 {/* Lender Actions */}
                 {isLenderModal && selectedBookingForModal.status === "requested" && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full">
                     <button
                       onClick={async () => {
                         await handleStatusChange(selectedBookingForModal.id, "approved");
@@ -1079,7 +1080,7 @@ export default function BorrowRequestsPage() {
                     </div>
                   ) : modalIsExpired ? (
                     <div className="w-full flex justify-between items-center gap-2">
-                      <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
+                      <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900">
                         <Calendar className="h-3.5 w-3.5 text-red-500" />
                         <span className="text-[11px] font-bold text-red-500">Lending window expired</span>
                       </div>
@@ -1093,28 +1094,30 @@ export default function BorrowRequestsPage() {
                       </button>
                     </div>
                   ) : modalIsStarted ? (
-                    <div className="w-full flex gap-2">
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "handover");
-                          closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
-                        }}
-                        className="flex-1 btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
-                      >
-                        <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                      </button>
+                    <>
+                      <div className="w-full">
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "handover");
+                            closeBookingModal({ ...selectedBookingForModal, status: "handover_requested" });
+                          }}
+                          className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                        </button>
+                      </div>
                       <button
                         onClick={async () => {
                           await handleStatusChange(selectedBookingForModal.id, "cancelled");
                         }}
-                        className="flex-none btn-secondary !py-2.5 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                        className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center gap-1.5 mr-auto"
                       >
                         <Ban className="h-3.5 w-3.5" /> Cancel Booking
                       </button>
-                    </div>
+                    </>
                   ) : (
                     <div className="w-full flex justify-between items-center gap-2">
-                      <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                      <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString()}</span>
                       </div>
@@ -1131,7 +1134,7 @@ export default function BorrowRequestsPage() {
                 )}
 
                 {isLenderModal && (selectedBookingForModal.status === "active" || selectedBookingForModal.status === "ongoing" || selectedBookingForModal.status === "late") && (
-                  <div className="flex items-center justify-between gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                  <div className="w-full flex items-center justify-between gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-1.5">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-400">Item is currently with borrower</span>
@@ -1164,12 +1167,12 @@ export default function BorrowRequestsPage() {
 
                 {selectedBookingForModal.status === "cancellation_requested" && (
                   selectedBookingForModal.cancellation_requested_by_id === user?.id ? (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                    <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-400">Pending cancellation approval</span>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full">
                       <button
                         onClick={async () => {
                           await handleStatusChange(selectedBookingForModal.id, "accept_cancellation");
@@ -1192,33 +1195,25 @@ export default function BorrowRequestsPage() {
                   )
                 )}
 
-                {/* Bottom Row — Message + Report Issue (left) | Close Details (right) */}
-                <div className="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-800 pt-4 mt-4">
-                  {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
-                    <a
-                      href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
-                      className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5 mr-auto"
-                    >
-                      <AlertCircle className="h-3.5 w-3.5" /> Report Issue
-                    </a>
-                  )}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setOpenChatId(selectedBookingForModal.id);
-                      closeBookingModal();
-                    }}
-                    className="btn-secondary !py-2 !px-4 text-xs flex items-center gap-1.5"
+                {/* Message + Report Issue */}
+                {["active", "returned", "damaged", "late"].includes(selectedBookingForModal.status) && (
+                  <a
+                    href={`/complaints?borrow_request_id=${selectedBookingForModal.id}&resource_id=${selectedBookingForModal.resource?.id || ''}&against_user_id=${(isLenderModal ? selectedBookingForModal.borrower?.id : selectedBookingForModal.lender?.id) || ''}&category=dispute`}
+                    className="btn-secondary !py-2 !px-3 text-xs text-red-600 hover:bg-red-50 hover:border-red-200 flex items-center gap-1.5 mr-auto"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" /> Message
-                  </button>
-                  <button
-                    onClick={() => closeBookingModal()}
-                    className="btn-secondary !py-2 !px-4 text-xs"
-                  >
-                    Close Details
-                  </button>
-                </div>
+                    <AlertCircle className="h-3.5 w-3.5" /> Report Issue
+                  </a>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenChatId(selectedBookingForModal.id);
+                    closeBookingModal();
+                  }}
+                  className="btn-secondary !py-2 !px-4 text-xs flex items-center gap-1.5"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" /> Message
+                </button>
               </div>
             </div>
           </div>
