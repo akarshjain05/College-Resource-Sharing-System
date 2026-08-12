@@ -156,6 +156,7 @@ export default function BorrowRequestsPage() {
     ])
       .then(([myReqsResp, incomingReqsResp]) => {
         const dbMyReqs = (myReqsResp.data || []).map(r => ({
+          ...r,
           id: r.id,
           resource: {
             id: r.resource.id,
@@ -169,9 +170,11 @@ export default function BorrowRequestsPage() {
           lender: { id: r.lender?.id, full_name: r.lender?.full_name || "Unknown" },
           borrower: { id: r.borrower?.id, full_name: "You" },
           payment: r.payment,
+          cancellation_requested_by_id: r.cancellation_requested_by_id,
         }));
 
         const dbIncomingReqs = (incomingReqsResp.data || []).map(r => ({
+          ...r,
           id: r.id,
           resource: {
             id: r.resource.id,
@@ -185,6 +188,7 @@ export default function BorrowRequestsPage() {
           lender: { id: r.lender?.id, full_name: "You" },
           borrower: { id: r.borrower?.id, full_name: r.borrower?.full_name || "Unknown" },
           payment: r.payment,
+          cancellation_requested_by_id: r.cancellation_requested_by_id,
         }));
 
         setBookings({
