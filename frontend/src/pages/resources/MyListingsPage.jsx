@@ -299,7 +299,7 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">Daily Price</span>
-            <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{item.daily_price ?? Math.floor((item.deposit_amount || 0) * 0.05)}/day</span>
+            <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{item.daily_price > 0 ? item.daily_price : Math.floor((item.deposit_amount || 0) * 0.05)}/day</span>
           </div>
           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-center">
             <span className="text-[9px] font-bold uppercase text-slate-400 block">Security Deposit</span>
