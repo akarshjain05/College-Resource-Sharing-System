@@ -6,8 +6,8 @@ import { borrowApi } from "../../api/endpoints";
 import DueBadge from "../../components/DueBadge";
 import ChatThread from "../../components/ChatThread";
 import ConfirmModal from "../../components/ConfirmModal";
+import { useAuth } from "../../context/AuthContext";
 import PayNowButton from "../../components/PayNowButton";
-
 const getStatusBadge = (status) => {
   const st = (status || "").toLowerCase();
   if (st === "requested") return <span className="rounded-lg bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 text-xs font-bold uppercase tracking-wider">Requested</span>;
@@ -26,6 +26,7 @@ const getStatusBadge = (status) => {
 };
 
 export default function BorrowRequestsPage() {
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Determine initial tab based on search params URL query
