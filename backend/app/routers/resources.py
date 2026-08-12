@@ -39,10 +39,11 @@ def list_resources(
     page_size: int = Query(20, ge=1, le=100),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    from sqlalchemy.orm import joinedload
+    from sqlalchemy.orm import joinedload, selectinload
     query = db.query(Resource).options(
         joinedload(Resource.category),
-        joinedload(Resource.owner)
+        joinedload(Resource.owner),
+        selectinload(Resource.images)
     )
 
     if search:
@@ -109,13 +110,14 @@ def get_my_listings_with_borrowers(
     Fetch all resources listed by the current user along with complete borrower history,
     contact info, requested dates, actual return dates, and current borrow status.
     """
-    from sqlalchemy.orm import joinedload
+    from sqlalchemy.orm import joinedload, selectinload
 
     resources = (
         db.query(Resource)
         .options(
             joinedload(Resource.category),
-            joinedload(Resource.owner)
+            joinedload(Resource.owner),
+            selectinload(Resource.images)
         )
         .filter(Resource.owner_id == current_user.id)
         .order_by(Resource.created_at.desc())
@@ -172,12 +174,13 @@ def get_resource(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    from sqlalchemy.orm import joinedload
+    from sqlalchemy.orm import joinedload, selectinload
     resource = (
         db.query(Resource)
         .options(
             joinedload(Resource.category),
-            joinedload(Resource.owner)
+            joinedload(Resource.owner),
+            selectinload(Resource.images)
         )
         .filter(Resource.id == resource_id)
         .first()
