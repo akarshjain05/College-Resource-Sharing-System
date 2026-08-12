@@ -627,20 +627,22 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : isStarted ? (
-                      <div className="w-full flex gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
-                          className="flex-1 btn-primary !py-2 text-xs"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                        </button>
+                      <>
+                        <div className="w-full">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
+                            className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                          </button>
+                        </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
-                          className="flex-none btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100"
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center gap-1.5 mr-auto"
                         >
                           <Ban className="h-3.5 w-3.5" /> Cancel Booking
                         </button>
-                      </div>
+                      </>
                     ) : (
                       <>
                         <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
