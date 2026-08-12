@@ -36,8 +36,8 @@ class Resource(Base, UUIDMixin, TimestampMixin):
     daily_price: Mapped[Optional[float]] = mapped_column(Numeric(10, 2), default=0)
     max_borrow_days: Mapped[int] = mapped_column(Integer, default=7)
 
-    average_rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0)
-    total_borrows: Mapped[int] = mapped_column(Integer, default=0)
+    average_rating: Mapped[float] = mapped_column(Numeric(3, 2), default=0, index=True)
+    total_borrows: Mapped[int] = mapped_column(Integer, default=0, index=True)
     view_count: Mapped[int] = mapped_column(Integer, default=0)
 
     owner_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)

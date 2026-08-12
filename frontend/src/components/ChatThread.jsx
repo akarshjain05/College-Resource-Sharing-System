@@ -16,13 +16,12 @@ export default function ChatThread({ request, onReportIssue }) {
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
 
-  if (!request) return null;
-
   const fetchMessages = async () => {
+    if (!request) return;
     try {
       const resp = await chatApi.list(request.id);
       setMessages(resp.data);
-      if (resp.data.some(m => !m.read_at && m.sender_id !== user.id)) {
+      if (resp.data.some(m => !m.read_at && m.sender_id !== user?.id)) {
         await chatApi.markRead(request.id);
       }
     } catch (err) {
@@ -33,6 +32,7 @@ export default function ChatThread({ request, onReportIssue }) {
   };
 
   useEffect(() => {
+    if (!request) return;
     fetchMessages();
 
     const unsubscribe = chatMessageRouter.registerHandler(request.id, (newMsg) => {
@@ -44,7 +44,7 @@ export default function ChatThread({ request, onReportIssue }) {
     });
 
     return () => unsubscribe();
-  }, [request.id]);
+  }, [request?.id]);
 
   useEffect(() => {
     if (messagesEndRef.current) {

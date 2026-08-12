@@ -65,7 +65,7 @@ def test_idor_borrow_request_cancel(client, db_session, test_user, second_user, 
 
     # Attacker tries to cancel the borrower's request
     cancel_resp = client.post(f"/api/v1/borrow-requests/{request_id}/cancel", headers=attacker_headers, json={})
-    print("RESPONSE:", cancel_resp.json())
+
     assert cancel_resp.status_code in (403, 404), f"Unexpected status {cancel_resp.status_code}: {cancel_resp.text}"
 
 

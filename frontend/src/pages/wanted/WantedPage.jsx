@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, ArrowRight, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,7 +16,7 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
+         aria-label="Close">
           <X className="h-5 w-5" />
         </button>
 
@@ -208,6 +209,9 @@ export default function WantedPage() {
 
   return (
     <div className="space-y-6">
+      <Helmet>
+        <title>Campus Needs | CRSS</title>
+      </Helmet>
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h1 className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Campus Needs</h1>

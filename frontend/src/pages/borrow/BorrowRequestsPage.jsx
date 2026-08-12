@@ -697,7 +697,7 @@ export default function BorrowRequestsPage() {
                   )}
 
                   {book.status === "cancellation_requested" && (
-                    book.cancellation_requested_by_id === user?.id ? (
+                    (book.cancellation_requested_by_id && user?.id && book.cancellation_requested_by_id.toLowerCase() === user.id.toLowerCase()) ? (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Pending cancellation approval
                       </span>
@@ -839,6 +839,7 @@ export default function BorrowRequestsPage() {
               <button
                 onClick={() => closeBookingModal()}
                 className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1166,7 +1167,7 @@ export default function BorrowRequestsPage() {
 
 
                 {selectedBookingForModal.status === "cancellation_requested" && (
-                  selectedBookingForModal.cancellation_requested_by_id === user?.id ? (
+                  (selectedBookingForModal.cancellation_requested_by_id && user?.id && selectedBookingForModal.cancellation_requested_by_id.toLowerCase() === user.id.toLowerCase()) ? (
                     <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-400">Pending cancellation approval</span>
@@ -1233,6 +1234,7 @@ export default function BorrowRequestsPage() {
               <button
                 onClick={() => setOpenChatId(null)}
                 className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-150 dark:hover:bg-slate-800 transition-colors z-10"
+                aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>

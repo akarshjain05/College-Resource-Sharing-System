@@ -251,7 +251,7 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 transition-colors"
-        >
+         aria-label="Close">
           <X className="h-5 w-5" />
         </button>
 
@@ -431,7 +431,7 @@ function PublishDatesModal({ item, onClose, onConfirm }) {
             <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white">Publish Visibility</h3>
             <p className="text-xs text-slate-400 font-semibold mt-1">Set the dates this item will be available.</p>
           </div>
-          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+          <button type="button" onClick={onClose} className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         </div>

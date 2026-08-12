@@ -77,7 +77,7 @@ export default function ResourceCard({ resource, onWishlistUpdate }) {
           primaryImage.image_url.startsWith("data:")) ? (
           <img
             src={getImageUrl(primaryImage.image_url)}
-            alt={resource.title}
+            alt={resource.title || "Resource Image"}
             className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-[1.03]"
           />
         ) : (
