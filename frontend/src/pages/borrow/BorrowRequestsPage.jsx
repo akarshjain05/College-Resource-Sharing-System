@@ -697,7 +697,7 @@ export default function BorrowRequestsPage() {
                   )}
 
                   {book.status === "cancellation_requested" && (
-                    book.cancellation_requested_by_id === user?.id ? (
+                    (book.cancellation_requested_by_id && user?.id && book.cancellation_requested_by_id.toLowerCase() === user.id.toLowerCase()) ? (
                       <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" /> Pending cancellation approval
                       </span>
@@ -1166,7 +1166,7 @@ export default function BorrowRequestsPage() {
 
 
                 {selectedBookingForModal.status === "cancellation_requested" && (
-                  selectedBookingForModal.cancellation_requested_by_id === user?.id ? (
+                  (selectedBookingForModal.cancellation_requested_by_id && user?.id && selectedBookingForModal.cancellation_requested_by_id.toLowerCase() === user.id.toLowerCase()) ? (
                     <div className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
                       <Calendar className="h-3.5 w-3.5 text-slate-400" />
                       <span className="text-[11px] font-bold text-slate-400">Pending cancellation approval</span>
