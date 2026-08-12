@@ -14,10 +14,12 @@ export function resolveNotificationLink(link, notification = null) {
     const [pathPart, queryString] = rawLink.split("?");
     const params = new URLSearchParams(queryString || "");
 
+    const messageStr = typeof notification?.message === 'object' ? (notification.message.body || "") : (notification?.message || "");
+
     // Check if notification is for a lender action (e.g. Payment Received, New borrow request, Return requested, Offer was accepted)
     const isLenderAction = notification && (
         notification.title?.toLowerCase().includes("payment received") ||
-        notification.message?.toLowerCase().includes("payment received") ||
+        messageStr.toLowerCase().includes("payment received") ||
         notification.title?.toLowerCase().includes("new borrow request") ||
         notification.title?.toLowerCase().includes("return requested") ||
         notification.title?.toLowerCase().includes("offer was accepted") ||
