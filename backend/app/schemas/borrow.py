@@ -56,7 +56,7 @@ class BorrowRequestResponse(BaseModel):
     damage_report: Optional[str] = None
     rejection_reason: Optional[str] = None
     cancellation_reason: Optional[str] = None
-    cancellation_requested_by_id: Optional[UUID] = None
+    cancellation_requested_by_id: Optional[uuid.UUID] = None
     borrower_rating: Optional[int] = None
     borrower_review: Optional[str] = None
     lender_rating: Optional[int] = None
