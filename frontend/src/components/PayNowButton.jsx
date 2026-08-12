@@ -3,10 +3,19 @@ import toast from "react-hot-toast";
 import { paymentApi } from "../api/endpoints";
 import { loadRazorpayScript } from "../utils/loadRazorpay";
 import { useAuth } from "../context/AuthContext";
+import ConfirmModal from "./ConfirmModal";
 
 export default function PayNowButton({ borrowRequest, onPaid, className = "" }) {
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [showTopupConfirm, setShowTopupConfirm] = useState(false);
+  const [deficit, setDeficit] = useState(0);
+
+  const onClickPayNow = (e) => {
+    e.stopPropagation();
+    setShowPayConfirm(true);
+  };
 
   const handlePay = async () => {
     setProcessing(true);
@@ -30,8 +39,8 @@ export default function PayNowButton({ borrowRequest, onPaid, className = "" }) 
         }
 
         // Needs top-up
-        toast("Insufficient wallet balance. Redirecting to top-up...", { icon: "💳" });
-        await handleTopUpAndPay(deficitPaise);
+        setDeficit(deficitPaise);
+        setShowTopupConfirm(true);
       } else {
         toast.error(err.response?.data?.detail || "Could not complete payment. Please try again.");
       }
@@ -103,15 +112,34 @@ export default function PayNowButton({ borrowRequest, onPaid, className = "" }) 
   };
 
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        handlePay();
-      }}
-      disabled={processing}
-      className={`btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-2 px-4 text-xs font-bold shadow-md disabled:opacity-50 ${className}`}
-    >
-      {processing ? "Processing…" : "Pay Now"}
-    </button>
+    <>
+      <button
+        onClick={onClickPayNow}
+        disabled={processing}
+        className={`btn bg-primary-600 hover:bg-primary-700 text-white rounded-xl py-2 px-4 text-xs font-bold shadow-md disabled:opacity-50 ${className}`}
+      >
+        {processing ? "Processing…" : "Pay Now"}
+      </button>
+
+      <ConfirmModal
+        isOpen={showPayConfirm}
+        onClose={() => setShowPayConfirm(false)}
+        onConfirm={handlePay}
+        title="Confirm Payment"
+        message={`Are you sure you want to pay ₹${borrowRequest.total_amount || 0} for ${borrowRequest.resource?.title || "this booking"} from your Campus Wallet?`}
+        confirmText="Pay Now"
+        cancelText="Cancel"
+      />
+
+      <ConfirmModal
+        isOpen={showTopupConfirm}
+        onClose={() => setShowTopupConfirm(false)}
+        onConfirm={() => handleTopUpAndPay(deficit)}
+        title="Insufficient Balance"
+        message={`Your wallet balance is low. Do you want to top up ₹${deficit / 100} to complete this payment?`}
+        confirmText="Top Up & Pay"
+        cancelText="Cancel"
+      />
+    </>
   );
 }

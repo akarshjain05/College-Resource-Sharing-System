@@ -573,6 +573,7 @@ export default function TransactionsPage() {
                             borrowRequest={{
                               id: tx.borrow_request_id,
                               resource: { title: tx.item_title },
+                              total_amount: tx.total_amount / 100,
                             }}
                             onPaid={fetchTransactions}
                           />
