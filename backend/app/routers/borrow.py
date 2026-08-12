@@ -369,36 +369,14 @@ def reject_handover_resource(
     if br.status != BorrowStatus.HANDOVER_REQUESTED:
         raise AppException("Only pending handovers can be rejected", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    from app.models.payment import Payment
-    from app.models.enums import PaymentStatus
-    from app.services import payment_service
-
-    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
-    if payment:
-        result = payment_service.refund_payment(
-            db, payment, amount_paise=payment.total_amount,
-            notes={"reason": "borrower_rejected_handover_cancelled"},
-        )
-        
-        from app.services.email_service import send_payment_refund_email
-        if payment.payer and payment.payer.email:
-            background_tasks.add_task(
-                send_payment_refund_email,
-                payment.payer.email,
-                payment.payer.full_name,
-                payment.total_amount / 100.0,
-                br.resource.title if br.resource else "item",
-                result["id"]
-            )
-
-    br.status = BorrowStatus.CANCELLED
+    br.status = BorrowStatus.APPROVED
     db.commit()
     db.refresh(br)
 
     create_notification(
         db, br.lender_id, NotificationType.SYSTEM,
-        "Handover Rejected / Booking Cancelled",
-        f"'{br.resource.title if br.resource else 'item'}' handover was rejected by {current_user.full_name} (reported not received). The booking has been cancelled and refunded.",
+        "Handover Not Received",
+        f"{current_user.full_name} reported they haven't received '{br.resource.title if br.resource else 'item'}'. Please ensure you hand it over and then mark it as handed over again.",
         link=f"/my-bookings?id={br.id}",
     )
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()

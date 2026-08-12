@@ -244,7 +244,7 @@ export default function BorrowRequestsPage() {
       if (newStatus === "reject_handover" || newStatus === "not_received") {
         setConfirmDialog({
           title: "Not Received",
-          message: "Are you sure you want to mark this item as not received? This will notify the lender, cancel the booking, and refund your payment.",
+          message: "Are you sure you want to mark this item as not received? This will notify the lender and revert the status so they can try handing it over again.",
           confirmText: "Mark Not Received",
           isDanger: true,
           onConfirm: async () => {
@@ -532,9 +532,17 @@ export default function BorrowRequestsPage() {
                         </button>
                       </>
                     ) : !isStarted ? (
-                      <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
-                        <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                      </span>
+                      <>
+                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
+                          <Calendar className="h-3.5 w-3.5 text-slate-400" /> Handover unlocks on {new Date(book.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        </span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                        </button>
+                      </>
                     ) : (
                       <>
                         <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1 mr-auto">
@@ -545,6 +553,12 @@ export default function BorrowRequestsPage() {
                           className="btn-secondary !py-2 text-xs flex items-center gap-1.5"
                         >
                           <BellRing className="h-3.5 w-3.5" /> Nudge
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
+                          className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                        >
+                          <Ban className="h-3.5 w-3.5" /> Cancel Booking
                         </button>
                       </>
                     )
@@ -939,19 +953,39 @@ export default function BorrowRequestsPage() {
                       </button>
                     </div>
                   ) : !modalIsStarted ? (
-                    <div className="flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                    <div className="flex justify-between items-center gap-2">
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        <span className="text-[11px] font-bold text-slate-400">Handover unlocks on {new Date(selectedBookingForModal.requested_start_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="btn-secondary !py-2.5 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
+                      >
+                        <Ban className="h-3.5 w-3.5" /> Cancel Booking
+                      </button>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-                      <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                      <span className="text-[11px] font-bold text-slate-400">Waiting for owner to hand over</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
+                        <User className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                        <span className="text-[11px] font-bold text-slate-400">Waiting for owner to hand over</span>
+                        <button
+                          onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
+                          className="btn-secondary !py-1.5 !px-3 text-[10px] flex items-center gap-1 flex-shrink-0"
+                        >
+                          <BellRing className="h-3 w-3" /> Nudge Owner
+                        </button>
+                      </div>
                       <button
-                        onClick={() => handleStatusChange(selectedBookingForModal.id, "nudge")}
-                        className="btn-secondary !py-1.5 !px-3 text-[10px] flex items-center gap-1 flex-shrink-0"
+                        onClick={async () => {
+                          await handleStatusChange(selectedBookingForModal.id, "cancelled");
+                        }}
+                        className="btn-secondary w-full !py-2.5 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center justify-center gap-1.5"
                       >
-                        <BellRing className="h-3 w-3" /> Nudge Owner
+                        <Ban className="h-3.5 w-3.5" /> Cancel Booking
                       </button>
                     </div>
                   )
