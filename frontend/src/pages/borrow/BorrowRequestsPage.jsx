@@ -709,12 +709,15 @@ export default function BorrowRequestsPage() {
                         >
                           <Check className="h-3.5 w-3.5" /> Accept Cancellation
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_cancellation"); }}
-                          className="btn-secondary !py-2 text-xs"
-                        >
-                          <X className="h-3.5 w-3.5" /> Reject
-                        </button>
+                        {/* Only show reject button if it's the lender rejecting borrower's cancellation */}
+                        {tab === "lending" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "reject_cancellation"); }}
+                            className="btn-secondary !py-2 text-xs"
+                          >
+                            <X className="h-3.5 w-3.5" /> Reject
+                          </button>
+                        )}
                       </>
                     )
                   )}
@@ -1183,15 +1186,18 @@ export default function BorrowRequestsPage() {
                       >
                         <Check className="h-3.5 w-3.5" /> Accept Cancellation
                       </button>
-                      <button
-                        onClick={async () => {
-                          await handleStatusChange(selectedBookingForModal.id, "reject_cancellation");
-                          closeBookingModal({ ...selectedBookingForModal, status: "approved" });
-                        }}
-                        className="btn-secondary flex-1 !py-2.5 text-xs flex items-center justify-center gap-1.5"
-                      >
-                        <X className="h-3.5 w-3.5" /> Reject
-                      </button>
+                      {/* Only show reject button if it's the lender rejecting borrower's cancellation */}
+                      {tab === "lending" && (
+                        <button
+                          onClick={async () => {
+                            await handleStatusChange(selectedBookingForModal.id, "reject_cancellation");
+                            closeBookingModal({ ...selectedBookingForModal, status: "approved" });
+                          }}
+                          className="btn-secondary flex-1 !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                        >
+                          <X className="h-3.5 w-3.5" /> Reject
+                        </button>
+                      )}
                     </div>
                   )
                 )}
