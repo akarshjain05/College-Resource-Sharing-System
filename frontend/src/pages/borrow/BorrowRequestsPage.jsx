@@ -628,12 +628,14 @@ export default function BorrowRequestsPage() {
                       </>
                     ) : isStarted ? (
                       <>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
-                          className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
-                        >
-                          <Check className="h-3.5 w-3.5" /> Mark as Handed Over
-                        </button>
+                        <div className="w-full">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "handover"); }}
+                            className="w-full btn-primary !py-2.5 text-xs flex items-center justify-center gap-1.5"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Mark as Handed Over
+                          </button>
+                        </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleStatusChange(book.id, "cancelled"); }}
                           className="btn-secondary !py-2 text-xs text-red-600 hover:bg-red-50 border-red-100 flex items-center gap-1.5 mr-auto"
