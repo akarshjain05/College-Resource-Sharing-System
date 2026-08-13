@@ -51,9 +51,9 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
               {request.user?.full_name?.charAt(0) || "U"}
             </div>
             <div>
-              <Link to={`/users/${request.user?.roll_no || request.user?.id}`} className="font-bold text-slate-900 dark:text-white hover:underline">
-                Requested by {request.user?.full_name}
-              </Link>
+              <div className="font-bold text-slate-900 dark:text-white">
+                Requested by <Link to={`/users/${request.user?.roll_no || request.user?.id}`} className="hover:underline">{request.user?.full_name}</Link>
+              </div>
               <p className="text-[10px] text-amber-500 font-bold">⭐ Trust Score: {request.user?.trust_score || 100}</p>
             </div>
           </div>
@@ -98,12 +98,13 @@ export default function WantedPage() {
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [offerModalData, setOfferModalData] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState("");
-  const [offerMode, setOfferMode] = useState("existing");
+  const [offerMode, setOfferMode] = useState("new");
   const [newOfferForm, setNewOfferForm] = useState({
     title: "",
     description: "",
     condition: "good",
     deposit_amount: 0,
+    daily_price: 0,
     max_borrow_days: 7,
   });
 
@@ -161,6 +162,7 @@ export default function WantedPage() {
       description: "Available for borrowing.",
       condition: "good",
       deposit_amount: 0,
+      daily_price: 0,
       max_borrow_days: 7,
     });
   };
@@ -183,6 +185,7 @@ export default function WantedPage() {
           ...newOfferForm,
           category_id: offerModalData.category_id,
           deposit_amount: Number(newOfferForm.deposit_amount),
+          daily_price: Number(newOfferForm.daily_price),
           max_borrow_days: Number(newOfferForm.max_borrow_days),
           status: "unavailable",
         };
@@ -429,7 +432,9 @@ export default function WantedPage() {
                             <div className="flex-1 min-w-0">
                               <h4 className={`text-xs font-bold truncate ${selectedResourceId === r.id ? 'text-primary-700 dark:text-primary-400' : 'text-slate-800 dark:text-slate-200'}`}>{r.title}</h4>
                               <div className="flex items-center gap-2 mt-0.5 text-[10px] font-bold text-slate-500">
-                                <span className="text-slate-600 dark:text-slate-400">Deposit: ₹{r.deposit_amount}</span>
+                                <span className="text-slate-600 dark:text-slate-400">
+                                  Deposit: ₹{r.deposit_amount} {r.daily_price > 0 && `• Rent: ₹${r.daily_price}/day`}
+                                </span>
                                 <span>•</span>
                                 <span className="uppercase">{r.condition}</span>
                               </div>
@@ -469,6 +474,17 @@ export default function WantedPage() {
                       />
                     </div>
                     <div>
+                      <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Rent / Day (₹)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                        value={newOfferForm.daily_price}
+                        onChange={(e) => setNewOfferForm({ ...newOfferForm, daily_price: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
                       <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Condition</label>
                       <select
                         className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
