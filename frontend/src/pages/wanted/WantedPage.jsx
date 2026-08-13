@@ -51,9 +51,9 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
               {request.user?.full_name?.charAt(0) || "U"}
             </div>
             <div>
-              <Link to={`/users/${request.user?.roll_no || request.user?.id}`} className="font-bold text-slate-900 dark:text-white hover:underline">
-                Requested by {request.user?.full_name}
-              </Link>
+              <div className="font-bold text-slate-900 dark:text-white">
+                Requested by <Link to={`/users/${request.user?.roll_no || request.user?.id}`} className="hover:underline">{request.user?.full_name}</Link>
+              </div>
               <p className="text-[10px] text-amber-500 font-bold">⭐ Trust Score: {request.user?.trust_score || 100}</p>
             </div>
           </div>
