@@ -190,12 +190,6 @@ function ComplaintDetailsModal({ complaint, onClose }) {
             </div>
           </div>
         )}
-
-        <div className="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4">
-          <button onClick={onClose} className="rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 transition-colors">
-            Close Window
-          </button>
-        </div>
       </div>
     </div>
   );

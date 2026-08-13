@@ -27,10 +27,10 @@
           }
           if (theme === "dark") {
             document.documentElement.classList.add("dark");
-            document.documentElement.style.backgroundColor = "#020617";
+            document.write('<style id="fouc-fix">html, body { background-color: #020617 !important; color-scheme: dark; }</style>');
           } else {
             document.documentElement.classList.remove("dark");
-            document.documentElement.style.backgroundColor = "#f8fafc";
+            document.write('<style id="fouc-fix">html, body { background-color: #f8fafc !important; color-scheme: light; }</style>');
           }
         } catch (_) {}
       })();
