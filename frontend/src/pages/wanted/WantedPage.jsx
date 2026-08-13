@@ -156,7 +156,7 @@ export default function WantedPage() {
     }
     setOfferModalData(request);
     setSelectedResourceId("");
-    setOfferMode(myResources.length === 0 ? "new" : "existing");
+    setOfferMode("new");
     setNewOfferForm({
       title: request.title,
       description: "Available for borrowing.",
