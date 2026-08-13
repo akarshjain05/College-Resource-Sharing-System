@@ -146,10 +146,6 @@ function NeedDetailsModal({ request, offers, onClose, onAcceptOffer, onCancelOff
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </button>
           </div>
-
-          <button onClick={onClose} className="btn-secondary !py-2 !px-4 text-xs">
-            Close Details
-          </button>
         </div>
       </div>
     </div>

@@ -389,12 +389,6 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
             >
               Delete
             </button>
-            <button
-              onClick={onClose}
-              className="btn-secondary !py-2 !px-4 text-xs"
-            >
-              Close Details
-            </button>
           </div>
         </div>
       </div>

@@ -74,12 +74,6 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
             {hasOffered ? "Offer Sent" : "I Have This →"}
           </button>
         </div>
-
-        <div className="flex justify-end pt-2">
-          <button onClick={onClose} className="btn-secondary !py-2 !px-4 text-xs">
-            Close
-          </button>
-        </div>
       </div>
     </div>,
     document.body
