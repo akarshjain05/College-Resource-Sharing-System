@@ -312,7 +312,7 @@ export default function WantedPage() {
       )}
 
       {/* Selected Need Details Modal */}
-      {selectedNeedForModal && createPortal(
+      {selectedNeedForModal && (
         <NeedDetailsModal
           request={selectedNeedForModal}
           onClose={() => setSelectedNeedForModal(null)}
@@ -322,8 +322,8 @@ export default function WantedPage() {
       )}
 
       {/* Post Need Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      {showModal && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Post Campus Need</h2>
@@ -374,7 +374,8 @@ export default function WantedPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Offer Modal */}
