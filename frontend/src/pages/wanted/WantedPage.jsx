@@ -98,7 +98,7 @@ export default function WantedPage() {
   const [selectedNeedForModal, setSelectedNeedForModal] = useState(null);
   const [offerModalData, setOfferModalData] = useState(null);
   const [selectedResourceId, setSelectedResourceId] = useState("");
-  const [offerMode, setOfferMode] = useState("existing");
+  const [offerMode, setOfferMode] = useState("new");
   const [newOfferForm, setNewOfferForm] = useState({
     title: "",
     description: "",
