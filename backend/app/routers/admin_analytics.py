@@ -162,11 +162,17 @@ def get_analytics_dashboard(
         
     recent_disputes = db.query(Complaint).filter(Complaint.status == ComplaintStatus.RESOLVED).order_by(Complaint.updated_at.desc()).limit(10).all()
     for disp in recent_disputes:
+        title = "Dispute Resolved"
+        if disp.borrow_request and disp.borrow_request.resource:
+            title = f'Dispute Resolved: "{disp.borrow_request.resource.title}"'
+        elif disp.subject:
+            title = f'Dispute Resolved: "{disp.subject}"'
+            
         activities.append(RecentActivityItem(
             id=f"disp_{disp.id}",
             type="dispute",
-            title=f'Dispute Resolved: "{disp.borrow_request.resource.title}"',
-            user=f"involving {disp.reporter.full_name}",
+            title=title,
+            user=f"involving {disp.filed_by.full_name}" if disp.filed_by else "Unknown",
             timestamp=disp.updated_at,
             icon="gavel"
         ))
