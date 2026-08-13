@@ -475,8 +475,8 @@ export default function AppLayout() {
       </div>
 
       {/* Post Need Modal */}
-      {showPostNeedModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] p-4">
+      {showPostNeedModal && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-[1px] p-4">
           <div className="w-full max-w-[460px] rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-2xl border border-slate-100/80 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-200">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-[22px] font-bold text-slate-900 dark:text-white tracking-tight font-display">Post a Need</h2>
@@ -575,7 +575,8 @@ export default function AppLayout() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

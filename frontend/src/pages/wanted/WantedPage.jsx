@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
 import { Plus, Check, Trash2, X, ChevronDown, ChevronUp, User, Tag, HelpCircle, ArrowRight, Clock } from "lucide-react";
@@ -10,8 +11,8 @@ import { appCallbacks } from "../../utils/appCallbacks";
 function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
   if (!request) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl space-y-5">
         <button
           onClick={onClose}
@@ -80,7 +81,8 @@ function NeedDetailsModal({ request, onClose, onOpenOffer, hasOffered }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -310,7 +312,7 @@ export default function WantedPage() {
       )}
 
       {/* Selected Need Details Modal */}
-      {selectedNeedForModal && (
+      {selectedNeedForModal && createPortal(
         <NeedDetailsModal
           request={selectedNeedForModal}
           onClose={() => setSelectedNeedForModal(null)}
@@ -376,8 +378,8 @@ export default function WantedPage() {
       )}
 
       {/* Offer Modal */}
-      {offerModalData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      {offerModalData && createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h2 className="font-display text-base font-extrabold text-slate-900 dark:text-white">Make an Offer</h2>
@@ -512,7 +514,8 @@ export default function WantedPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
