@@ -485,18 +485,17 @@ export default function WantedPage() {
                     </div>
                   </div>
                   <div>
-                      <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Condition</label>
-                      <select
-                        className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
-                        value={newOfferForm.condition}
-                        onChange={(e) => setNewOfferForm({ ...newOfferForm, condition: e.target.value })}
-                      >
-                        <option value="new">New</option>
-                        <option value="good">Good</option>
-                        <option value="fair">Fair</option>
-                        <option value="worn">Worn</option>
-                      </select>
-                    </div>
+                    <label className="mb-1 block font-bold text-slate-700 dark:text-slate-300">Condition</label>
+                    <select
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none"
+                      value={newOfferForm.condition}
+                      onChange={(e) => setNewOfferForm({ ...newOfferForm, condition: e.target.value })}
+                    >
+                      <option value="new">New</option>
+                      <option value="good">Good</option>
+                      <option value="fair">Fair</option>
+                      <option value="worn">Worn</option>
+                    </select>
                   </div>
                 </div>
               )}
