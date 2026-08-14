@@ -112,8 +112,9 @@ def get_analytics_dashboard(
             BorrowRequest.created_at >= start_date,
             BorrowRequest.created_at < end_date
         ).count()
+        label = start_date.strftime("%b %d")
         trends.append({
-            "week": f"Week {12 - i}",
+            "week": label,
             "items_borrowed": count
         })
         
