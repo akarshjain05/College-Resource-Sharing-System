@@ -134,6 +134,8 @@ def get_analytics_dashboard(
             "percentage": pct
         })
         
+    from app.models.wanted import WantedRequest
+    
     # 4. Recent Activity
     activities = []
     
@@ -145,6 +147,17 @@ def get_analytics_dashboard(
             title=f'New Listing: "{r.title}"',
             user=f"by {r.owner.full_name}",
             timestamp=r.created_at,
+            icon="laptop"
+        ))
+        
+    recent_wanted = db.query(WantedRequest).order_by(WantedRequest.created_at.desc()).limit(10).all()
+    for w in recent_wanted:
+        activities.append(RecentActivityItem(
+            id=f"wan_{w.id}",
+            type="listing",
+            title=f'Campus Need: "{w.title}"',
+            user=f"by {w.user.full_name}",
+            timestamp=w.created_at,
             icon="laptop"
         ))
         
