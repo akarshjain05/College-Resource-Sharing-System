@@ -196,7 +196,7 @@ export default function AdminAnalyticsPage() {
               const isDispute = item.type === "dispute";
               
               const date = new Date(item.timestamp);
-              const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const timeString = date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
               return (
                 <div key={item.id} className="flex gap-3 relative">
