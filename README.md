@@ -21,7 +21,7 @@ Campus-Resource-Sharing/
 │   │   ├── services/    # business-logic helpers (e.g. notifications)
 │   │   └── main.py      # FastAPI app entrypoint
 │   ├── alembic/         # DB migrations
-│   ├── scripts/         # seed_data.py
+│   ├── scripts/         # Utility scripts (e.g., promote_admin.py)
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
@@ -53,13 +53,11 @@ Campus-Resource-Sharing/
    - Backend API docs (Swagger): http://localhost:8000/docs
    - Backend health check: http://localhost:8000/health
 
-4. Seed demo data (categories, an admin account, a couple of resources):
+4. Set up an Admin Account:
+   Register a normal account through the frontend, then promote it to an admin using the provided script:
    ```bash
-   docker compose exec backend python scripts/seed_data.py
+   docker compose exec backend python scripts/promote_admin.py <your_email@crss.edu>
    ```
-   Demo logins after seeding:
-   - Admin: `admin@crss.edu` / `AdminPass123!`
-   - Student: `asha.rao@crss.edu` / `Password123!`
 
 ## Database migrations
 
