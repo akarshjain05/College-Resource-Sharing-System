@@ -48,7 +48,6 @@ export default function ResourceListPage() {
         sort_dir: sortDir,
         page,
         page_size: pageSize,
-        ...(user?.id ? { exclude_owner_id: user.id } : {}),
       })
       .then(({ data }) => {
         if (data && data.items) {

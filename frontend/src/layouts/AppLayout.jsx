@@ -214,6 +214,14 @@ export default function AppLayout() {
     navigate("/login");
   };
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-body text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* SIDEBAR */}
