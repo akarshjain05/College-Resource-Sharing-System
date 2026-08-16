@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Search, Compass, Plus, PackageOpen, Users, Clock, ShieldCheck } from "lucide-react";
+import { Search, Compass, Plus, PackageOpen, Users, Clock, ShieldCheck, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { Helmet } from "react-helmet-async";
 
