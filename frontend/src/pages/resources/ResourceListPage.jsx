@@ -15,7 +15,7 @@ export default function ResourceListPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState(searchParams.get("search") || "");
   const [categoryId, setCategoryId] = useState("");
   const [condition, setCondition] = useState("");
   const [status, setStatus] = useState("");
