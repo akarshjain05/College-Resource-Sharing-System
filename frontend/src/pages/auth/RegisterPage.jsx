@@ -167,10 +167,7 @@ export default function RegisterPage() {
 
           {/* Bottom stats / branding */}
           <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-6 text-xs text-slate-400">
-            <span>© 2026 SVNIT Campus Sharing</span>
-            <span className="flex items-center gap-1.5">
-              Made with <span className="text-red-500">♥</span> for SVNITians
-            </span>
+            <span>&copy; {new Date().getFullYear()} Campus Resource Sharing System. All rights reserved.</span>
           </div>
         </div>
 
