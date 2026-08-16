@@ -35,6 +35,7 @@ const AdminComplaintsPage = lazy(() => import("./pages/admin/AdminComplaintsPage
 
 import NotFoundPage from "./pages/errors/NotFoundPage";
 import ForbiddenPage from "./pages/errors/ForbiddenPage";
+import LandingPage from "./pages/LandingPage";
 
 const LoadingFallback = () => (
   <div className="flex h-screen items-center justify-center">
@@ -96,7 +97,7 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="/" element={<Navigate to="/resources" replace />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/403" element={<ForbiddenPage />} />
             <Route path="/404" element={<NotFoundPage />} />
             <Route path="*" element={<NotFoundPage />} />
