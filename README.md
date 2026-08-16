@@ -1,5 +1,6 @@
 # Campus Resource Sharing System (CRSS)
 
+**Live at:** [http://13-48-123-128.sslip.io](http://13-48-123-128.sslip.io)
 A secure, campus-only platform where students, faculty, and clubs can lend and borrow resources — cameras, lab equipment, sports gear, books, and more — instead of buying items that mostly sit idle.
 
 ## Tech stack
