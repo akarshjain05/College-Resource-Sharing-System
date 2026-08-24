@@ -339,15 +339,19 @@ async def send_complaint_update_email(
     status: str,
     update_text: str,
 ) -> bool:
+    safe_name = html.escape(full_name)
+    safe_subject = html.escape(subject_title)
+    safe_update = html.escape(update_text)
+    
     subject = f"Complaint Update [{status.upper()}]: {subject_title}"
     body = f"""
     <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2 style="color: #2563eb;">Complaint Triage & Resolution Update</h2>
-        <p>Hello <strong>{full_name}</strong>,</p>
-        <p>Your complaint <strong>"{subject_title}"</strong> has been updated.</p>
+        <p>Hello <strong>{safe_name}</strong>,</p>
+        <p>Your complaint <strong>"{safe_subject}"</strong> has been updated.</p>
         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; margin: 15px 0;">
-            <p><strong>Status:</strong> {status.upper()}</p>
-            <p><strong>Details:</strong> {update_text}</p>
+            <p><strong>Status:</strong> {html.escape(status.upper())}</p>
+            <p><strong>Details:</strong> {safe_update}</p>
         </div>
         <p>Log in to your account dashboard to view the full resolution & chat updates.</p>
     </div>
