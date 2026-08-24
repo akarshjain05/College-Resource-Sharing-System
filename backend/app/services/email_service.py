@@ -263,7 +263,7 @@ async def send_return_reminder_email(to_email: str, borrower_name: str, resource
 
 
 async def send_brevo_otp_email(to_email: str, full_name: str, otp: str) -> bool:
-    is_testing = "pytest" in sys.modules
+    is_testing = settings.ENVIRONMENT == "testing"
     api_key = settings.BREVO_API_KEY.strip()
 
     if not api_key or is_testing:
