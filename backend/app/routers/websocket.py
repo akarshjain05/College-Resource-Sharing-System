@@ -34,7 +34,10 @@ def _authenticate_ws_token(token: str, db: Session) -> User | None:
         user_id = uuid.UUID(payload["sub"])
     except (KeyError, ValueError):
         return None
-    return db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not user.is_active or user.is_suspended:
+        return None
+    return user
 
 
 @router.websocket("/ws/notifications")
