@@ -97,8 +97,7 @@ def my_complaints(current_user: User = Depends(get_current_user), db: Session = 
 
 
 @router.get("", response_model=list[ComplaintResponse])
-def list_all_complaints(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Admins or users assigned to complaints can list complaints
+def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
     return _complaint_query(db).order_by(Complaint.created_at.desc()).all()
 
 
