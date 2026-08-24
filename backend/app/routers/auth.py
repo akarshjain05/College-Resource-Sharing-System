@@ -55,18 +55,20 @@ from app.services.session_service import store_refresh_token, rotate_refresh_tok
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-def set_refresh_cookie(response: Response, refresh_token: str):
+def set_refresh_cookie(request: Request, response: Response, refresh_token: str):
+    is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
     response.set_cookie(
         key="crss_refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.ENVIRONMENT == "production",
+        secure=is_secure,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
     
-def clear_refresh_cookie(response: Response):
-    response.delete_cookie("crss_refresh_token", httponly=True, secure=settings.ENVIRONMENT == "production", samesite="lax")
+def clear_refresh_cookie(request: Request, response: Response):
+    is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
+    response.delete_cookie("crss_refresh_token", httponly=True, secure=is_secure, samesite="lax")
 
 
 
@@ -154,7 +156,7 @@ def verify_otp(request: Request, response: Response, payload: VerifySignupOtpReq
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -246,7 +248,7 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -328,7 +330,7 @@ def google_login(request: Request, response: Response, payload: GoogleAuthReques
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return GoogleAuthResponse(status="login", access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/google/complete-profile", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -381,7 +383,7 @@ def complete_google_profile(request: Request, response: Response, payload: Googl
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -405,11 +407,11 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
     # Check rotate and revoke on reuse
     rotated = rotate_refresh_token(str(user.id), cookie_token, new_refresh_token)
     if not rotated:
-        clear_refresh_cookie(response)
+        clear_refresh_cookie(request, response)
         raise AppException("Token reuse detected. All sessions revoked.", status_code=status.HTTP_401_UNAUTHORIZED, error_code="TOKEN_REUSE_DETECTED")
 
     access_token = create_access_token(str(user.id), {"role": user.role.value})
-    set_refresh_cookie(response, new_refresh_token)
+    set_refresh_cookie(request, response, new_refresh_token)
     return Token(access_token=access_token, refresh_token=new_refresh_token)
 
 @router.post("/logout")
@@ -425,7 +427,7 @@ def logout(
     elif current_user:
         from app.services.session_service import revoke_all_refresh_tokens
         revoke_all_refresh_tokens(str(current_user.id))
-    clear_refresh_cookie(response)
+    clear_refresh_cookie(request, response)
     return {"detail": "Logged out successfully"}
 
 @router.get("/me", response_model=UserResponse)
