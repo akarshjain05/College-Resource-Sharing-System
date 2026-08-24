@@ -89,26 +89,23 @@ class Settings(BaseSettings):
     RAZORPAY_CURRENCY: str = "INR"
 
     @model_validator(mode="after")
-    def validate_secrets_in_prod(self) -> 'Settings':
-        if self.ENVIRONMENT == "production":
-            import secrets
-            import logging
-            logger = logging.getLogger("crss")
-            
-            if not self.SECRET_KEY:
-                logger.warning("SECRET_KEY not set in production! Generating a random one. All sessions will be invalidated on restart.")
-                self.SECRET_KEY = secrets.token_urlsafe(32)
-                
-            if not self.OTP_SECRET:
-                logger.warning("OTP_SECRET not set in production! Generating a random one. OTPs will be invalidated on restart.")
-                self.OTP_SECRET = secrets.token_urlsafe(32)
+    def validate_secrets(self) -> 'Settings':
+        import logging
+        logger = logging.getLogger("crss")
 
+        # These MUST always be set — an empty HMAC key is a full auth bypass.
+        if not self.SECRET_KEY:
+            raise ValueError("SECRET_KEY must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+        if not self.OTP_SECRET:
+            raise ValueError("OTP_SECRET must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+
+        if self.ENVIRONMENT == "production":
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
                 logger.warning("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Payments will fail!")
-                
+
             if not self.GOOGLE_CLIENT_ID:
                 logger.warning("GOOGLE_CLIENT_ID is not set in production. Google Sign-In will fail!")
-                
+
         return self
 
 settings = Settings()
