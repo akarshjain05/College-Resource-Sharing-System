@@ -86,7 +86,15 @@ async def register(request: Request, payload: UserRegister, db: Session = Depend
 
     if existing:
         if existing.is_verified:
-            raise ConflictException("An account with this email already exists")
+            # Prevent user enumeration: return a dummy challenge ID and pretend it succeeded.
+            # A real user will wait for an OTP they never receive, and hopefully try to log in.
+            import uuid
+            return SignupOtpResponse(
+                message="Verification code sent",
+                requires_verification=True,
+                challenge_id=str(uuid.uuid4()),
+                expires_in=settings.OTP_EXPIRY_SECONDS,
+            )
         else:
             existing.full_name = payload.full_name
             existing.hashed_password = hash_password(payload.password)
