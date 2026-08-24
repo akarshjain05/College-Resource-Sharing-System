@@ -19,7 +19,7 @@ from starlette.requests import Request
 from app.services.ws_manager import manager
 from app.utils.moderation import check_chat_message_content
 
-router = APIRouter(prefix="/my-bookings?id={request_id}/messages", tags=["Chat"])
+router = APIRouter(prefix="/borrow-requests/{request_id}/messages", tags=["Chat"])
 
 
 def _get_authorized_request(request_id: uuid.UUID, current_user: User, db: Session) -> BorrowRequest:

@@ -221,34 +221,37 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
     redis_client = _get_redis_client()
     lockout_key = f"login_attempts:{email_key}"
     
-    if redis_client:
-        attempts = redis_client.get(lockout_key)
-        if attempts and int(attempts) >= 5:
-            raise AppException(
-                "Account locked due to too many failed login attempts. Please try again in 15 minutes.",
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                error_code="ACCOUNT_LOCKED",
-            )
+    if not redis_client:
+        raise AppException(
+            "Login temporarily unavailable due to backend services being down.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            error_code="REDIS_UNAVAILABLE",
+        )
+        
+    attempts = redis_client.get(lockout_key)
+    if attempts and int(attempts) >= 5:
+        raise AppException(
+            "Account locked due to too many failed login attempts. Please try again in 15 minutes.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            error_code="ACCOUNT_LOCKED",
+        )
 
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if user and not user.hashed_password:
-        if redis_client:
-            redis_client.incr(lockout_key)
-            redis_client.expire(lockout_key, 900)
+        redis_client.incr(lockout_key)
+        redis_client.expire(lockout_key, 900)
         raise AppException(
             "This account signs in with Google. Use the 'Continue with Google' button instead.",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="GOOGLE_ACCOUNT_NO_PASSWORD",
         )
     if not user or not verify_password(form_data.password, user.hashed_password):
-        if redis_client:
-            redis_client.incr(lockout_key)
-            redis_client.expire(lockout_key, 900)
+        redis_client.incr(lockout_key)
+        redis_client.expire(lockout_key, 900)
         raise AppException("Incorrect email or password", status_code=status.HTTP_401_UNAUTHORIZED, error_code="BAD_CREDENTIALS")
     
-    if redis_client:
-        redis_client.delete(lockout_key)
+    redis_client.delete(lockout_key)
         
     if not user.is_active or user.is_suspended:
         raise AppException("Account is inactive or suspended", status_code=status.HTTP_403_FORBIDDEN, error_code="ACCOUNT_DISABLED")
@@ -500,7 +503,8 @@ def reset_password(request: Request, payload: PasswordResetConfirm, db: Session 
     if not user:
         raise AppException("User not found", status_code=status.HTTP_404_NOT_FOUND, error_code="USER_NOT_FOUND")
         
-    if user.hashed_password and data.get("h") != user.hashed_password[-10:]:
+    import hmac
+    if user.hashed_password and not hmac.compare_digest(data.get("h", ""), user.hashed_password[-10:]):
         raise AppException("This reset link has already been used", status_code=status.HTTP_400_BAD_REQUEST, error_code="USED_RESET_TOKEN")
         
     user.hashed_password = hash_password(payload.new_password)

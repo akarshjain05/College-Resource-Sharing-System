@@ -38,6 +38,15 @@ def file_complaint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if payload.borrow_request_id:
+        from app.models.borrow import BorrowRequest
+        from app.core.exceptions import ForbiddenException
+        br = db.query(BorrowRequest).filter(BorrowRequest.id == payload.borrow_request_id).first()
+        if not br:
+            raise NotFoundException("Borrow request not found")
+        if current_user.id not in (br.borrower_id, br.lender_id):
+            raise ForbiddenException("You cannot file a complaint for a borrow request you are not part of")
+
     complaint = Complaint(**payload.model_dump(), filed_by_id=current_user.id)
     db.add(complaint)
     db.commit()

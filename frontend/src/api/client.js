@@ -14,8 +14,20 @@ function getCookie(name) {
   return match ? match[2] : null;
 }
 
+let memoryAccessToken = null;
+
+export const setAccessToken = (token) => {
+  memoryAccessToken = token;
+};
+
+export const getAccessToken = () => memoryAccessToken;
+
+export const clearAccessToken = () => {
+  memoryAccessToken = null;
+};
+
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("crss_access_token");
+  const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -64,7 +76,7 @@ api.interceptors.response.use(
           headers: csrfToken ? { "X-CSRF-Token": csrfToken } : {},
           withCredentials: true,
         });
-        localStorage.setItem("crss_access_token", data.access_token);
+        setAccessToken(data.access_token);
         // refresh_token is set via Set-Cookie header automatically
         processQueue(null, data.access_token);
         originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
@@ -73,10 +85,9 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         const status = refreshError.response?.status;
         if (status === 401 || status === 400) {
-          localStorage.removeItem("crss_access_token");
+          clearAccessToken();
           appCallbacks.trigger("auth-unauthorized");
-          // No need to remove crss_refresh_token as it's a cookie managed by backend
-          window.location.href = "/login";
+          // ProtectedRoute will handle redirecting to /login if the route requires auth
         }
         return Promise.reject(refreshError);
       } finally {
