@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import get_current_user, require_admin, require_permissions
 from app.core.exceptions import NotFoundException
 from app.models.chat import ChatMessage
 from app.models.enums import ComplaintStatus, NotificationType
@@ -97,7 +97,7 @@ def my_complaints(current_user: User = Depends(get_current_user), db: Session = 
 
 
 @router.get("", response_model=list[ComplaintResponse])
-def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(require_admin)):
+def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(require_permissions("can_moderate_complaints"))):
     return _complaint_query(db).order_by(Complaint.created_at.desc()).all()
 
 
@@ -107,7 +107,7 @@ def update_complaint(
     payload: ComplaintAdminUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    _admin: User = Depends(require_admin),
+    _admin: User = Depends(require_permissions("can_moderate_complaints")),
 ):
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
