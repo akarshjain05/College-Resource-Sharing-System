@@ -71,6 +71,9 @@ class Settings(BaseSettings):
     NOTIFICATION_SERVICE_URL: str = "http://localhost:8001"
     NOTIFICATION_SERVICE_API_KEY: str = "default-dev-key"
 
+    # ---- Cron ----
+    CRON_SECRET: str = ""
+
     # ---- Brevo & OTP ----
     BREVO_API_KEY: str = ""
     BREVO_SENDER_EMAIL: str = "security@yourdomain.com"
@@ -98,6 +101,8 @@ class Settings(BaseSettings):
             raise ValueError("SECRET_KEY must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
         if not self.OTP_SECRET:
             raise ValueError("OTP_SECRET must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+        if not self.CRON_SECRET:
+            raise ValueError("CRON_SECRET must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
 
         if self.ENVIRONMENT == "production":
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:

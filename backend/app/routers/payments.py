@@ -522,8 +522,9 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/reconcile-cron", include_in_schema=False)
 def reconcile_payments_cron(request: Request, db: Session = Depends(get_db)):
     """Called periodically by an external cron to check on stale CREATED orders."""
-    cron_secret = request.headers.get("X-Cron-Secret")
-    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY:
+    import hmac
+    cron_secret = request.headers.get("X-Cron-Secret") or ""
+    if not hmac.compare_digest(cron_secret, settings.CRON_SECRET):
         raise AppException(
             "Unauthorized cron execution", 
             status_code=401, 
