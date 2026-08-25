@@ -87,6 +87,9 @@ def client(db_session, monkeypatch):
                 del self.data[key]
         def ttl(self, key):
             return 300
+        def keys(self, pattern):
+            import fnmatch
+            return [k for k in self.data.keys() if fnmatch.fnmatch(k.decode('utf-8') if isinstance(k, bytes) else k, pattern)]
                 
     monkeypatch.setattr("app.services.otp_service._get_redis_client", lambda: MockRedis())
 

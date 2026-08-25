@@ -8,7 +8,7 @@ from slowapi.util import get_remote_address
 
 from app.core.config import settings
 
-is_testing = settings.ENVIRONMENT == "testing"
+is_testing = settings.ENVIRONMENT in ("test", "testing")
 
 limiter = Limiter(
     key_func=get_remote_address,
