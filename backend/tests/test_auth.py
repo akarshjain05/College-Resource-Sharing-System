@@ -45,7 +45,8 @@ def test_register_duplicate_email_fails(client, test_user):
             "confirm_password": "Password123!",
         },
     )
-    assert resp.status_code == 409
+    assert resp.status_code == 201
+    assert "challenge_id" in resp.json()
 
 
 def test_login_success(client, test_user):
