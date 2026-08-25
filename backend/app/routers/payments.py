@@ -86,20 +86,6 @@ def get_my_transactions(
     for br in brs:
         p = db.query(Payment).filter(Payment.borrow_request_id == br.id).order_by(Payment.created_at.desc()).first()
         is_lender = (br.lender_id == current_user.id)
-        other_party = (
-            getattr(br.borrower, "full_name", "Unknown") if is_lender else getattr(br.lender, "full_name", "Unknown")
-        )
-        item_title = getattr(br.resource, "title", "Unknown Resource") if br.resource else "Unknown Resource"
-        image_url = None
-        if br.resource and br.resource.images and len(br.resource.images) > 0:
-            first_img = br.resource.images[0]
-            if hasattr(first_img, "image_url"):
-                image_url = first_img.image_url
-            elif isinstance(first_img, str):
-                image_url = first_img
-            else:
-                image_url = str(getattr(first_img, "url", "")) or None
-
         if p:
             tx_type = "CREDIT" if is_lender else "DEBIT"
             status_str = p.status.value if hasattr(p.status, "value") else str(p.status)
@@ -121,49 +107,12 @@ def get_my_transactions(
             elif tx_type == "DEBIT" and br.status == BorrowStatus.APPROVED:
                 pending_to_be_paid_paise += (p.total_amount or 0)
 
-            items.append(
-                TransactionItem(
-                    id=str(p.id),
-                    borrow_request_id=str(br.id),
-                    status=status_str,
-                    rent_amount=int(p.rent_amount or 0),
-                    deposit_amount=int(p.deposit_amount or 0),
-                    total_amount=int(p.total_amount or 0),
-                    currency=p.currency or "INR",
-                    refunded_amount=int(p.refunded_amount or 0),
-                    created_at=p.created_at.isoformat() if p.created_at else "",
-                    razorpay_payment_id=p.razorpay_payment_id,
-                    transaction_type=tx_type,
-                    item_title=item_title,
-                    item_image=image_url,
-                    other_party_name=other_party,
-                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
-                    is_to_be_paid=(status_str in ("created", "attempted", "pending_payment") and br.status == BorrowStatus.APPROVED and not is_lender),
-                )
-            )
+            items.append(payment_service.build_transaction_item(br, p, current_user, is_lender, 0, 0, 0))
+
         elif not is_lender and br.status == BorrowStatus.APPROVED:
             rent_paise, deposit_paise, total_paise = _compute_amounts(br)
             pending_to_be_paid_paise += total_paise
-            items.append(
-                TransactionItem(
-                    id=f"pending_{br.id}",
-                    borrow_request_id=str(br.id),
-                    status="PENDING_PAYMENT",
-                    rent_amount=rent_paise,
-                    deposit_amount=deposit_paise,
-                    total_amount=total_paise,
-                    currency=settings.RAZORPAY_CURRENCY,
-                    refunded_amount=0,
-                    created_at=br.created_at.isoformat() if br.created_at else "",
-                    razorpay_payment_id=None,
-                    transaction_type="DEBIT",
-                    item_title=item_title,
-                    item_image=image_url,
-                    other_party_name=other_party,
-                    borrow_status=br.status.value if hasattr(br.status, "value") else str(br.status),
-                    is_to_be_paid=True,
-                )
-            )
+            items.append(payment_service.build_transaction_item(br, None, current_user, is_lender, rent_paise, deposit_paise, total_paise))
 
     return MyTransactionsResponse(
         summary=WalletSummary(
@@ -522,8 +471,9 @@ async def razorpay_webhook(request: Request, db: Session = Depends(get_db)):
 @router.post("/reconcile-cron", include_in_schema=False)
 def reconcile_payments_cron(request: Request, db: Session = Depends(get_db)):
     """Called periodically by an external cron to check on stale CREATED orders."""
-    cron_secret = request.headers.get("X-Cron-Secret")
-    if cron_secret != settings.NOTIFICATION_SERVICE_API_KEY:
+    import hmac
+    cron_secret = request.headers.get("X-Cron-Secret") or ""
+    if not hmac.compare_digest(cron_secret, settings.CRON_SECRET):
         raise AppException(
             "Unauthorized cron execution", 
             status_code=401, 

@@ -138,10 +138,10 @@ export default function AppLayout() {
   const fetchUnreadCount = () => {
     if (!user) return;
     notificationApi
-      .list()
+      .getUnreadCount()
       .then(({ data }) => {
-        if (Array.isArray(data)) {
-          setUnreadCount(data.filter((n) => !n.is_read).length);
+        if (data && typeof data.unread_count === 'number') {
+          setUnreadCount(data.unread_count);
         }
       })
       .catch(() => { });

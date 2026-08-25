@@ -260,9 +260,10 @@ def test_owner_can_update_resource_status(client, test_user, test_category):
     assert resp.json()["status"] == "unavailable"
 
 
+import os
 import pytest
 
-@pytest.mark.skip(reason="SQLite in-memory DB segfaults with concurrent with_for_update()")
+@pytest.mark.skipif(os.environ.get("DATABASE_URL", "sqlite").startswith("sqlite"), reason="SQLite in-memory DB segfaults with concurrent with_for_update()")
 def test_concurrent_approve_borrow_request(client, test_user, second_user, test_category):
     import concurrent.futures
     owner_headers = auth_headers(client, test_user.email, "Password123!")

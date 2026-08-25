@@ -79,8 +79,16 @@ def list_wanted_requests(
 ):
     from app.models.wanted import WantedOffer
     from sqlalchemy.orm import joinedload
+    from sqlalchemy import select
 
-    requests = db.query(WantedRequest).options(
+    has_offered_subq = (
+        select(1)
+        .where(WantedOffer.wanted_request_id == WantedRequest.id)
+        .where(WantedOffer.offerer_id == current_user.id)
+        .exists()
+    )
+
+    results = db.query(WantedRequest, has_offered_subq.label("has_offered")).options(
         joinedload(WantedRequest.user),
         joinedload(WantedRequest.category)
     ).filter(
@@ -88,13 +96,11 @@ def list_wanted_requests(
         WantedRequest.user_id != current_user.id
     ).order_by(WantedRequest.created_at.desc()).all()
 
-    valid_requests = [r for r in requests if r.user is not None and r.category is not None]
-
-    for r in valid_requests:
-        r.has_offered = db.query(WantedOffer).filter(
-            WantedOffer.wanted_request_id == r.id,
-            WantedOffer.offerer_id == current_user.id
-        ).first() is not None
+    valid_requests = []
+    for r, has_offered in results:
+        if r.user is not None and r.category is not None:
+            r.has_offered = has_offered
+            valid_requests.append(r)
 
     return valid_requests
 

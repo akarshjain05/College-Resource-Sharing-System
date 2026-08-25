@@ -21,9 +21,7 @@ class DamageClaim(Base, UUIDMixin, TimestampMixin):
     borrow_request_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("borrow_requests.id"), nullable=False, unique=True
     )
-    filed_by_id: Mapped[UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
-    )
+    filed_by_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     against_user_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )

@@ -8,7 +8,7 @@ from slowapi.util import get_remote_address
 
 from app.core.config import settings
 
-is_testing = "pytest" in sys.modules
+is_testing = settings.ENVIRONMENT == "testing"
 
 limiter = Limiter(
     key_func=get_remote_address,

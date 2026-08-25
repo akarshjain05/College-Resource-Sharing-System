@@ -22,13 +22,27 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS", "TRACE"}
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
+    # Genuinely unauthenticated/public POST endpoints that don't use cookies.
+    # /auth/refresh and /auth/logout are NOT here — they rely on the
+    # httpOnly refresh-token cookie and MUST be CSRF-protected.
+    CSRF_EXEMPT_PATHS = {
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/verify-signup-otp",
+        "/api/v1/auth/resend-signup-otp",
+        "/api/v1/auth/google",
+        "/api/v1/auth/google/complete-profile",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password",
+    }
+
     async def dispatch(self, request: Request, call_next):
         existing_token = request.cookies.get(CSRF_COOKIE_NAME)
 
         # Bearer-token requests (the normal API path) are not vulnerable to CSRF
         # since browsers never attach Authorization headers automatically.
         is_bearer_request = request.headers.get("authorization", "").lower().startswith("bearer ")
-        is_auth_endpoint = "/auth/" in request.url.path
+        is_exempt = is_bearer_request or request.url.path in self.CSRF_EXEMPT_PATHS
 
         # A request with no CSRF cookie at all was never issued a token to echo back —
         # it's a plain unauthenticated/non-browser request, not a cookie-riding CSRF
@@ -39,8 +53,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         if (
             request.method not in SAFE_METHODS
-            and not is_bearer_request
-            and not is_auth_endpoint
+            and not is_exempt
             and has_csrf_cookie
         ):
             submitted_token = request.headers.get(CSRF_HEADER_NAME)

@@ -65,4 +65,5 @@ class BorrowRequestResponse(BaseModel):
     borrower: Optional[UserResponse] = None
     lender: Optional[UserResponse] = None
     payment: Optional[PaymentResponse] = None
+    estimated_total_paise: int
     created_at: datetime

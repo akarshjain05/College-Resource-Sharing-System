@@ -36,6 +36,8 @@ const RECONNECT_MAX_MS = 30_000;
  * and shows a toast for each one as it arrives.  Reconnects automatically
  * with exponential backoff so a brief network hiccup doesn't spam retries.
  */
+import { getAccessToken } from "../api/client";
+
 export function useNotificationSocket(onNotification, user) {
   const navigate = useNavigate();
   const socketRef = useRef(null);
@@ -45,7 +47,7 @@ export function useNotificationSocket(onNotification, user) {
   useEffect(() => {
     if (!user) return;
 
-    const token = localStorage.getItem("crss_access_token");
+    const token = getAccessToken();
     if (!token) return;
 
     let cancelled = false;
@@ -54,7 +56,7 @@ export function useNotificationSocket(onNotification, user) {
       if (cancelled) return;
 
       // Always read the token fresh — it may have been refreshed since last connect.
-      const token = localStorage.getItem("crss_access_token");
+      const token = getAccessToken();
       if (!token) return;
 
       const wsBase = getWebSocketBaseUrl();

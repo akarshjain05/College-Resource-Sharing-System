@@ -6,7 +6,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
-from app.core.deps import get_current_user, require_admin
+from app.core.deps import get_current_user, require_admin, require_permissions
 from app.core.exceptions import NotFoundException
 from app.models.chat import ChatMessage
 from app.models.enums import ComplaintStatus, NotificationType
@@ -38,6 +38,15 @@ def file_complaint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if payload.borrow_request_id:
+        from app.models.borrow import BorrowRequest
+        from app.core.exceptions import ForbiddenException
+        br = db.query(BorrowRequest).filter(BorrowRequest.id == payload.borrow_request_id).first()
+        if not br:
+            raise NotFoundException("Borrow request not found")
+        if current_user.id not in (br.borrower_id, br.lender_id):
+            raise ForbiddenException("You cannot file a complaint for a borrow request you are not part of")
+
     complaint = Complaint(**payload.model_dump(), filed_by_id=current_user.id)
     db.add(complaint)
     db.commit()
@@ -97,8 +106,7 @@ def my_complaints(current_user: User = Depends(get_current_user), db: Session = 
 
 
 @router.get("", response_model=list[ComplaintResponse])
-def list_all_complaints(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    # Admins or users assigned to complaints can list complaints
+def list_all_complaints(db: Session = Depends(get_db), _admin: User = Depends(require_permissions("can_moderate_complaints"))):
     return _complaint_query(db).order_by(Complaint.created_at.desc()).all()
 
 
@@ -108,7 +116,7 @@ def update_complaint(
     payload: ComplaintAdminUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    _admin: User = Depends(require_admin),
+    _admin: User = Depends(require_permissions("can_moderate_complaints")),
 ):
     complaint = db.query(Complaint).filter(Complaint.id == complaint_id).first()
     if not complaint:
@@ -175,13 +183,16 @@ def update_complaint(
 
     # Post real-time chat update message if borrow request is linked
     if complaint.borrow_request_id:
-        system_msg_body = f"[COMPLAINT_UPDATE] 📢 Complaint Status: {complaint.status.value.upper()}"
-        if complaint.resolution_data:
-            system_msg_body += f"\nResolution Data: {complaint.resolution_data}"
         msg = ChatMessage(
             borrow_request_id=complaint.borrow_request_id,
             sender_id=complaint.filed_by_id,
-            body=system_msg_body,
+            body=f"Complaint status updated to {complaint.status.value.upper()}.",
+            message_type="system_event",
+            metadata_payload={
+                "event_type": "COMPLAINT_UPDATE",
+                "status": complaint.status.value.upper(),
+                "resolution_data": complaint.resolution_data,
+            }
         )
         db.add(msg)
         db.commit()

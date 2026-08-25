@@ -3,6 +3,7 @@ Central exception handling so every API error returns a consistent JSON shape:
 { "detail": str, "error_code": str }
 """
 import logging
+from app.core.config import settings
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
@@ -87,7 +88,8 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
         logger.exception("Unhandled exception: %s", str(exc))
+        detail_msg = f"Internal server error: {str(exc)}" if settings.ENVIRONMENT != "production" else "Internal server error"
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"detail": f"Internal server error: {str(exc)}", "error_code": "INTERNAL_ERROR"},
+            content={"detail": detail_msg, "error_code": "INTERNAL_ERROR"},
         )

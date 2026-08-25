@@ -8,6 +8,8 @@ from app.utils.validation import SafeStr
 
 class ChatMessageBase(BaseModel):
     body: SafeStr = Field(..., max_length=1000)
+    message_type: str = Field(default="text", max_length=50)
+    metadata_payload: Optional[dict] = None
 
 
 class ChatMessageCreate(ChatMessageBase):

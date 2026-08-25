@@ -71,3 +71,40 @@ def test_complaints_with_linked_borrow_request(client, test_user, second_user, t
     assert my_complaints_data[0]["borrow_request"]["id"] == borrow_request_id
     assert "start_date" in my_complaints_data[0]["borrow_request"]
     assert "end_date" in my_complaints_data[0]["borrow_request"]
+
+def test_update_complaint(client, admin_user, db_session, test_user):
+    # Ensure admin has complaint resolution permission
+    admin_user.can_moderate_complaints = True
+    db_session.commit()
+
+    from app.models.misc import Complaint
+    # Create a real complaint in the DB
+    complaint = Complaint(
+        filed_by_id=test_user.id,
+        subject="Test subject",
+        description="Test desc",
+        status="open",
+        category="general"
+    )
+    db_session.add(complaint)
+    db_session.commit()
+
+    headers = auth_headers(client, admin_user.email, "AdminPass123!")
+    response = client.put(
+        f"/api/v1/complaints/{complaint.id}",
+        headers=headers,
+        json={
+            "status": "resolved",
+            "admin_response": "Test notes",
+            "resolution_action": "refund_issued",
+            "resolution_amount": 200,
+            "resolution_notes": "Test notes",
+            "trust_score_penalty": None
+        }
+    )
+    assert response.status_code == 200
+    
+    db_session.refresh(complaint)
+    assert complaint.status.value == "resolved"
+    assert complaint.admin_response == "Test notes"
+

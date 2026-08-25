@@ -70,8 +70,9 @@ def create_review(
     db.add(review)
     db.commit()
 
-    all_ratings = [r.rating for r in resource.reviews] + [payload.rating]
-    resource.average_rating = sum(all_ratings) / len(all_ratings)
+    from sqlalchemy import func
+    avg_rating = db.query(func.avg(Review.rating)).filter(Review.resource_id == resource.id).scalar()
+    resource.average_rating = float(avg_rating) if avg_rating is not None else 0.0
     db.commit()
     db.refresh(review)
     return review
@@ -104,8 +105,9 @@ def delete_review(
     db.flush()  # apply deletion before recomputing
 
     # Recompute average rating from remaining reviews
-    remaining = [r.rating for r in resource.reviews if r.id != review_id]
-    resource.average_rating = sum(remaining) / len(remaining) if remaining else 0.0
+    from sqlalchemy import func
+    avg_rating = db.query(func.avg(Review.rating)).filter(Review.resource_id == resource.id).scalar()
+    resource.average_rating = float(avg_rating) if avg_rating is not None else 0.0
 
     db.commit()
     return None
@@ -154,3 +156,17 @@ def clear_all_notifications(current_user: User = Depends(get_current_user), db: 
     db.query(Notification).filter(Notification.user_id == current_user.id).delete()
     db.commit()
     return None
+
+@router.get("/notifications/unread-count")
+def get_unread_count(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    from sqlalchemy import select, func
+    from app.models.misc import Notification
+    count = db.execute(
+        select(func.count(Notification.id))
+        .where(Notification.user_id == current_user.id)
+        .where(Notification.is_read == False)
+    ).scalar_one()
+    return {"unread_count": count}

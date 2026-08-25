@@ -431,11 +431,15 @@ def cancel_borrow_request(
         db.commit()
 
         # Send chat message
-        system_msg_body = f"[CANCELLATION_REQUEST] ⚠️ Cancellation Requested\nReason: {payload.reason or 'No reason provided.'}"
         msg = ChatMessage(
             borrow_request_id=br.id,
             sender_id=current_user.id,
-            body=system_msg_body,
+            body=f"Cancellation Requested. Reason: {payload.reason or 'No reason provided.'}",
+            message_type="system_event",
+            metadata_payload={
+                "event_type": "CANCELLATION_REQUEST",
+                "reason": payload.reason or "No reason provided."
+            }
         )
         db.add(msg)
         db.commit()
@@ -531,11 +535,12 @@ def accept_cancellation(
     br.status = BorrowStatus.CANCELLED
     db.commit()
     
-    system_msg_body = f"[CANCELLATION_ACCEPTED] ✅ {current_user.full_name} accepted the cancellation request."
     msg = ChatMessage(
         borrow_request_id=br.id,
         sender_id=current_user.id,
-        body=system_msg_body,
+        body=f"{current_user.full_name} accepted the cancellation request.",
+        message_type="system_event",
+        metadata_payload={"event_type": "CANCELLATION_ACCEPTED"}
     )
     db.add(msg)
     db.commit()
@@ -596,11 +601,12 @@ def reject_cancellation(
     br.cancellation_reason = None
     db.commit()
     
-    system_msg_body = f"[CANCELLATION_REJECTED] ❌ {current_user.full_name} rejected the cancellation request."
     msg = ChatMessage(
         borrow_request_id=br.id,
         sender_id=current_user.id,
-        body=system_msg_body,
+        body=f"{current_user.full_name} rejected the cancellation request.",
+        message_type="system_event",
+        metadata_payload={"event_type": "CANCELLATION_REJECTED"}
     )
     db.add(msg)
     db.commit()
@@ -759,142 +765,7 @@ def confirm_return_resource(
     if br.status != BorrowStatus.RETURN_REQUESTED:
         raise AppException("Only pending returns can be confirmed", status_code=status.HTTP_400_BAD_REQUEST, error_code="INVALID_STATE")
 
-    resource = br.resource
-    resource_title = resource.title if resource else "item"
-
-    # A damage claim can be initiated by the borrower's report OR the lender's report
-    lender_reported_damage = bool(payload.damage_report)
-    borrower_reported_damage = bool(br.damage_report)
-    is_damaged = lender_reported_damage or borrower_reported_damage
-
-    if lender_reported_damage:
-        if not payload.damage_evidence_url:
-            raise AppException("Photo evidence (damage_evidence_url) is required to file a damage claim", status_code=status.HTTP_400_BAD_REQUEST, error_code="EVIDENCE_REQUIRED")
-        
-        # Rate-limit checks: max 2 claims against the same borrower in 30 days
-        from datetime import timedelta
-        from app.models.damage_claim import DamageClaim
-        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-        recent_claims = db.query(DamageClaim).filter(
-            DamageClaim.filed_by_id == current_user.id,
-            DamageClaim.against_user_id == br.borrower_id,
-            DamageClaim.created_at >= thirty_days_ago
-        ).count()
-        if recent_claims >= 2:
-            raise AppException("You have filed too many recent damage claims against this user. Please contact support.", status_code=status.HTTP_429_TOO_MANY_REQUESTS, error_code="RATE_LIMIT_EXCEEDED")
-
-    br.status = BorrowStatus.DAMAGED if is_damaged else BorrowStatus.RETURNED
-    br.borrower_rating = payload.borrower_rating
-    br.borrower_review = payload.borrower_review
-
-    if resource:
-        resource.total_borrows += 1
-
-    # Trust Score Logic (Borrower)
-    borrower = db.query(User).filter(User.id == br.borrower_id).first()
-    
-    from app.models.payment import Payment
-    from app.models.enums import PaymentStatus
-    from app.services import payment_service
-
-    payment = db.query(Payment).options(joinedload(Payment.payer)).filter(Payment.borrow_request_id == br.id, Payment.status == PaymentStatus.PAID).first()
-    
-    # Credit the rent amount to the lender's wallet unconditionally on return
-    if payment and payment.rent_amount > 0:
-        from app.models.wallet import WalletTransaction
-        from app.models.enums import WalletTransactionType
-        
-        lender = db.query(User).filter(User.id == br.lender_id).first()
-        if lender:
-            lender.wallet_balance += payment.rent_amount
-            
-            earning_tx = WalletTransaction(
-                user_id=lender.id,
-                amount=payment.rent_amount,
-                type=WalletTransactionType.EARNING,
-                reference_id=str(br.id)
-            )
-            db.add(earning_tx)
-
-    if borrower:
-        if not is_damaged:
-            if payment and payment.refunded_amount == 0:
-                result = payment_service.refund_payment(
-                    db, payment, amount_paise=payment.deposit_amount,
-                    notes={"reason": "item_returned_undamaged"},
-                )
-                
-                from app.services.email_service import send_payment_refund_email
-                if payment.payer and payment.payer.email:
-                    background_tasks.add_task(
-                        send_payment_refund_email,
-                        payment.payer.email,
-                        payment.payer.full_name,
-                        payment.deposit_amount / 100.0,
-                        br.resource.title if br.resource else "item",
-                        result["id"]
-                    )
-
-            # Only apply normal trust adjustments for non-damaged returns
-            actual_ret = _to_date(br.actual_return_date)
-            req_end = _to_date(br.requested_end_date)
-            if actual_ret and req_end and actual_ret > req_end:
-                borrower.trust_score -= 5
-            else:
-                borrower.trust_score += 2
-
-        if br.borrower_rating is not None:
-            rating_adj = {1: -5, 2: -2, 3: 0, 4: +2, 5: +5}
-            borrower.trust_score += rating_adj.get(br.borrower_rating, 0)
-
-    # Sharing Score Logic (Lender)
-    if not is_damaged:
-        current_user.sharing_score += 10
-    
-    if br.lender_rating is not None:
-        rating_adj = {1: -2, 2: -1, 3: 0, 4: +2, 5: +5}
-        current_user.sharing_score += rating_adj.get(br.lender_rating, 0)
-
-    db.commit()
-
-    # If damaged, auto-create a DamageClaim for admin adjudication
-    if is_damaged:
-        from app.models.damage_claim import DamageClaim
-        from app.models.enums import DamageClaimStatus
-
-        claim = DamageClaim(
-            borrow_request_id=br.id,
-            filed_by_id=current_user.id,
-            against_user_id=br.borrower_id,
-            description=payload.damage_report or br.damage_report,
-            damage_evidence_url=payload.damage_evidence_url,
-            status=DamageClaimStatus.OPEN,
-        )
-        db.add(claim)
-        db.commit()
-
-        create_notification(
-            db, br.borrower_id, NotificationType.SYSTEM,
-            "Damage claim filed",
-            f"A damage claim has been filed for '{resource_title}'. You can dispute it within your dashboard.",
-            link=f"/damage-claims/{claim.id}",
-        )
-
-    create_notification(
-        db, br.borrower_id, NotificationType.RETURN_CONFIRMED,
-        "Return confirmed",
-        f"'{resource_title}' return has been confirmed.",
-        link=f"/my-bookings?id={br.id}",
-    )
-
-    if resource:
-        wishlisters = db.query(WishlistItem).filter(WishlistItem.resource_id == resource.id).limit(100).all()
-        for item in wishlisters:
-            create_notification(
-                db, item.user_id, NotificationType.SYSTEM,
-                "Wishlist item available",
-                f"An item on your wishlist, '{resource_title}', is now available to borrow!",
-                link=f"/resources/{resource.id}",
-            )
+    from app.services import borrow_service
+    borrow_service.confirm_return(db, br, current_user, payload, background_tasks)
 
     return _borrow_query(db).filter(BorrowRequest.id == br.id).first()

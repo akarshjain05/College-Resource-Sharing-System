@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { authApi } from "../api/endpoints";
 import { appCallbacks } from "../utils/appCallbacks";
+import { setAccessToken, clearAccessToken } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -9,17 +10,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem("crss_access_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
     try {
+      // The interceptor in client.js will automatically attempt a silent refresh
+      // if this request fails with 401 and we have a valid refresh cookie.
       const { data } = await authApi.me();
       setUser(data);
     } catch (err) {
       if (err.response && err.response.status === 401) {
-        localStorage.removeItem("crss_access_token");
+        clearAccessToken();
         setUser(null);
       }
     } finally {
@@ -31,31 +29,29 @@ export function AuthProvider({ children }) {
     loadUser();
     const handleUnauthorized = () => {
       setUser(null);
-      localStorage.removeItem("crss_access_token");
+      clearAccessToken();
     };
     return appCallbacks.register("auth-unauthorized", handleUnauthorized);
   }, [loadUser]);
 
   const login = async (email, password) => {
     const { data } = await authApi.login(email, password);
-    localStorage.setItem("crss_access_token", data.access_token);
+    setAccessToken(data.access_token);
     await loadUser();
   };
 
   const loginWithGoogle = async (credential) => {
     const { data } = await authApi.googleLogin(credential);
     if (data.status === "login") {
-      localStorage.setItem("crss_access_token", data.access_token);
+      setAccessToken(data.access_token);
       await loadUser();
     }
-    // If data.status === "needs_profile", the caller (Login/RegisterPage) is
-    // responsible for showing the profile-completion form -- no tokens exist yet.
     return data;
   };
 
   const completeGoogleProfile = async (payload) => {
     const { data } = await authApi.completeGoogleProfile(payload);
-    localStorage.setItem("crss_access_token", data.access_token);
+    setAccessToken(data.access_token);
     await loadUser();
   };
 
@@ -66,7 +62,7 @@ export function AuthProvider({ children }) {
 
   const verifySignupOtp = async (payload) => {
     const { data } = await authApi.verifySignupOtp(payload);
-    localStorage.setItem("crss_access_token", data.access_token);
+    setAccessToken(data.access_token);
     await loadUser();
     return data;
   };
@@ -82,7 +78,7 @@ export function AuthProvider({ children }) {
     } catch (err) {
       console.error("Logout failed on server:", err);
     }
-    localStorage.removeItem("crss_access_token");
+    clearAccessToken();
     setUser(null);
   };
 

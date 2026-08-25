@@ -318,10 +318,10 @@ export default function TransactionsPage() {
               <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-700">
                 <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  5% Daily Rental Pricing
+                  Daily Rental Pricing
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 text-xs mt-2 leading-relaxed">
-                  Daily rent is strictly calculated at <strong>5% of the item&apos;s security deposit</strong> per
+                  Daily rent is <strong>set by the item owner</strong> per
                   day of borrowing. The lender earns 100% of this rental fee once the handover is confirmed.
                 </p>
               </div>

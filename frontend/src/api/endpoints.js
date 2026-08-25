@@ -100,6 +100,7 @@ export const chatApi = {
 
 export const notificationApi = {
   list: () => api.get(`/notifications?_t=${Date.now()}`),
+  getUnreadCount: () => api.get("/notifications/unread-count"),
   markRead: (id) => api.post(`/notifications/${id}/read`),
   markAllRead: () => api.post("/notifications/read-all"),
   clearAll: () => api.delete("/notifications/clear-all"),

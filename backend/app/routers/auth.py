@@ -55,18 +55,20 @@ from app.services.session_service import store_refresh_token, rotate_refresh_tok
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-def set_refresh_cookie(response: Response, refresh_token: str):
+def set_refresh_cookie(request: Request, response: Response, refresh_token: str):
+    is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
     response.set_cookie(
         key="crss_refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.ENVIRONMENT == "production",
+        secure=is_secure,
         samesite="lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
     
-def clear_refresh_cookie(response: Response):
-    response.delete_cookie("crss_refresh_token", httponly=True, secure=settings.ENVIRONMENT == "production", samesite="lax")
+def clear_refresh_cookie(request: Request, response: Response):
+    is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto", "") == "https"
+    response.delete_cookie("crss_refresh_token", httponly=True, secure=is_secure, samesite="lax")
 
 
 
@@ -84,7 +86,15 @@ async def register(request: Request, payload: UserRegister, db: Session = Depend
 
     if existing:
         if existing.is_verified:
-            raise ConflictException("An account with this email already exists")
+            # Prevent user enumeration: return a dummy challenge ID and pretend it succeeded.
+            # A real user will wait for an OTP they never receive, and hopefully try to log in.
+            import uuid
+            return SignupOtpResponse(
+                message="Verification code sent",
+                requires_verification=True,
+                challenge_id=str(uuid.uuid4()),
+                expires_in=settings.OTP_EXPIRY_SECONDS,
+            )
         else:
             existing.full_name = payload.full_name
             existing.hashed_password = hash_password(payload.password)
@@ -154,7 +164,7 @@ def verify_otp(request: Request, response: Response, payload: VerifySignupOtpReq
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -211,34 +221,37 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
     redis_client = _get_redis_client()
     lockout_key = f"login_attempts:{email_key}"
     
-    if redis_client:
-        attempts = redis_client.get(lockout_key)
-        if attempts and int(attempts) >= 5:
-            raise AppException(
-                "Account locked due to too many failed login attempts. Please try again in 15 minutes.",
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                error_code="ACCOUNT_LOCKED",
-            )
+    if not redis_client:
+        raise AppException(
+            "Login temporarily unavailable due to backend services being down.",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            error_code="REDIS_UNAVAILABLE",
+        )
+        
+    attempts = redis_client.get(lockout_key)
+    if attempts and int(attempts) >= 5:
+        raise AppException(
+            "Account locked due to too many failed login attempts. Please try again in 15 minutes.",
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            error_code="ACCOUNT_LOCKED",
+        )
 
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if user and not user.hashed_password:
-        if redis_client:
-            redis_client.incr(lockout_key)
-            redis_client.expire(lockout_key, 900)
+        redis_client.incr(lockout_key)
+        redis_client.expire(lockout_key, 900)
         raise AppException(
             "This account signs in with Google. Use the 'Continue with Google' button instead.",
             status_code=status.HTTP_400_BAD_REQUEST,
             error_code="GOOGLE_ACCOUNT_NO_PASSWORD",
         )
     if not user or not verify_password(form_data.password, user.hashed_password):
-        if redis_client:
-            redis_client.incr(lockout_key)
-            redis_client.expire(lockout_key, 900)
+        redis_client.incr(lockout_key)
+        redis_client.expire(lockout_key, 900)
         raise AppException("Incorrect email or password", status_code=status.HTTP_401_UNAUTHORIZED, error_code="BAD_CREDENTIALS")
     
-    if redis_client:
-        redis_client.delete(lockout_key)
+    redis_client.delete(lockout_key)
         
     if not user.is_active or user.is_suspended:
         raise AppException("Account is inactive or suspended", status_code=status.HTTP_403_FORBIDDEN, error_code="ACCOUNT_DISABLED")
@@ -246,7 +259,7 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -328,7 +341,7 @@ def google_login(request: Request, response: Response, payload: GoogleAuthReques
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return GoogleAuthResponse(status="login", access_token=access_token, refresh_token=refresh_token)
 
 @router.post("/google/complete-profile", response_model=Token, status_code=status.HTTP_201_CREATED)
@@ -381,7 +394,7 @@ def complete_google_profile(request: Request, response: Response, payload: Googl
     access_token = create_access_token(str(user.id), {"role": user.role.value})
     refresh_token = create_refresh_token(str(user.id))
     store_refresh_token(str(user.id), refresh_token)
-    set_refresh_cookie(response, refresh_token)
+    set_refresh_cookie(request, response, refresh_token)
     return Token(access_token=access_token, refresh_token=refresh_token)
 
 
@@ -405,11 +418,11 @@ def refresh_token(request: Request, response: Response, db: Session = Depends(ge
     # Check rotate and revoke on reuse
     rotated = rotate_refresh_token(str(user.id), cookie_token, new_refresh_token)
     if not rotated:
-        clear_refresh_cookie(response)
+        clear_refresh_cookie(request, response)
         raise AppException("Token reuse detected. All sessions revoked.", status_code=status.HTTP_401_UNAUTHORIZED, error_code="TOKEN_REUSE_DETECTED")
 
     access_token = create_access_token(str(user.id), {"role": user.role.value})
-    set_refresh_cookie(response, new_refresh_token)
+    set_refresh_cookie(request, response, new_refresh_token)
     return Token(access_token=access_token, refresh_token=new_refresh_token)
 
 @router.post("/logout")
@@ -425,7 +438,7 @@ def logout(
     elif current_user:
         from app.services.session_service import revoke_all_refresh_tokens
         revoke_all_refresh_tokens(str(current_user.id))
-    clear_refresh_cookie(response)
+    clear_refresh_cookie(request, response)
     return {"detail": "Logged out successfully"}
 
 @router.get("/me", response_model=UserResponse)
@@ -490,7 +503,8 @@ def reset_password(request: Request, payload: PasswordResetConfirm, db: Session 
     if not user:
         raise AppException("User not found", status_code=status.HTTP_404_NOT_FOUND, error_code="USER_NOT_FOUND")
         
-    if user.hashed_password and data.get("h") != user.hashed_password[-10:]:
+    import hmac
+    if user.hashed_password and not hmac.compare_digest(data.get("h", ""), user.hashed_password[-10:]):
         raise AppException("This reset link has already been used", status_code=status.HTTP_400_BAD_REQUEST, error_code="USED_RESET_TOKEN")
         
     user.hashed_password = hash_password(payload.new_password)

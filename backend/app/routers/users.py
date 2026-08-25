@@ -129,7 +129,7 @@ def get_user_profile(user_id: str, db: Session = Depends(get_db), current_user: 
 
 
 @router.get("/{user_id}/public")
-def get_public_profile(user_id: str, db: Session = Depends(get_db)):
+def get_public_profile(user_id: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     from app.schemas.user import PublicUserResponse
     from app.models.resource import Resource
     from app.schemas.resource import ResourceResponse
@@ -140,7 +140,8 @@ def get_public_profile(user_id: str, db: Session = Depends(get_db)):
         uid = uuid.UUID(user_id)
         user = db.query(User).filter(User.id == uid).first()
     except ValueError:
-        user = db.query(User).filter(User.email.ilike(f"%{user_id}%@%")).first()
+        escaped_user_id = user_id.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        user = db.query(User).filter(User.email.ilike(f"%{escaped_user_id}%@%", escape="\\")).first()
 
     if not user:
         raise NotFoundException("User not found")
@@ -312,12 +313,7 @@ def get_user_presence_endpoint(
     return {"user_id": str(user_id), "status": status_str}
 
 
-@router.get("/presence/all")
-def get_all_presences_endpoint(
-    _current_user: User = Depends(get_current_user),
-):
-    from app.services.presence_service import get_all_presences
-    return {"presence": get_all_presences()}
+
 
 
 @router.post("/me/fcm-token", status_code=status.HTTP_204_NO_CONTENT)

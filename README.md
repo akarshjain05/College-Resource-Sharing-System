@@ -92,6 +92,7 @@ docker compose exec backend alembic upgrade head
 - Campus Needs / Wanted board for users to request specific items (auth protected)
 - Trust/Sharing reputation scoring system
 - Wishlist to save resources you might want to borrow later
+- Vitest-powered frontend unit testing suite for core business logic
 - Real-time Chat functionality for coordinating borrows
 - Full documentation set in `docs/` — SRS, design doc, ER diagram, DFDs, UML diagrams,
   API reference, testing report, user/admin manuals, installation & maintenance guides,
@@ -107,4 +108,4 @@ docker compose exec backend pytest
 
 ## Project status
 
-All planned phases are complete. The application features robust integrations including real payment processing via Razorpay and an exhaustive backend test suite. See `docs/PROJECT_REPORT.md` Chapter 11 for details on what's intentionally out of scope for this iteration (e.g., native mobile apps, a frontend automated test suite) versus what's fully implemented.
+All planned phases are complete. The application features robust integrations including real payment processing via Razorpay and an exhaustive backend test suite. See `docs/PROJECT_REPORT.md` Chapter 11 for details on what's intentionally out of scope for this iteration (e.g., native mobile apps, full e2e test suite) versus what's fully implemented.

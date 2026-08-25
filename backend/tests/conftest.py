@@ -5,9 +5,14 @@ clean schema. Postgres-only features (e.g. server-side defaults) are avoided
 in the models, so this is a faithful enough substitute for unit/API testing.
 """
 import os
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+import tempfile
+
+if "DATABASE_URL" not in os.environ:
+    db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
 os.environ["SECRET_KEY"] = "test-secret-key-for-jwt-tokens-0123456789"
 os.environ["OTP_SECRET"] = "test-otp-secret-key-0123456789"
+os.environ["CRON_SECRET"] = "test-cron-secret-0123456789"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,14 +27,15 @@ from app.models.category import Category
 from app.core.security import hash_password
 from app.models.enums import UserRole
 
-import tempfile
+SQLALCHEMY_TEST_URL = os.environ["DATABASE_URL"]
 
-db_fd, db_path = tempfile.mkstemp(suffix=".db")
-SQLALCHEMY_TEST_URL = f"sqlite:///{db_path}"
+connect_args = {}
+if SQLALCHEMY_TEST_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
 
 engine = create_engine(
     SQLALCHEMY_TEST_URL,
-    connect_args={"check_same_thread": False},
+    connect_args=connect_args,
     pool_size=10,
     max_overflow=20,
 )
@@ -51,7 +57,7 @@ def db_session():
 
 
 @pytest.fixture(scope="function")
-def client(db_session):
+def client(db_session, monkeypatch):
     def override_get_db():
         try:
             yield db_session
@@ -59,6 +65,26 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    
+    # Mock redis client for login rate limiting
+    class MockRedis:
+        def __init__(self):
+            self.data = {}
+        def get(self, key):
+            return self.data.get(key)
+        def incr(self, key):
+            self.data[key] = int(self.data.get(key, 0)) + 1
+            return self.data[key]
+        def expire(self, key, ttl):
+            pass
+        def setex(self, key, ttl, value):
+            self.data[key] = value
+        def delete(self, key):
+            if key in self.data:
+                del self.data[key]
+                
+    monkeypatch.setattr("app.services.otp_service._get_redis_client", lambda: MockRedis())
+
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

@@ -71,19 +71,14 @@ def check_security_anomalies() -> None:
             select(BorrowRequest.borrower_id, BorrowRequest.lender_id, func.count(BorrowRequest.id))
             .where(BorrowRequest.created_at >= one_day_ago)
             .group_by(BorrowRequest.borrower_id, BorrowRequest.lender_id)
+            .having(func.count(BorrowRequest.id) > 5)
         ).all()
 
-        pair_counts = {}
         for borrower_id, lender_id, count in recent_borrows:
-            pair = tuple(sorted([str(borrower_id), str(lender_id)]))
-            pair_counts[pair] = pair_counts.get(pair, 0) + count
-
-        for pair, count in pair_counts.items():
-            if count > 5:
-                send_security_alert(
-                    "Possible Collusion / Trust Score Gaming",
-                    f"Users {pair[0]} and {pair[1]} have had {count} borrow transactions between them in the last 24 hours. Please review."
-                )
+            send_security_alert(
+                "Possible Collusion / Trust Score Gaming",
+                f"Users {borrower_id} and {lender_id} have had {count} borrow transactions between them in the last 24 hours. Please review."
+            )
 
         logger.info("Security anomaly checks completed.")
     except Exception as exc:
