@@ -61,7 +61,7 @@ def test_correct_otp_verifies_account(client, db_session):
             "/api/v1/auth/register",
             json={
                 "full_name": "Verify User",
-                "email": "verify@svnit.ac.in",
+                "email": "verify_fresh@svnit.ac.in",
                 "password": "Password123!",
                 "confirm_password": "Password123!",
             },
@@ -78,7 +78,7 @@ def test_correct_otp_verifies_account(client, db_session):
         body = v_resp.json()
         assert "access_token" in body
 
-        user = db_session.query(User).filter(User.email == "verify@svnit.ac.in").first()
+        user = db_session.query(User).filter(User.email == "verify_fresh@svnit.ac.in").first()
         assert user.is_verified is True
         assert user.email_verified_at is not None
 

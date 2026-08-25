@@ -13,8 +13,8 @@ def test_websocket_auth_failure(client: TestClient):
             websocket.receive_text() # Will raise WebSocketDisconnect
     assert excinfo.value.code == 4401
 
-def test_websocket_message_throttle(client: TestClient, active_user, db_session):
-    token = create_access_token(str(active_user.id))
+def test_websocket_message_throttle(client: TestClient, test_user, db_session):
+    token = create_access_token(str(test_user.id))
     with pytest.raises(WebSocketDisconnect) as excinfo:
         with client.websocket_connect(f"/api/v1/ws/notifications?token={token}") as websocket:
             # Throttle allows 30 per min, so 31 should kill it
@@ -23,13 +23,13 @@ def test_websocket_message_throttle(client: TestClient, active_user, db_session)
             websocket.receive_text() # catch the disconnect
     assert excinfo.value.code == 1008
 
-def test_websocket_connection_cap(client: TestClient, active_user, db_session):
+def test_websocket_connection_cap(client: TestClient, test_user, db_session):
     import asyncio
     from app.services.ws_manager import ConnectionManager
     from unittest.mock import AsyncMock
     
     cm = ConnectionManager()
-    user_id = active_user.id
+    user_id = test_user.id
     
     async def run_cap_test():
         socks = [AsyncMock() for _ in range(6)]
