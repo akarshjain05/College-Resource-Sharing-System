@@ -183,13 +183,16 @@ def update_complaint(
 
     # Post real-time chat update message if borrow request is linked
     if complaint.borrow_request_id:
-        system_msg_body = f"[COMPLAINT_UPDATE] 📢 Complaint Status: {complaint.status.value.upper()}"
-        if complaint.resolution_data:
-            system_msg_body += f"\nResolution Data: {complaint.resolution_data}"
         msg = ChatMessage(
             borrow_request_id=complaint.borrow_request_id,
             sender_id=complaint.filed_by_id,
-            body=system_msg_body,
+            body=f"Complaint status updated to {complaint.status.value.upper()}.",
+            message_type="system_event",
+            metadata_payload={
+                "event_type": "COMPLAINT_UPDATE",
+                "status": complaint.status.value.upper(),
+                "resolution_data": complaint.resolution_data,
+            }
         )
         db.add(msg)
         db.commit()

@@ -79,15 +79,6 @@ def get_analytics_dashboard(
     db: Session = Depends(get_db),
     _admin: User = Depends(require_admin),
 ):
-    from sqlalchemy import func
-    from datetime import datetime, timedelta
-    from app.models.user import User
-    from app.models.resource import Resource
-    from app.models.borrow import BorrowRequest
-    from app.models.misc import Complaint
-    from app.models.enums import ResourceStatus, BorrowStatus, ComplaintStatus
-    from app.models.category import Category
-    from app.schemas.analytics import AnalyticsResponse, KPIResponse, BorrowTrend, CategoryDistribution, RecentActivityItem
     
     # 1. KPIs
     total_active_users = db.query(User).filter(User.is_active == True).count()
@@ -134,12 +125,12 @@ def get_analytics_dashboard(
             "percentage": pct
         })
         
-    from app.models.wanted import WantedRequest
+    
     
     # 4. Recent Activity
     activities = []
     
-    recent_resources = db.query(Resource).order_by(Resource.created_at.desc()).limit(10).all()
+    recent_resources = db.query(Resource).options(joinedload(Resource.owner)).order_by(Resource.created_at.desc()).limit(10).all()
     for r in recent_resources:
         activities.append(RecentActivityItem(
             id=f"res_{r.id}",
@@ -150,7 +141,7 @@ def get_analytics_dashboard(
             icon="laptop"
         ))
         
-    recent_wanted = db.query(WantedRequest).order_by(WantedRequest.created_at.desc()).limit(10).all()
+    recent_wanted = db.query(WantedRequest).options(joinedload(WantedRequest.user)).order_by(WantedRequest.created_at.desc()).limit(10).all()
     for w in recent_wanted:
         activities.append(RecentActivityItem(
             id=f"wan_{w.id}",
@@ -161,7 +152,10 @@ def get_analytics_dashboard(
             icon="laptop"
         ))
         
-    recent_returns = db.query(BorrowRequest).filter(
+    recent_returns = db.query(BorrowRequest).options(
+        joinedload(BorrowRequest.resource),
+        joinedload(BorrowRequest.borrower)
+    ).filter(
         BorrowRequest.status.in_([BorrowStatus.RETURNED, BorrowStatus.DAMAGED])
     ).order_by(BorrowRequest.actual_return_date.desc().nulls_last()).limit(10).all()
     for ret in recent_returns:
@@ -174,7 +168,10 @@ def get_analytics_dashboard(
             icon="check"
         ))
         
-    recent_disputes = db.query(Complaint).filter(Complaint.status == ComplaintStatus.RESOLVED).order_by(Complaint.updated_at.desc()).limit(10).all()
+    recent_disputes = db.query(Complaint).options(
+        joinedload(Complaint.borrow_request).joinedload(BorrowRequest.resource),
+        joinedload(Complaint.filed_by)
+    ).filter(Complaint.status == ComplaintStatus.RESOLVED).order_by(Complaint.updated_at.desc()).limit(10).all()
     for disp in recent_disputes:
         title = "Dispute Resolved"
         if disp.borrow_request and disp.borrow_request.resource:

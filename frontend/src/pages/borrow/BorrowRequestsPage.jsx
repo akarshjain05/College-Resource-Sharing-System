@@ -1,3 +1,4 @@
+import { STATUS_GROUPS } from "../../utils/statusGroups";
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -38,7 +39,7 @@ export default function BorrowRequestsPage() {
 
   const getInitialSubTab = () => {
     const pSubTab = searchParams.get("subTab") || searchParams.get("section");
-    if (pSubTab && ["upcoming", "ongoing", "completed", "cancelled"].includes(pSubTab.toLowerCase())) {
+    if (pSubTab && Object.keys(STATUS_GROUPS).includes(pSubTab.toLowerCase())) {
       return pSubTab.toLowerCase();
     }
     return "upcoming";
@@ -66,13 +67,13 @@ export default function BorrowRequestsPage() {
     if (booking) {
       const status = (booking.status || "").toLowerCase();
       let targetSubTab = "upcoming";
-      if (["requested", "pending", "approved", "handover_requested"].includes(status)) {
+      if (STATUS_GROUPS.upcoming.includes(status)) {
         targetSubTab = "upcoming";
-      } else if (["active", "ongoing", "return_requested", "late"].includes(status)) {
+      } else if (STATUS_GROUPS.ongoing.includes(status)) {
         targetSubTab = "ongoing";
-      } else if (["returned", "confirmed_return", "damaged"].includes(status)) {
+      } else if (STATUS_GROUPS.completed.includes(status)) {
         targetSubTab = "completed";
-      } else if (["cancelled", "rejected"].includes(status)) {
+      } else if (STATUS_GROUPS.cancelled.includes(status)) {
         targetSubTab = "cancelled";
       }
 
@@ -116,10 +117,10 @@ export default function BorrowRequestsPage() {
         autoOpenedRef.current = urlId;
         setTab(newTab);
         const status = foundBooking.status.toLowerCase();
-        if (["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status)) setSubTab("upcoming");
-        else if (["active", "ongoing", "return_requested", "late"].includes(status)) setSubTab("ongoing");
-        else if (["returned", "confirmed_return", "damaged"].includes(status)) setSubTab("completed");
-        else if (["cancelled", "rejected"].includes(status)) setSubTab("cancelled");
+        if (STATUS_GROUPS.upcoming.includes(status)) setSubTab("upcoming");
+        else if (STATUS_GROUPS.ongoing.includes(status)) setSubTab("ongoing");
+        else if (STATUS_GROUPS.completed.includes(status)) setSubTab("completed");
+        else if (STATUS_GROUPS.cancelled.includes(status)) setSubTab("cancelled");
 
         if (isOpenChat) {
           setOpenChatId(urlId);
@@ -325,16 +326,16 @@ export default function BorrowRequestsPage() {
     const filtered = list.filter(b => {
       const status = b.status.toLowerCase();
       if (subTab === "upcoming") {
-        return ["requested", "pending", "approved", "handover_requested", "cancellation_requested"].includes(status);
+        return STATUS_GROUPS.upcoming.includes(status);
       }
       if (subTab === "ongoing") {
-        return ["active", "ongoing", "return_requested", "late"].includes(status);
+        return STATUS_GROUPS.ongoing.includes(status);
       }
       if (subTab === "completed") {
-        return ["returned", "confirmed_return", "damaged"].includes(status);
+        return STATUS_GROUPS.completed.includes(status);
       }
       if (subTab === "cancelled") {
-        return ["cancelled", "rejected"].includes(status);
+        return STATUS_GROUPS.cancelled.includes(status);
       }
       return true;
     });
@@ -482,7 +483,7 @@ export default function BorrowRequestsPage() {
                       <p className="text-primary-600 dark:text-primary-400 font-extrabold">₹{book.total_amount}</p>
                       {book.total_amount === 0 ? (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
-                      ) : ["rejected", "cancelled"].includes(book.status?.toLowerCase()) ? (
+                      ) : STATUS_GROUPS.cancelled.includes(book.status?.toLowerCase()) ? (
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                           {book.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
                         </span>
@@ -874,7 +875,7 @@ export default function BorrowRequestsPage() {
                     <span className="font-extrabold text-primary-600 dark:text-primary-400 text-sm">₹{selectedBookingForModal.total_amount || 0}</span>
                     {(selectedBookingForModal.total_amount || 0) === 0 ? (
                       <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">Free</span>
-                    ) : ["rejected", "cancelled"].includes(selectedBookingForModal.status?.toLowerCase()) ? (
+                    ) : STATUS_GROUPS.cancelled.includes(selectedBookingForModal.status?.toLowerCase()) ? (
                       <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                         {selectedBookingForModal.status?.toLowerCase() === "rejected" ? "Owner Declined" : "Cancelled"}
                       </span>

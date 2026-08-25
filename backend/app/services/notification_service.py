@@ -12,9 +12,11 @@ from app.core.config import settings
 
 
 import logging
+import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logger = logging.getLogger("crss")
-
+_notification_pool = ThreadPoolExecutor(max_workers=20, thread_name_prefix="notif_fanout")
 
 def _forward_post(url: str, headers: dict, payload: dict) -> None:
     try:
@@ -65,7 +67,7 @@ def forward_to_microservice(
     if email:
         payload["contact_info"] = {"email": email}
 
-    threading.Thread(target=_forward_post, args=(url, headers, payload), daemon=True).start()
+    _notification_pool.submit(_forward_post, url, headers, payload)
 
 
 def create_notification(

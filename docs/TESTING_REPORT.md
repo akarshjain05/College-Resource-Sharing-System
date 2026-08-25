@@ -24,7 +24,7 @@ tests and PostgreSQL in production — no test-only model duplication needed.
 | Borrow lifecycle | `tests/test_borrow.py` | full happy-path lifecycle (request → approve → return, with availability counters verified at each step), self-borrow rejection, reject flow, non-owner approve forbidden |
 | Admin / RBAC | `tests/test_admin.py` | non-admin blocked from user list, admin can list users, suspend/unsuspend (+ suspended user blocked from login), analytics overview, category CRUD is admin-only |
 
-**Total: 22 test cases** across 4 files, covering the primary user journeys end-to-end
+**Total: 70 test cases** across multiple files, covering the primary user journeys end-to-end
 (not just unit-level function calls) via real HTTP requests through the FastAPI
 `TestClient`, which exercises the full stack — routing, dependency injection, Pydantic
 validation, and the ORM — for each case.

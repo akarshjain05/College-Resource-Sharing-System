@@ -57,8 +57,8 @@ def get_user_presence(user_id: str) -> str:
             status = client.get(f"presence:{user_id}")
             if status:
                 return status
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
     return _in_memory_presence.get(user_id, "offline")
 
 
@@ -68,6 +68,6 @@ def get_all_presences() -> Dict[str, str]:
     if client:
         try:
             return client.hgetall("user_presence") or {}
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
     return _in_memory_presence

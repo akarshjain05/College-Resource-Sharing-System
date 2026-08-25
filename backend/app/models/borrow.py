@@ -22,8 +22,8 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     resource_id: Mapped[UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("resources.id"), nullable=False
     )
-    borrower_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    lender_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    borrower_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    lender_id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     wanted_request_id: Mapped[Optional[UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("wanted_requests.id", ondelete="SET NULL"), nullable=True
     )

@@ -109,8 +109,8 @@ def check_resend_cooldown(email: str) -> bool:
     if client:
         try:
             return bool(client.exists(f"signup_otp_resend:{normalized_email}"))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
 
     cooldown_until = _in_memory_cooldown_store.get(normalized_email)
     if cooldown_until:
@@ -191,8 +191,8 @@ def update_otp_challenge(challenge_id: str, payload: dict) -> None:
             if ttl > 0:
                 client.setex(f"signup_otp:{challenge_id}", ttl, json.dumps(payload))
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
 
     if challenge_id in _in_memory_otp_store:
         _in_memory_otp_store[challenge_id] = payload
@@ -205,8 +205,8 @@ def delete_otp_challenge(challenge_id: str, email: Optional[str] = None) -> None
             client.delete(f"signup_otp:{challenge_id}")
             if email:
                 client.delete(f"signup_otp_email:{email}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
 
     _in_memory_otp_store.pop(challenge_id, None)
     if email and _in_memory_email_index.get(email) == challenge_id:
@@ -222,8 +222,8 @@ def resolve_email_from_challenge(challenge_id: str) -> Optional[str]:
             if raw_data:
                 data = json.loads(raw_data)
                 return data.get("email")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Handled exception: {e}")
 
     payload = _in_memory_otp_store.get(challenge_id)
     if payload:

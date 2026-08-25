@@ -230,6 +230,7 @@ export default function ResourceCreatePage() {
             await uploadApi.uploadResourceImage(createdId, photos[i].file, isPrimary);
           } catch (uploadErr) {
             console.error("Failed to upload image index: ", i, uploadErr);
+            toast.error("Failed to upload an image. You can try adding it later.");
           }
         }
       }

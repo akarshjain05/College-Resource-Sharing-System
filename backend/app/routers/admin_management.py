@@ -94,7 +94,8 @@ def get_all_borrows(
     _admin = Depends(require_admin),
     status: Optional[BorrowStatus] = None,
 ):
-    query = db.query(BorrowRequest)
+    from app.routers.borrow import _borrow_query
+    query = _borrow_query(db)
     if status:
         query = query.filter(BorrowRequest.status == status)
     items = query.order_by(BorrowRequest.created_at.desc()).all()

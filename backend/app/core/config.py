@@ -106,10 +106,10 @@ class Settings(BaseSettings):
 
         if self.ENVIRONMENT == "production":
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
-                logger.warning("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are not set. Payments will fail!")
+                raise ValueError("RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET must be set in production.")
 
             if not self.GOOGLE_CLIENT_ID:
-                logger.warning("GOOGLE_CLIENT_ID is not set in production. Google Sign-In will fail!")
+                raise ValueError("GOOGLE_CLIENT_ID must be set in production.")
 
         return self
 

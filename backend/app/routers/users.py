@@ -313,12 +313,7 @@ def get_user_presence_endpoint(
     return {"user_id": str(user_id), "status": status_str}
 
 
-@router.get("/presence/all")
-def get_all_presences_endpoint(
-    _current_user: User = Depends(get_current_user),
-):
-    from app.services.presence_service import get_all_presences
-    return {"presence": get_all_presences()}
+
 
 
 @router.post("/me/fcm-token", status_code=status.HTTP_204_NO_CONTENT)

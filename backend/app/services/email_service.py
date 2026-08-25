@@ -356,15 +356,10 @@ async def send_complaint_update_email(
         <p>Log in to your account dashboard to view the full resolution & chat updates.</p>
     </div>
     """
-    html = _wrap_template(f"Complaint Update: {status.upper()}", body)
+    html_content = _wrap_template(f"Complaint Update: {status.upper()}", body)
     try:
-        await send_email(to_email, subject, html)
+        await send_email(to_email, subject, html_content)
         return True
     except Exception:
         logger.exception("Failed to send complaint update email to %s", to_email)
         return False
-
-
-
-
-

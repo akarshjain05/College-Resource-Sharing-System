@@ -78,56 +78,53 @@ export default function ChatThread({ request, onReportIssue }) {
   };
 
   const renderMessageContent = (msg) => {
-    const isComplaintUpdate = msg.body?.includes("[COMPLAINT_UPDATE]");
-    const isComplaintFiled = msg.body?.includes("[COMPLAINT_FILED]");
-
-    if (isComplaintUpdate && msg.body.includes("Resolution Data:")) {
-      try {
-        const jsonPart = msg.body.split("Resolution Data:")[1].trim();
-        return (
-          <div className="space-y-2">
-            <p className="font-extrabold text-xs tracking-wider uppercase text-indigo-600 dark:text-indigo-400">
-              {msg.body.split("\n")[0]}
-            </p>
-            <ResolutionCard resolutionData={jsonPart} />
-          </div>
-        );
-      } catch (e) {
-        // fallback
-      }
+    if (msg.message_type !== "system_event") {
+      return <p>{msg.body}</p>;
     }
 
-    if (isComplaintFiled) {
+    const { metadata_payload } = msg;
+    const eventType = metadata_payload?.event_type;
+
+    if (eventType === "COMPLAINT_UPDATE" && metadata_payload?.resolution_data) {
+      return (
+        <div className="space-y-2">
+          <p className="font-extrabold text-xs tracking-wider uppercase text-indigo-600 dark:text-indigo-400">
+            {msg.body}
+          </p>
+          <ResolutionCard resolutionData={metadata_payload.resolution_data} />
+        </div>
+      );
+    }
+
+    if (eventType === "COMPLAINT_UPDATE" || eventType === "COMPLAINT_FILED") {
       return (
         <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-red-900 dark:text-red-200 text-xs space-y-1">
-          <p className="font-bold">{msg.body.split("\n\n")[0]}</p>
-          <p className="text-[11px] opacity-90">{msg.body.split("\n\n")[1] || msg.body}</p>
+          <p className="font-bold">{msg.body}</p>
         </div>
       );
     }
 
-    if (msg.body?.includes("[CANCELLATION_REQUEST]")) {
-      const parts = msg.body.split("\n");
+    if (eventType === "CANCELLATION_REQUEST") {
       return (
         <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-amber-900 dark:text-amber-200 text-xs space-y-1">
-          <p className="font-bold">{parts[0].replace("[CANCELLATION_REQUEST] ", "")}</p>
-          {parts[1] && <p className="text-[11px] opacity-90">{parts.slice(1).join("\n")}</p>}
+          <p className="font-bold">Cancellation Requested</p>
+          {metadata_payload?.reason && <p className="text-[11px] opacity-90">{metadata_payload.reason}</p>}
         </div>
       );
     }
 
-    if (msg.body?.includes("[CANCELLATION_ACCEPTED]")) {
+    if (eventType === "CANCELLATION_ACCEPTED") {
       return (
         <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-900 dark:text-emerald-200 text-xs text-center font-bold">
-          {msg.body.replace("[CANCELLATION_ACCEPTED] ", "")}
+          {msg.body}
         </div>
       );
     }
 
-    if (msg.body?.includes("[CANCELLATION_REJECTED]")) {
+    if (eventType === "CANCELLATION_REJECTED") {
       return (
         <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-slate-200 text-xs text-center font-bold">
-          {msg.body.replace("[CANCELLATION_REJECTED] ", "")}
+          {msg.body}
         </div>
       );
     }
@@ -164,7 +161,7 @@ export default function ChatThread({ request, onReportIssue }) {
         ) : (
           messages.map((msg) => {
             const isMe = msg.sender_id === user.id;
-            const isSystemMsg = msg.body?.includes("[COMPLAINT_UPDATE]") || msg.body?.includes("[COMPLAINT_FILED]") || msg.body?.includes("[CANCELLATION_REQUEST]") || msg.body?.includes("[CANCELLATION_ACCEPTED]") || msg.body?.includes("[CANCELLATION_REJECTED]");
+            const isSystemMsg = msg.message_type === "system_event";
 
             if (isSystemMsg) {
               return (
