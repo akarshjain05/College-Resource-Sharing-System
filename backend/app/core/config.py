@@ -96,13 +96,19 @@ class Settings(BaseSettings):
         import logging
         logger = logging.getLogger("crss")
 
+        import secrets
         # These MUST always be set — an empty HMAC key is a full auth bypass.
+        # If missing, we generate a random secure key for this session to prevent crashes,
+        # but warn the user since state (like sessions or OTPs) will be lost on restart.
         if not self.SECRET_KEY:
-            raise ValueError("SECRET_KEY must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+            self.SECRET_KEY = secrets.token_urlsafe(32)
+            logger.critical("SECRET_KEY was missing! A random one was generated for this session. Users will be logged out on restart. Set SECRET_KEY in your environment.")
         if not self.OTP_SECRET:
-            raise ValueError("OTP_SECRET must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+            self.OTP_SECRET = secrets.token_urlsafe(32)
+            logger.critical("OTP_SECRET was missing! A random one was generated for this session. Set OTP_SECRET in your environment.")
         if not self.CRON_SECRET:
-            raise ValueError("CRON_SECRET must be set. Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\"")
+            self.CRON_SECRET = secrets.token_urlsafe(32)
+            logger.critical("CRON_SECRET was missing! A random one was generated for this session. Set CRON_SECRET in your environment.")
 
         if self.ENVIRONMENT == "production":
             if not self.RAZORPAY_KEY_ID or not self.RAZORPAY_KEY_SECRET:
