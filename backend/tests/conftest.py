@@ -67,9 +67,12 @@ def client(db_session, monkeypatch):
     app.dependency_overrides[get_db] = override_get_db
     
     # Mock redis client for login rate limiting
+    # Use a single shared dictionary for all MockRedis instances during this test
+    # so that get_redis() and _get_redis_client() return connected instances.
+    _shared_redis_data = {}
     class MockRedis:
         def __init__(self):
-            self.data = {}
+            self.data = _shared_redis_data
         def get(self, key):
             return self.data.get(key)
         def incr(self, key):
@@ -82,9 +85,12 @@ def client(db_session, monkeypatch):
         def delete(self, key):
             if key in self.data:
                 del self.data[key]
+        def ttl(self, key):
+            return 300
                 
     monkeypatch.setattr("app.services.otp_service._get_redis_client", lambda: MockRedis())
 
+    _shared_redis_data.clear()
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
