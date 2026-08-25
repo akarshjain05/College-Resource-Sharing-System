@@ -329,7 +329,9 @@ function ItemFullDetailsModal({ item, requests, onClose, onTogglePublish, onActi
             <div className="bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1">
               <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Listing Available Dates</span>
               <p className="font-extrabold text-slate-850 dark:text-slate-100 text-xs">
-                {item.available_from && item.available_to ? (
+                {!isAvailable ? (
+                  <span className="text-slate-400">Currently Unpublished</span>
+                ) : item.available_from && item.available_to ? (
                   `${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} → ${new Date(item.available_to).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
                 ) : item.available_from ? (
                   `From ${new Date(item.available_from).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} onwards`
@@ -582,8 +584,17 @@ export default function MyListingsPage() {
     }
 
     try {
-      await resourceApi.update(itemId, { status: newStatus });
+      const resp = await resourceApi.update(itemId, { 
+        status: newStatus,
+        available_from: null,
+        available_to: null 
+      });
       toast.success("Item unpublished!");
+      // Update with exact backend state
+      setItems((prev) => prev.map((item) => (item.id === itemId ? resp.data : item)));
+      if (selectedItemForModal?.id === itemId) {
+        setSelectedItemForModal(resp.data);
+      }
     } catch (err) {
       // Rollback on failure
       setItems((prev) =>
@@ -601,19 +612,24 @@ export default function MyListingsPage() {
     
     // Optimistic UI update
     setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, status: "available" } : item))
+      prev.map((item) => (item.id === itemId ? { ...item, status: "available", available_from: fromDate || null, available_to: toDate || null } : item))
     );
     if (selectedItemForModal?.id === itemId) {
-      setSelectedItemForModal((prev) => ({ ...prev, status: "available" }));
+      setSelectedItemForModal((prev) => ({ ...prev, status: "available", available_from: fromDate || null, available_to: toDate || null }));
     }
 
     try {
-      await resourceApi.update(itemId, { 
+      const resp = await resourceApi.update(itemId, { 
         status: "available",
         available_from: fromDate,
         available_to: toDate 
       });
       toast.success("Item published to campus!");
+      // Update with exact backend state
+      setItems((prev) => prev.map((item) => (item.id === itemId ? resp.data : item)));
+      if (selectedItemForModal?.id === itemId) {
+        setSelectedItemForModal(resp.data);
+      }
     } catch (err) {
       // Rollback on failure
       setItems((prev) =>
