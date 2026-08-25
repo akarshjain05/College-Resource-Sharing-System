@@ -67,5 +67,25 @@ class BorrowRequest(Base, UUIDMixin, TimestampMixin):
     def end_date(self) -> datetime:
         return self.requested_end_date
 
+    @property
+    def estimated_total_paise(self) -> int:
+        if self.payment:
+            return self.payment.total_amount
+        if not self.resource:
+            return 0
+            
+        deposit_val = float(getattr(self.resource, "deposit_amount", 0) or 0)
+        try:
+            days = max(1, (self.requested_end_date.date() - self.requested_start_date.date()).days + 1)
+        except Exception:
+            days = 1
+            
+        resource_daily_price = float(getattr(self.resource, "daily_price", 0) or 0)
+        daily_price = int(resource_daily_price)
+        rent = daily_price * days
+        deposit = int(deposit_val)
+        
+        return max(100, (rent + deposit) * 100)
+
     def __repr__(self) -> str:
         return f"<BorrowRequest {self.id} status={self.status}>"

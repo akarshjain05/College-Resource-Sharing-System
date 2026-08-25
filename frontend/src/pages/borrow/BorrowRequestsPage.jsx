@@ -137,14 +137,7 @@ export default function BorrowRequestsPage() {
   }, [bookings, searchParams, loading]);
 
   const computeTotalAmountRupees = (r) => {
-    if (r.payment) return (r.payment.total_amount || 0) / 100;
-    const depositVal = r.resource?.deposit_amount || 0;
-    const start = new Date(r.requested_start_date);
-    const end = new Date(r.requested_end_date);
-    const days = Math.max(1, Math.round((end - start) / 86400000) + 1);
-    const dailyPrice = r.resource?.daily_price || 0;
-    
-    return dailyPrice * days + depositVal;
+    return (r.estimated_total_paise || 0) / 100;
   };
 
   const loadBookingsList = () => {
