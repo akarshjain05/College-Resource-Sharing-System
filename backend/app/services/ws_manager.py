@@ -22,7 +22,7 @@ MAX_CONNECTIONS_PER_USER = 5
 
 class ConnectionManager:
     def __init__(self) -> None:
-        self._connections: Dict[str, Set[WebSocket]] = {}
+        self._connections: Dict[str, Dict[WebSocket, None]] = {}
         self.main_loop: asyncio.AbstractEventLoop | None = None
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -30,23 +30,23 @@ class ConnectionManager:
 
     async def connect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
         key = str(user_id)
-        sockets = self._connections.setdefault(key, set())
+        sockets = self._connections.setdefault(key, {})
         # Item 86: Cap concurrent WebSocket connections per user
         if len(sockets) >= MAX_CONNECTIONS_PER_USER:
             oldest_ws = next(iter(sockets))
-            sockets.discard(oldest_ws)
+            sockets.pop(oldest_ws, None)
             try:
                 await oldest_ws.close(code=1008, reason="Connection limit exceeded")
             except Exception:
                 pass
-        sockets.add(websocket)
+        sockets[websocket] = None
         from app.services.presence_service import set_user_presence
         set_user_presence(key, "online")
 
     def disconnect(self, user_id: uuid.UUID, websocket: WebSocket) -> None:
         key = str(user_id)
         if key in self._connections:
-            self._connections[key].discard(websocket)
+            self._connections[key].pop(websocket, None)
             if not self._connections[key]:
                 del self._connections[key]
                 from app.services.presence_service import set_user_presence
@@ -55,13 +55,13 @@ class ConnectionManager:
     async def _send_to_user(self, user_id: uuid.UUID, payload: dict) -> None:
         key = str(user_id)
         dead_sockets = []
-        for ws in self._connections.get(key, set()):
+        for ws in self._connections.get(key, {}):
             try:
                 await ws.send_text(json.dumps(payload))
             except Exception:
                 dead_sockets.append(ws)
         for ws in dead_sockets:
-            self._connections[key].discard(ws)
+            self._connections[key].pop(ws, None)
 
     def notify_user(self, user_id: uuid.UUID, payload: dict) -> None:
         """
