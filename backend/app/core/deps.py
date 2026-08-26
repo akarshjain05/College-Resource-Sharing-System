@@ -80,14 +80,23 @@ require_admin = require_roles(UserRole.ADMIN)
 
 
 def require_permissions(*permissions: str):
-    def permission_checker(current_user: User = Depends(get_current_user)) -> User:
+    def permission_checker(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+    ) -> User:
         if current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Admin privileges required"
             )
+            
+        # The oldest admin is considered the root admin and bypasses granular permissions
+        # This prevents lockouts when permissions are added or migrated.
+        root_admin = db.query(User).filter(User.role == UserRole.ADMIN).order_by(User.created_at.asc()).first()
+        is_root = root_admin and current_user.id == root_admin.id
+
         for perm in permissions:
-            if not getattr(current_user, perm, False):
+            if not getattr(current_user, perm, False) and not is_root:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Missing required permission: {perm}"
