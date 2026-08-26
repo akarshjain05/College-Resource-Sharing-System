@@ -8,7 +8,12 @@ from app.models.borrow import BorrowRequest
 from app.models.resource import Resource
 from app.models.user import User
 from app.models.category import Category
-from app.models.enums import BorrowStatus
+from app.models.enums import BorrowStatus, ResourceStatus, ComplaintStatus
+from app.models.misc import Complaint
+from app.models.wanted import WantedRequest
+from app.schemas.analytics import AnalyticsResponse, KPIResponse, BorrowTrend, CategoryDistribution, RecentActivityItem
+from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/admin/analytics", tags=["Admin Analytics"])
 
